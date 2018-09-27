@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package info.maaskant.wmsnotes.server.command.grpc;
+
+service CommandService {
+    rpc PostCommand (PostCommandRequest) returns (PostCommandResponse);
+}
+
+message PostCommandRequest {
+    // The id of the note to which the command applies
+    string note_id = 1;
+
+    oneof command {
+        CreateNoteCommand create_note = 2;
+        DeleteNoteCommand delete_note = 3;
+    }
+
+    message CreateNoteCommand {
+        string title = 1;
+    }
+
+    message DeleteNoteCommand {
+    }
+}
+
+
+message PostCommandResponse {
+    enum Status {
+        SUCCESS = 0;
+        INTERNAL_ERROR = 1;
+        BAD_REQUEST = 2;
+    }
+    Status status = 1;
+    string errorDescription = 2;
+}

@@ -1,0 +1,31 @@
+syntax = 'proto3';
+
+package info.maaskant.wmsnotes.server.command.grpc;
+
+service EventService {
+    rpc GetEvents (GetEventsRequest) returns (stream GetEventsResponse);
+}
+
+message GetEventsRequest {
+    // If specified, only include events after the node with the given id
+    //    string after_note_id = 1;
+}
+
+message GetEventsResponse {
+    string event_id = 1;
+
+    // The id of the note to which the note applies
+    string note_id = 2;
+
+    oneof event {
+        NoteCreatedEvent note_created = 3;
+        NoteDeletedEvent note_deleted = 4;
+    }
+
+    message NoteCreatedEvent {
+        string title = 1;
+    }
+
+    message NoteDeletedEvent {
+    }
+}

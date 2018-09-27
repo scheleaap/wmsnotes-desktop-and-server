@@ -1,11 +1,10 @@
 package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.desktop.app.logger
-import io.reactivex.Completable
+import io.reactivex.ObservableTransformer
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
-import java.util.*
 
 class Model(private val eventStore: EventStore) {
 
@@ -23,30 +22,40 @@ class Model(private val eventStore: EventStore) {
 
     init {
 
-        commands.doOnNext { logger.debug("Received command: $it") }
-                .map(this::processCommand)
-                .filter(Optional<Event>::isPresent)
-                .map(Optional<Event>::get)
-//                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
-                .doOnNext { logger.debug("Storing event: $it") }
-                .doOnNext { store(it) }
-                .doOnNext { logger.debug("Emitting event: $it") }
+        commands
+                .compose(processCommands())
                 .subscribe(events)
 
     }
 
-    private fun store(e: Event) {
-        eventStore
-                .storeEvent(e)
-//                .concatWith { eventStore.getEvent(e.eventId) }
-                .subscribe()
+    private fun processCommands(): ObservableTransformer<Command, Event> {
+        return ObservableTransformer { it2 ->
+            it2.doOnNext { logger.debug("Received command: $it") }
+                    .map(this::executeCommand)
+                    .compose(removeEmptyOptionalItems())
+                    .observeOn(Schedulers.io())
+                    .doOnNext { storeEvent(it) }
+                    .doOnNext { logger.debug("Generated event: $it") }
+        }
     }
 
-    private fun processCommand(c: Command): Optional<Event> {
+    private fun <T> removeEmptyOptionalItems(): ObservableTransformer<Optional<T>, T> {
+        return ObservableTransformer { it2 ->
+            it2
+                    .filter { it.isPresent }
+                    .map { it.value }
+        }
+    }
+
+
+    private fun storeEvent(e: Event) {
+        eventStore.storeEvent(e).blockingGet()
+    }
+
+    private fun executeCommand(c: Command): Optional<Event> {
         return when (c) {
-            is CreateNoteCommand -> Optional.of(createNote(c))
-            is DeleteNoteCommand -> Optional.of(deleteNote(c))
+            is CreateNoteCommand -> Optional(createNote(c))
+            is DeleteNoteCommand -> Optional(deleteNote(c))
             // else -> Optional.empty()
         }
     }

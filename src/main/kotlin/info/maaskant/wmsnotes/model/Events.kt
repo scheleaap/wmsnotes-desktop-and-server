@@ -3,14 +3,12 @@ package info.maaskant.wmsnotes.model
 import au.com.console.kassava.kotlinToString
 import java.util.*
 
-sealed class Event(val id: String) {
-    val eventId = UUID.randomUUID()
+sealed class Event(val eventId: UUID, val id: String)
+
+class NoteCreatedEvent(id: String, val title: String, eventId: UUID = UUID.randomUUID()) : Event(eventId, id) {
+    override fun toString() = kotlinToString(properties = arrayOf(NoteCreatedEvent::eventId, NoteCreatedEvent::id, NoteCreatedEvent::title))
 }
 
-class NoteCreatedEvent(id: String, val title: String) : Event(id) {
-    override fun toString() = kotlinToString(properties = arrayOf(NoteCreatedEvent::id, NoteCreatedEvent::title))
-
-}
-class NoteDeletedEvent(id: String) : Event(id) {
-    override fun toString() = kotlinToString(properties = arrayOf(NoteDeletedEvent::id))
+class NoteDeletedEvent(id: String, eventId: UUID = UUID.randomUUID()) : Event(eventId, id) {
+    override fun toString() = kotlinToString(properties = arrayOf(NoteDeletedEvent::eventId, NoteDeletedEvent::id))
 }
