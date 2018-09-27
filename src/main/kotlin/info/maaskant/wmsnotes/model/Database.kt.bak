@@ -1,0 +1,68 @@
+package model
+
+import app.logger
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.io.Input
+import com.esotericsoftware.kryo.io.Output
+import io.reactivex.Single
+import io.reactivex.rxkotlin.subscribeBy
+import org.nield.rxkotlinjdbc.execute
+import org.nield.rxkotlinjdbc.insert
+import org.nield.rxkotlinjdbc.select
+import java.io.ByteArrayOutputStream
+import java.sql.DriverManager
+import java.util.*
+
+class EventStore(val kryo: Kryo) {
+
+    private val logger by logger()
+
+    val db = DriverManager.getConnection("jdbc:sqlite::memory:").apply {
+
+        execute("create table note_event (eventId uuid primary key, type varchar, note_id varchar, data blob)")
+                .toSingle()
+                .subscribeBy(
+                        onSuccess = { logger.info("Table 'note_event' created, $it") },
+                        onError = { throw RuntimeException(it) })
+    }
+
+    fun storeEvent(e: Event): Single<Unit> {
+
+        // TODO move
+        kryo.register(NoteCreatedEvent::class.java)
+        kryo.register(UUID::class.java)
+
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        byteArrayOutputStream.use { baos ->
+            Output(baos).use { ko -> kryo.writeClassAndObject(ko, e) }
+        }
+        val data: ByteArray = byteArrayOutputStream.toByteArray()
+
+        return db
+                .insert("insert into note_event (eventId, type, note_id, data) values (:eventId, :type, :note_id, :data)")
+                .parameter("eventId", e.eventId)
+                .parameter("type", e::class.simpleName)
+                .parameter("note_id", e.id)
+                .parameter("data", data.inputStream())
+                .toSingle { Unit }
+    }
+
+    fun getEvent(eventId: UUID): Single<Event> {
+        return db
+                .select("select type, data from note_event where eventId = :eventId")
+                .parameter("eventId", eventId)
+                .toSingle {
+                    when (it.getString(1)) {
+                        NoteCreatedEvent::class.simpleName -> {
+                            val string = it.getString(1)
+                            val bytes: ByteArray = it.getBytes(2)
+                            val kryoInput = Input(bytes)
+                            kryoInput.use { ki ->
+                                kryo.readObject(ki, NoteCreatedEvent::class.java)
+                            }
+                        }
+                        else -> throw IllegalArgumentException()
+                    }
+                }
+    }
+}
