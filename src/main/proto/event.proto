@@ -12,7 +12,7 @@ message GetEventsRequest {
 }
 
 message GetEventsResponse {
-    string event_id = 1;
+    int32 event_id = 1;
 
     // The id of the note to which the note applies
     string note_id = 2;

@@ -10,10 +10,11 @@ import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.StatusRuntimeException
 import io.reactivex.Observable
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
-class InboundSynchronizer internal constructor(
+class InboundSynchronizer  constructor(
         private val channel: ManagedChannel,
         private val eventStore: EventStore,
         private val model: Model
@@ -22,21 +23,13 @@ class InboundSynchronizer internal constructor(
     private val logger by logger()
 
     private var started: Boolean = false
+    private var timerDisposable: Disposable? = null
 
     private val blockingStub: EventServiceGrpc.EventServiceBlockingStub = EventServiceGrpc.newBlockingStub(channel)
 
-    constructor(host: String, port: Int, eventStore: EventStore, model: Model) :
-            this(ManagedChannelBuilder.forAddress(host, port)
-                    // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
-                    // needing certificates.
-                    .usePlaintext()
-                    .build(),
-                    eventStore,
-                    model)
-
     fun start() {
         if (!started) {
-            Observable
+            timerDisposable = Observable
                     .interval(0, 10, TimeUnit.SECONDS)
                     .observeOn(Schedulers.io())
                     .subscribe {
@@ -48,6 +41,7 @@ class InboundSynchronizer internal constructor(
 
     @Throws(InterruptedException::class)
     fun stop() {
+        timerDisposable?.dispose()
         if (started) {
             channel.shutdown().awaitTermination(60, TimeUnit.SECONDS)
             started = false
@@ -56,6 +50,7 @@ class InboundSynchronizer internal constructor(
 
     private fun getAndProcessRemoteEvents() {
         logger.info("Getting and processing remote events")
+        logger.debug("${channel.getState(false)}")
         val request = Event.GetEventsRequest.newBuilder().build()
         try {
             val response: Iterator<Event.GetEventsResponse> =

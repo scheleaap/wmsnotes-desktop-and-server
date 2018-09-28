@@ -5,8 +5,11 @@ import io.reactivex.ObservableTransformer
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class Model(private val eventStore: EventStore) {
+@Singleton
+class Model @Inject constructor(private val eventStore: EventStore) {
 
     private val logger by logger()
 
@@ -61,10 +64,10 @@ class Model(private val eventStore: EventStore) {
     }
 
     private fun createNote(c: CreateNoteCommand): Event {
-        return NoteCreatedEvent(c.id, c.title)
+        return NoteCreatedEvent(eventId = 1, noteId = c.noteId, title = c.title)
     }
 
     private fun deleteNote(c: DeleteNoteCommand): Event {
-        return NoteDeletedEvent(c.id)
+        return NoteDeletedEvent(eventId = 1, noteId = c.noteId)
     }
 }

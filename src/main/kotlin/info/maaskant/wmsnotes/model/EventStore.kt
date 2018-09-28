@@ -2,14 +2,17 @@ package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.desktop.app.database
 import info.maaskant.wmsnotes.desktop.app.logger
+import info.maaskant.wmsnotes.model.eventrepository.EventRepository
 import info.maaskant.wmsnotes.model.serialization.EventSerializer
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.subjects.CompletableSubject
-import java.util.*
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class EventStore(private val eventSerializer: EventSerializer) {
+@Singleton
+class EventStore @Inject constructor(private val eventSerializer: EventSerializer) : EventRepository {
 
     private val logger by logger()
 
@@ -17,47 +20,52 @@ class EventStore(private val eventSerializer: EventSerializer) {
 
     init {
         database
-                .update("create table if not exists note_event (eventId uuid primary key, type varchar, note_id varchar, data blob) ")
+                .update("create table if not exists note_event (event_id integer primary key, type varchar, note_id varchar, data blob) ")
                 .complete()
                 .doOnComplete { logger.debug("Table 'note_event' prepared") }
                 .doOnError { logger.warn("Could not create table 'note_event'", it) }
                 .subscribe(initDone)
     }
 
-    fun storeEvent(e: Event): Completable {
+    override fun storeEvent(event: Event): Completable {
 //        Thread.sleep(1000)
         return initDone.concatWith(
                 database
-                        .update("insert into note_event (eventId, type, note_id, data) values (:eventId, :type, :note_id, :data)")
-                        .parameter("eventId", e.eventId)
-                        .parameter("type", e::class.simpleName)
-                        .parameter("note_id", e.id)
-                        .parameter("data", eventSerializer.serialize(e))
+                        .update("insert into note_event (event_id, type, note_id, data) values (:event_id, :type, :note_id, :data)")
+                        .parameter("event_id", event.eventId)
+                        .parameter("type", event::class.simpleName)
+                        .parameter("note_id", event.noteId)
+                        .parameter("data", eventSerializer.serialize(event))
                         .complete()
-                        .doOnComplete { logger.debug("Inserted event ${e.eventId}") })
+                        .doOnComplete { logger.debug("Inserted event ${event.eventId}") })
     }
 
-    fun getEvent(eventId: UUID): Single<Event> {
+    override fun getEvent(eventId: Int): Single<Event> {
 //        Thread.sleep(1000)
         return initDone
                 .toSingle { Unit }
                 .flatMap { _ ->
                     database
-                            .select("select data from note_event where eventId = :eventId")
-                            .parameter("eventId", eventId)
+                            .select("select data from note_event where event_id = :event_id")
+                            .parameter("event_id", eventId)
                             .get { eventSerializer.deserialize(it.getBytes(1)) }
                             .singleOrError()
                 }
     }
 
-    fun getEvents(): Observable<Event> {
+    override fun getEvents(afterEventId: Int?): Observable<Event> {
 //        Thread.sleep(1000)
         return initDone
                 .toSingle { Unit }
                 .flatMapObservable { _ ->
-                    database
-                            .select("select data from note_event")
-                            .get { eventSerializer.deserialize(it.getBytes(1)) }.toObservable()
+                    if (afterEventId != null) {
+                        database
+                                .select("select data from note_event where event_id > :event_id")
+                                .parameter("event_id", afterEventId)
+                    } else {
+                        database
+                                .select("select data from note_event")
+                    }.get { eventSerializer.deserialize(it.getBytes(1)) }.toObservable()
                 }
     }
 }

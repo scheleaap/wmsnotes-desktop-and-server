@@ -1,14 +1,12 @@
 package info.maaskant.wmsnotes.desktop.view
 
-import info.maaskant.wmsnotes.desktop.app.kodein
+import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.model.Model
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
 import javafx.scene.control.TreeItem
-import info.maaskant.wmsnotes.model.*
-import org.kodein.di.generic.instance
 import tornadofx.*
 
 data class NotebookNode(val id: String, val title: String)
@@ -17,7 +15,7 @@ class NodeView : View() {
 
     private val logger by logger()
 
-    private val model: Model by kodein.instance()
+    private val model: Model = Injector.instance.model()
 
     private val rootNode = TreeItem(NotebookNode(id = "root", title = "Root"))
 
@@ -45,16 +43,16 @@ class NodeView : View() {
     }
 
     private fun noteCreated(e: NoteCreatedEvent) {
-        logger.debug("Adding note ${e.id}")
-        val node = NotebookNode(id = e.id, title = e.title)
+        logger.debug("Adding note ${e.noteId}")
+        val node = NotebookNode(id = e.noteId, title = e.title)
         val treeItem = TreeItem(node)
         treeItemReferences.put(node.id, treeItem)
         rootNode += treeItem
     }
 
     private fun noteDeleted(e: NoteDeletedEvent) {
-        logger.debug("Removing note ${e.id}")
-        val treeItem = treeItemReferences.remove(e.id)
+        logger.debug("Removing note ${e.noteId}")
+        val treeItem = treeItemReferences.remove(e.noteId)
         rootNode.children.remove(treeItem)
     }
 }
