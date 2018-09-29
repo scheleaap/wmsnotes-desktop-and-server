@@ -8,6 +8,7 @@ import info.maaskant.wmsnotes.model.Model
 import info.maaskant.wmsnotes.model.eventrepository.FileEventRepository
 import info.maaskant.wmsnotes.model.serialization.EventSerializer
 import info.maaskant.wmsnotes.model.serialization.KryoEventSerializer
+import info.maaskant.wmsnotes.model.synchronization.CachingStateProperty
 import info.maaskant.wmsnotes.model.synchronization.InboundSynchronizer
 import info.maaskant.wmsnotes.model.synchronization.RemoteEventImporter
 import info.maaskant.wmsnotes.model.synchronization.SimpleFileStateProperty
@@ -50,7 +51,7 @@ class ApplicationModule {
             RemoteEventImporter(
                     eventService,
                     FileEventRepository(File("importedRemoteEvents"), eventSerializer),
-                    SimpleFileStateProperty(File("importedRemoteEvents").resolve(".state"))
+                    CachingStateProperty(SimpleFileStateProperty(File("importedRemoteEvents").resolve(".state")))
             )
 
     @Provides

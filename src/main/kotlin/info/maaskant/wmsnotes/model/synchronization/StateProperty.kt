@@ -47,3 +47,19 @@ class SimpleFileStateProperty(private val file: File) : StateProperty {
         return file.readBytes().toString().toInt()
     }
 }
+
+class CachingStateProperty(private val wrapped: StateProperty) : StateProperty {
+    private var cached: Boolean = false
+    private var value: Int? = null
+
+    override fun put(value: Int) {
+        this.cached = false
+        wrapped.put(value)
+        this.value = value
+        this.cached = true
+    }
+
+    override fun get(): Int? {
+        return if (cached) value else wrapped.get()
+    }
+}
