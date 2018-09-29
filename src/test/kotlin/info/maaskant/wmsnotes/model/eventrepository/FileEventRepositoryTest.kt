@@ -31,13 +31,13 @@ internal class FileEventRepositoryTest {
     }
 
     @Test
-    fun storeEvent() {
+    fun addEvent() {
         // Given
         val tempDir = createTempDir(this::class.simpleName!!)
         val r = FileEventRepository(tempDir, eventSerializer)
 
         // When
-        val completable = r.storeEvent(events[0].first)
+        val completable = r.addEvent(events[0].first)
 
         // Then
         assertThat(tempDir.list()).isEmpty()
@@ -57,7 +57,7 @@ internal class FileEventRepositoryTest {
         // Given
         val tempDir = createTempDir(this::class.simpleName!!)
         val r = FileEventRepository(tempDir, eventSerializer)
-            assertThat(r.storeEvent(events[0].first).blockingGet()).isNull()
+            assertThat(r.addEvent(events[0].first).blockingGet()).isNull()
         val observer = TestObserver<Event>()
 
         // When
@@ -75,7 +75,7 @@ internal class FileEventRepositoryTest {
         val tempDir = createTempDir(this::class.simpleName!!)
         val r = FileEventRepository(tempDir, eventSerializer)
         events.forEach {
-            assertThat(r.storeEvent(it.first).blockingGet()).isNull()
+            assertThat(r.addEvent(it.first).blockingGet()).isNull()
         }
         val observer = TestObserver<Event>()
 

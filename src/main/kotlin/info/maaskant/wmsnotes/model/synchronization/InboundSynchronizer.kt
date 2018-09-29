@@ -58,7 +58,7 @@ class InboundSynchronizer  constructor(
             response.forEachRemaining {
                 val event = GrpcConverters.toModelClass(it)
                 logger.info("$event")
-                this.eventStore.storeEvent(event)
+                this.eventStore.appendEvent(event)
                 this.model.events.onNext(event)
             }
         } catch (e: StatusRuntimeException) {

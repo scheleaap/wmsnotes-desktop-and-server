@@ -8,9 +8,9 @@ import io.reactivex.Single
 import java.io.File
 import javax.inject.Inject
 
-class FileEventRepository @Inject constructor(private val directory: File, private val eventSerializer: EventSerializer) : EventRepository {
+class FileEventRepository @Inject constructor(private val directory: File, private val eventSerializer: EventSerializer) : ModifiableEventRepository {
 
-    override fun storeEvent(event: Event): Completable {
+    override fun addEvent(event: Event): Completable {
         return Completable.create {
             try {
                 directory.mkdirs()

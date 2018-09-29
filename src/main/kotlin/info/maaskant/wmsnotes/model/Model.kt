@@ -52,7 +52,7 @@ class Model @Inject constructor(private val eventStore: EventStore) {
 
 
     private fun storeEvent(e: Event) {
-        eventStore.storeEvent(e).blockingGet()
+        eventStore.appendEvent(e).blockingGet()
     }
 
     private fun executeCommand(c: Command): Optional<Event> {

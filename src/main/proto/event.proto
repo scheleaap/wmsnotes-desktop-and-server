@@ -7,8 +7,8 @@ service EventService {
 }
 
 message GetEventsRequest {
-    // If specified, only include events after the node with the given id
-    //    string after_note_id = 1;
+    // If not 0, only return events following the specified event
+    int32 after_event_id = 1;
 }
 
 message GetEventsResponse {
@@ -18,8 +18,8 @@ message GetEventsResponse {
     string note_id = 2;
 
     oneof event {
-        NoteCreatedEvent note_created = 3;
-        NoteDeletedEvent note_deleted = 4;
+        NoteCreatedEvent note_created = 10;
+        NoteDeletedEvent note_deleted = 11;
     }
 
     message NoteCreatedEvent {

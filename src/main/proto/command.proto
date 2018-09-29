@@ -11,8 +11,8 @@ message PostCommandRequest {
     string note_id = 1;
 
     oneof command {
-        CreateNoteCommand create_note = 2;
-        DeleteNoteCommand delete_note = 3;
+        CreateNoteCommand create_note = 10;
+        DeleteNoteCommand delete_note = 11;
     }
 
     message CreateNoteCommand {

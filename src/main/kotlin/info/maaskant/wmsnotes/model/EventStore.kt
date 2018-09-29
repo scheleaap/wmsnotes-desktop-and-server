@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.desktop.app.database
 import info.maaskant.wmsnotes.desktop.app.logger
+import info.maaskant.wmsnotes.model.eventrepository.AppendableEventRepository
 import info.maaskant.wmsnotes.model.eventrepository.EventRepository
 import info.maaskant.wmsnotes.model.serialization.EventSerializer
 import io.reactivex.Completable
@@ -12,7 +13,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class EventStore @Inject constructor(private val eventSerializer: EventSerializer) : EventRepository {
+class EventStore @Inject constructor(private val eventSerializer: EventSerializer) : AppendableEventRepository {
 
     private val logger by logger()
 
@@ -27,7 +28,7 @@ class EventStore @Inject constructor(private val eventSerializer: EventSerialize
                 .subscribe(initDone)
     }
 
-    override fun storeEvent(event: Event): Completable {
+    override fun appendEvent(event: Event): Completable {
 //        Thread.sleep(1000)
         return initDone.concatWith(
                 database
