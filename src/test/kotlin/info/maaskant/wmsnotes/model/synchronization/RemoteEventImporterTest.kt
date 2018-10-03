@@ -26,8 +26,8 @@ internal class RemoteEventImporterTest {
     @Test
     fun `store new events`() {
         // Given
-        val event1 = noteCreatedEventGrpc(id = 1) to noteCreatedEventModel(id = 1)
-        val event2 = noteCreatedEventGrpc(id = 2) to noteCreatedEventModel(id = 2)
+        val event1 = grpcNoteEvent(id = 1) to modelNoteEvent(id = 1)
+        val event2 = grpcNoteEvent(id = 2) to modelNoteEvent(id = 2)
         every { eventService.getEvents(any()) }.returns(listOf(event1.first, event2.first).iterator())
         val importer = RemoteEventImporter(eventService, eventRepository, InMemoryStateProperty())
 
@@ -45,8 +45,8 @@ internal class RemoteEventImporterTest {
     @Test
     fun `only load new events`() {
         // Given
-        val event1 = noteCreatedEventGrpc(id = 1) to noteCreatedEventModel(id = 1)
-        val event2 = noteCreatedEventGrpc(id = 2) to noteCreatedEventModel(id = 2)
+        val event1 = grpcNoteEvent(id = 1) to modelNoteEvent(id = 1)
+        val event2 = grpcNoteEvent(id = 2) to modelNoteEvent(id = 2)
         every { eventService.getEvents(request()) }.returns(listOf(event1.first).iterator())
         every { eventService.getEvents(request(1)) }.returns(emptyList<Event.GetEventsResponse>().iterator())
         val stateProperty = InMemoryStateProperty()
@@ -82,12 +82,12 @@ private fun request(afterEventId: Int? = null): Event.GetEventsRequest {
     return builder.build()
 }
 
-private fun noteCreatedEventGrpc(id: Int): Event.GetEventsResponse {
+private fun grpcNoteEvent(id: Int): Event.GetEventsResponse {
     val builder = Event.GetEventsResponse.newBuilder().setEventId(id).setNoteId("note-$id")
     builder.getNoteCreatedBuilder().setTitle("Title $id")
     return builder.build()
 }
 
-private fun noteCreatedEventModel(id: Int): NoteCreatedEvent {
+private fun modelNoteEvent(id: Int): NoteCreatedEvent {
     return NoteCreatedEvent(id, "note-$id", "Title $id")
 }
