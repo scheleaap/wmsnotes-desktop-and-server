@@ -2,7 +2,7 @@ package info.maaskant.wmsnotes.desktop.view
 
 import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.app.logger
-import info.maaskant.wmsnotes.model.Model
+import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
@@ -15,7 +15,7 @@ class NodeView : View() {
 
     private val logger by logger()
 
-    private val model: Model = Injector.instance.model()
+    private val commandProcessor: CommandProcessor = Injector.instance.commandProcessor()
 
     private val rootNode = TreeItem(NotebookNode(id = "root", title = "Root"))
 
@@ -32,7 +32,7 @@ class NodeView : View() {
     }
 
     init {
-        model.events
+        commandProcessor.events
                 .observeOn(JavaFxScheduler.platform())
                 .subscribe({
                     when (it) {

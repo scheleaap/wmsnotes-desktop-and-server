@@ -8,6 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.reactivex.observers.TestObserver
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.catchThrowable
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -31,25 +32,43 @@ internal class FileEventRepositoryTest {
     }
 
     @Test
+    fun `check that directory is empty on initialization`() {
+        // Given
+        val tempDir = createTempDir(this::class.simpleName!!)
+        FileEventRepository(tempDir, eventSerializer)
+
+        // Then
+        assertThat(tempDir.list()).isEmpty()
+    }
+
+
+    @Test
     fun addEvent() {
         // Given
         val tempDir = createTempDir(this::class.simpleName!!)
         val r = FileEventRepository(tempDir, eventSerializer)
 
         // When
-        val completable = r.addEvent(events[0].first)
+        r.addEvent(events[0].first)
 
         // Then
-        assertThat(tempDir.list()).isEmpty()
-
-        // When
-        val t = completable.blockingGet()
-
-        // Then
-        assertThat(t).isNull()
         val expectedEventFile = tempDir.resolve("0000000001")
         assertThat(expectedEventFile).exists()
         assertThat(expectedEventFile.readBytes()).isEqualTo("DATA1".toByteArray())
+    }
+
+    @Test
+    fun `addEvent, duplicate`() {
+        // Given
+        val tempDir = createTempDir(this::class.simpleName!!)
+        val r = FileEventRepository(tempDir, eventSerializer)
+        r.addEvent(events[0].first)
+
+        // When
+        val throwable = catchThrowable { r.addEvent(events[0].first) }
+
+        // Then
+        assertThat(throwable).isInstanceOf(IllegalStateException::class.java)
     }
 
     @Test
@@ -57,34 +76,60 @@ internal class FileEventRepositoryTest {
         // Given
         val tempDir = createTempDir(this::class.simpleName!!)
         val r = FileEventRepository(tempDir, eventSerializer)
-            assertThat(r.addEvent(events[0].first).blockingGet()).isNull()
-        val observer = TestObserver<Event>()
+        r.addEvent(events[0].first)
 
         // When
-        r.getEvent(1).subscribe(observer)
+        val event = r.getEvent(1)
 
         // Then
-        observer.assertComplete()
-        observer.assertNoErrors()
-        assertThat(observer.values()[0]).isEqualTo(events[0].first)
+        assertThat(event).isEqualTo(events[0].first)
     }
 
     @Test
-    fun getEvents() {
+    fun getCurrentEvents() {
         // Given
         val tempDir = createTempDir(this::class.simpleName!!)
         val r = FileEventRepository(tempDir, eventSerializer)
         events.forEach {
-            assertThat(r.addEvent(it.first).blockingGet()).isNull()
+            r.addEvent(it.first)
         }
         val observer = TestObserver<Event>()
 
         // When
-        r.getEvents(afterEventId = 1).subscribe(observer)
+        r.getCurrentEvents(afterEventId = 1).subscribe(observer)
 
         // Then
         observer.assertComplete()
         observer.assertNoErrors()
         assertThat(observer.values().toList()).isEqualTo(listOf(events[1].first, events[2].first))
     }
+
+    @Test
+    fun removeEvent() {
+        // Given
+        val tempDir = createTempDir(this::class.simpleName!!)
+        val r = FileEventRepository(tempDir, eventSerializer)
+        r.addEvent(events[0].first)
+
+        // When
+        r.removeEvent(events[0].first)
+
+        // Then
+        val expectedEventFile = tempDir.resolve("0000000001")
+        assertThat(expectedEventFile).doesNotExist()
+    }
+
+    @Test
+    fun `removeEvent, nonexistent`() {
+        // Given
+        val tempDir = createTempDir(this::class.simpleName!!)
+        val r = FileEventRepository(tempDir, eventSerializer)
+
+        // When
+        val throwable = catchThrowable { r.removeEvent(events[0].first) }
+
+        // Then
+        assertThat(throwable).isInstanceOf(IllegalStateException::class.java)
+    }
+
 }

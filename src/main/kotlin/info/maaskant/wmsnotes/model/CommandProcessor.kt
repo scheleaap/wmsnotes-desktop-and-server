@@ -1,7 +1,9 @@
 package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.desktop.app.logger
+import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -9,36 +11,49 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class Model @Inject constructor(private val eventStore: EventStore) {
+class CommandProcessor @Inject constructor(private val eventStore: EventStore) {
 
     private val logger by logger()
 
     val commands: Subject<Command> = PublishSubject.create()
-    //    val events: Observable<Event> =
-//            Observable.just(
-//                    NoteCreatedEvent("1", "Note 1"),
-//                    NoteCreatedEvent("2", "Note 2"),
-//                    NoteDeletedEvent("2"),
-//                    NoteCreatedEvent("3", "Note 3")
-//            )
-    val events: Subject<Event> = PublishSubject.create()
+    val events: Subject<Event> = PublishSubject.create() // TODO: Move to EventStore
 
     init {
-
         commands
                 .compose(processCommands())
+                .compose(removeEmptyOptionalItems())
                 .subscribe(events)
-
     }
 
-    private fun processCommands(): ObservableTransformer<Command, Event> {
+    @Synchronized
+    fun blockingProcessCommand(command: Command, lastEventId: Int?): Event? { // TODO: Write test for lastEventId
+        return Observable
+                .just(command)
+                .compose(processCommands())
+                .blockingSingle()
+                .value
+    }
+
+    private fun processCommands(): ObservableTransformer<Command, Optional<Event>> {
         return ObservableTransformer { it2 ->
             it2.doOnNext { logger.debug("Received command: $it") }
                     .map(this::executeCommand)
-                    .compose(removeEmptyOptionalItems())
                     .observeOn(Schedulers.io())
-                    .doOnNext { storeEvent(it) }
-                    .doOnNext { logger.debug("Generated event: $it") }
+                    .doOnNext { storeEventIfPresent(it) }
+                    .doOnNext { logEventIfPresent(it) } // TODO: Move to EventStore
+        }
+    }
+
+    private fun logEventIfPresent(e: Optional<Event>) {
+        if (e.value != null) {
+            logger.debug("Generated event: $e.value")
+        }
+    }
+
+    private fun storeEventIfPresent(e: Optional<Event>) {
+        if (e.value != null) {
+            logger.debug("Storing event: $e.value")
+            eventStore.appendEvent(e.value)
         }
     }
 
@@ -48,11 +63,6 @@ class Model @Inject constructor(private val eventStore: EventStore) {
                     .filter { it.isPresent }
                     .map { it.value }
         }
-    }
-
-
-    private fun storeEvent(e: Event) {
-        eventStore.appendEvent(e).blockingGet()
     }
 
     private fun executeCommand(c: Command): Optional<Event> {

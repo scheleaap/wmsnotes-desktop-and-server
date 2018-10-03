@@ -2,7 +2,17 @@ package info.maaskant.wmsnotes.server.api
 
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.Event
+
+// Server:
+// model event -> API event response
+// API command request -> model command
+
+// Client
+// API event response -> model event
+// model event -> API command request
+// model event -> model command
 
 class GrpcConverters {
 
@@ -28,7 +38,7 @@ class GrpcConverters {
             }
         }
 
-        fun toGrpcClass(event: info.maaskant.wmsnotes.model.Event): Event.GetEventsResponse {
+        fun toGrpcGetEventsResponse(event: info.maaskant.wmsnotes.model.Event): Event.GetEventsResponse {
             with(event) {
                 val builder = Event.GetEventsResponse.newBuilder()
                         .setEventId(eventId)
@@ -40,6 +50,25 @@ class GrpcConverters {
                     }
                     is NoteDeletedEvent -> {
                         builder.noteDeletedBuilder.build()
+                    }
+                }
+                return builder.build()
+            }
+        }
+
+        fun toGrpcPostCommandRequest(event: info.maaskant.wmsnotes.model.Event, lastEventId: Int?): Command.PostCommandRequest {
+            with(event) {
+                val builder = Command.PostCommandRequest.newBuilder()
+                        .setNoteId(noteId)
+                if (lastEventId != null) {
+                    builder.setLastEventId(lastEventId)
+                }
+                when (this) {
+                    is info.maaskant.wmsnotes.model.NoteCreatedEvent -> {
+                        builder.createNoteBuilder.setTitle(title).build()
+                    }
+                    is NoteDeletedEvent -> {
+                        builder.deleteNoteBuilder.build()
                     }
                 }
                 return builder.build()

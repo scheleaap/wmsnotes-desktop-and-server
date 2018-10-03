@@ -6,17 +6,25 @@ import io.reactivex.Observable
 import io.reactivex.Single
 
 interface EventRepository {
-    fun getEvent(eventId: Int): Single<Event>
-    fun getEvents(afterEventId: Int? = null): Observable<Event>
+    /**
+     * Returns a single event.
+     */
+    fun getEvent(eventId: Int): Event?
+
+    /**
+     * Returns a completing observable that streams all events currently in the repository. Updates are not included.
+     */
+    fun getCurrentEvents(afterEventId: Int? = null): Observable<Event>
+
 }
 
 interface AppendableEventRepository : EventRepository {
     // TODO: Add synchronized
-    fun appendEvent(event: Event): Completable // Add parameter for previous event id?
+    fun appendEvent(event: Event) // Add parameter for previous event id?
 }
 
 interface ModifiableEventRepository : EventRepository {
-    // TODO: Add synchronized
-    fun addEvent(event: Event): Completable
+    fun addEvent(event: Event)
+    fun removeEvent(event: Event)
 }
 

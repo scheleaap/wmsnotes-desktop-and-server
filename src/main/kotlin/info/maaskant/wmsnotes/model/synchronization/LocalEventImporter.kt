@@ -19,9 +19,9 @@ class LocalEventImporter @Inject constructor(
     fun loadAndStoreLocalEvents() {
         logger.info("Getting and processing local events")
         try {
-            eventStore.getEvents(stateProperty.get()).blockingSubscribe {
+            eventStore.getCurrentEvents(stateProperty.get()).blockingSubscribe {
                 logger.debug("Storing new local event: $it")
-                eventRepository.addEvent(it).blockingGet()
+                eventRepository.addEvent(it)
                 stateProperty.put(it.eventId)
             }
         } catch (e: StatusRuntimeException) {

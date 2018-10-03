@@ -8,7 +8,6 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifySequence
-import io.reactivex.Completable
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -20,14 +19,14 @@ internal class RemoteEventImporterTest {
     @BeforeEach
     fun init() {
         clearMocks(eventService, eventRepository)
-        every { eventRepository.addEvent(any()) }.returns(Completable.complete())
+        every { eventRepository.addEvent(any()) }.answers {}
     }
 
     @Test
     fun `store new events`() {
         // Given
-        val event1 = grpcNoteEvent(id = 1) to modelNoteEvent(id = 1)
-        val event2 = grpcNoteEvent(id = 2) to modelNoteEvent(id = 2)
+        val event1 = remoteNoteEvent(id = 1) to modelEvent(id = 1)
+        val event2 = remoteNoteEvent(id = 2) to modelEvent(id = 2)
         every { eventService.getEvents(any()) }.returns(listOf(event1.first, event2.first).iterator())
         val importer = RemoteEventImporter(eventService, eventRepository, InMemoryStateProperty())
 
@@ -36,7 +35,7 @@ internal class RemoteEventImporterTest {
 
         // Then
         verifySequence {
-            eventService.getEvents(request())
+            eventService.getEvents(remoteEventServiceRequest())
             eventRepository.addEvent(event1.second)
             eventRepository.addEvent(event2.second)
         }
@@ -45,10 +44,10 @@ internal class RemoteEventImporterTest {
     @Test
     fun `only load new events`() {
         // Given
-        val event1 = grpcNoteEvent(id = 1) to modelNoteEvent(id = 1)
-        val event2 = grpcNoteEvent(id = 2) to modelNoteEvent(id = 2)
-        every { eventService.getEvents(request()) }.returns(listOf(event1.first).iterator())
-        every { eventService.getEvents(request(1)) }.returns(emptyList<Event.GetEventsResponse>().iterator())
+        val event1 = remoteNoteEvent(id = 1) to modelEvent(id = 1)
+        val event2 = remoteNoteEvent(id = 2) to modelEvent(id = 2)
+        every { eventService.getEvents(remoteEventServiceRequest()) }.returns(listOf(event1.first).iterator())
+        every { eventService.getEvents(remoteEventServiceRequest(1)) }.returns(emptyList<Event.GetEventsResponse>().iterator())
         val stateProperty = InMemoryStateProperty()
 
         // When
@@ -56,8 +55,8 @@ internal class RemoteEventImporterTest {
         importer1.loadAndStoreRemoteEvents()
 
         // Given
-        every { eventService.getEvents(request()) }.returns(listOf(event1.first,event2.first).iterator())
-        every { eventService.getEvents(request(1)) }.returns(listOf(event2.first).iterator())
+        every { eventService.getEvents(remoteEventServiceRequest()) }.returns(listOf(event1.first, event2.first).iterator())
+        every { eventService.getEvents(remoteEventServiceRequest(1)) }.returns(listOf(event2.first).iterator())
 
         // When
         val importer2 = RemoteEventImporter(eventService, eventRepository, stateProperty)
@@ -65,16 +64,16 @@ internal class RemoteEventImporterTest {
 
         // Then
         verifySequence {
-            eventService.getEvents(request())
+            eventService.getEvents(remoteEventServiceRequest())
             eventRepository.addEvent(event1.second)
-            eventService.getEvents(request(1))
+            eventService.getEvents(remoteEventServiceRequest(1))
             eventRepository.addEvent(event2.second)
         }
     }
 
 }
 
-private fun request(afterEventId: Int? = null): Event.GetEventsRequest {
+private fun remoteEventServiceRequest(afterEventId: Int? = null): Event.GetEventsRequest {
     val builder = Event.GetEventsRequest.newBuilder()
     if (afterEventId != null) {
         builder.afterEventId = afterEventId
@@ -82,12 +81,12 @@ private fun request(afterEventId: Int? = null): Event.GetEventsRequest {
     return builder.build()
 }
 
-private fun grpcNoteEvent(id: Int): Event.GetEventsResponse {
+private fun remoteNoteEvent(id: Int): Event.GetEventsResponse {
     val builder = Event.GetEventsResponse.newBuilder().setEventId(id).setNoteId("note-$id")
     builder.getNoteCreatedBuilder().setTitle("Title $id")
     return builder.build()
 }
 
-private fun modelNoteEvent(id: Int): NoteCreatedEvent {
+private fun modelEvent(id: Int): NoteCreatedEvent {
     return NoteCreatedEvent(id, "note-$id", "Title $id")
 }

@@ -3,13 +3,12 @@ package info.maaskant.wmsnotes.desktop.app
 import dagger.Component
 import dagger.Module
 import dagger.Provides
+import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.EventStore
-import info.maaskant.wmsnotes.model.Model
 import info.maaskant.wmsnotes.model.eventrepository.FileEventRepository
 import info.maaskant.wmsnotes.model.serialization.EventSerializer
 import info.maaskant.wmsnotes.model.serialization.KryoEventSerializer
 import info.maaskant.wmsnotes.model.synchronization.CachingStateProperty
-import info.maaskant.wmsnotes.model.synchronization.InboundSynchronizer
 import info.maaskant.wmsnotes.model.synchronization.RemoteEventImporter
 import info.maaskant.wmsnotes.model.synchronization.SimpleFileStateProperty
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
@@ -27,8 +26,7 @@ object Injector {
 @Singleton
 @Component(modules = [ApplicationModule::class])
 interface ApplicationGraph {
-    fun inboundSynchronizer(): InboundSynchronizer
-    fun model(): Model
+    fun commandProcessor(): CommandProcessor
     fun remoteEventImporter(): RemoteEventImporter
 }
 
@@ -41,10 +39,6 @@ class ApplicationModule {
 
 //    @Provides
 //    fun eventRepository(fileEventRepository: FileEventRepository): EventRepository = fileEventRepository
-
-    @Provides
-    fun inboundSynchronizer(managedChannel: ManagedChannel, eventStore: EventStore, model: Model) =
-            InboundSynchronizer(managedChannel, eventStore, model)
 
     @Provides
     fun remoteEventImporter(eventService: EventServiceGrpc.EventServiceBlockingStub, eventSerializer: EventSerializer) =

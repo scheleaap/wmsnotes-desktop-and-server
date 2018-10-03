@@ -26,7 +26,7 @@ class RemoteEventImporter @Inject constructor(
             response.forEachRemaining {
                 val event = GrpcConverters.toModelClass(it)
                 logger.debug("Storing new remote event: $event")
-                eventRepository.addEvent(event).blockingGet()
+                eventRepository.addEvent(event)
                 stateProperty.put(event.eventId)
             }
         } catch (e: StatusRuntimeException) {

@@ -10,29 +10,11 @@ import javax.inject.Inject
 
 class FileEventRepository @Inject constructor(private val directory: File, private val eventSerializer: EventSerializer) : ModifiableEventRepository {
 
-    override fun addEvent(event: Event): Completable {
-        return Completable.create {
-            try {
-                directory.mkdirs()
-                eventPath(event).writeBytes(eventSerializer.serialize(event))
-                it.onComplete()
-            } catch (t: Throwable) {
-                it.onError(t)
-            }
-        }
+    override fun getEvent(eventId: Int): Event? {
+        return eventSerializer.deserialize(eventPath(eventId).readBytes())
     }
 
-    override fun getEvent(eventId: Int): Single<Event> {
-        return Single.create { emitter ->
-            try {
-                emitter.onSuccess(eventSerializer.deserialize(eventPath(eventId).readBytes()))
-            } catch (t: Throwable) {
-                emitter.onError(t)
-            }
-        }
-    }
-
-    override fun getEvents(afterEventId: Int?): Observable<Event> {
+    override fun getCurrentEvents(afterEventId: Int?): Observable<Event> {
         return Observable.create { emitter ->
             try {
                 val afterFileName: String? = "%010d".format(afterEventId)
@@ -45,6 +27,21 @@ class FileEventRepository @Inject constructor(private val directory: File, priva
                 emitter.onError(t)
             }
         }
+    }
+
+    @Synchronized
+    override fun addEvent(event: Event) {
+        val eventPath = eventPath(event)
+        if (eventPath.exists()) throw IllegalStateException("Event ${event.eventId} already exists ($eventPath)")
+        directory.mkdirs()
+        eventPath.writeBytes(eventSerializer.serialize(event))
+    }
+
+    @Synchronized
+    override fun removeEvent(event: Event) {
+        val eventPath = eventPath(event)
+        if (!eventPath.exists()) throw IllegalStateException("Event ${event.eventId} does not exist ($eventPath)")
+        eventPath.delete()
     }
 
     private fun eventPath(eventId: Int): File = directory.resolve("%010d".format(eventId))

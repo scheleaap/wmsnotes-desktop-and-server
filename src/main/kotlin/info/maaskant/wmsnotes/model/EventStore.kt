@@ -3,12 +3,11 @@ package info.maaskant.wmsnotes.model
 import info.maaskant.wmsnotes.desktop.app.database
 import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.model.eventrepository.AppendableEventRepository
-import info.maaskant.wmsnotes.model.eventrepository.EventRepository
 import info.maaskant.wmsnotes.model.serialization.EventSerializer
-import io.reactivex.Completable
 import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.subjects.CompletableSubject
+import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,6 +18,8 @@ class EventStore @Inject constructor(private val eventSerializer: EventSerialize
 
     private val initDone: CompletableSubject = CompletableSubject.create()
 
+    private val newEventSubject: Subject<Event> = PublishSubject.create()
+
     init {
         database
                 .update("create table if not exists note_event (event_id integer primary key, type varchar, note_id varchar, data blob) ")
@@ -28,7 +29,7 @@ class EventStore @Inject constructor(private val eventSerializer: EventSerialize
                 .subscribe(initDone)
     }
 
-    override fun appendEvent(event: Event): Completable {
+    override fun appendEvent(event: Event) {
 //        Thread.sleep(1000)
         return initDone.concatWith(
                 database
@@ -39,9 +40,10 @@ class EventStore @Inject constructor(private val eventSerializer: EventSerialize
                         .parameter("data", eventSerializer.serialize(event))
                         .complete()
                         .doOnComplete { logger.debug("Inserted event ${event.eventId}") })
+                .blockingAwait()
     }
 
-    override fun getEvent(eventId: Int): Single<Event> {
+    override fun getEvent(eventId: Int): Event? {
 //        Thread.sleep(1000)
         return initDone
                 .toSingle { Unit }
@@ -51,10 +53,12 @@ class EventStore @Inject constructor(private val eventSerializer: EventSerialize
                             .parameter("event_id", eventId)
                             .get { eventSerializer.deserialize(it.getBytes(1)) }
                             .singleOrError()
+
                 }
+                .blockingGet()
     }
 
-    override fun getEvents(afterEventId: Int?): Observable<Event> {
+    override fun getCurrentEvents(afterEventId: Int?): Observable<Event> {
 //        Thread.sleep(1000)
         return initDone
                 .toSingle { Unit }
@@ -69,4 +73,9 @@ class EventStore @Inject constructor(private val eventSerializer: EventSerialize
                     }.get { eventSerializer.deserialize(it.getBytes(1)) }.toObservable()
                 }
     }
+
+    fun getNewEvents(): Observable<Event> {
+        return newEventSubject
+    }
+
 }

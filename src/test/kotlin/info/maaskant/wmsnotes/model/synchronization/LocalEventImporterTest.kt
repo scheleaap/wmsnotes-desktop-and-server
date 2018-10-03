@@ -8,7 +8,6 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifySequence
-import io.reactivex.Completable
 import io.reactivex.Observable
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -21,15 +20,15 @@ internal class LocalEventImporterTest {
     @BeforeEach
     fun init() {
         clearMocks(eventStore, eventRepository)
-        every { eventRepository.addEvent(any()) }.returns(Completable.complete())
+        every { eventRepository.addEvent(any()) }.answers {}
     }
 
     @Test
     fun `store new events`() {
         // Given
-        val event1 = modelNoteEvent(id = 1)
-        val event2 = modelNoteEvent(id = 2)
-        every { eventStore.getEvents(any()) }.returns(Observable.just(event1, event2))
+        val event1 = modelEvent(id = 1)
+        val event2 = modelEvent(id = 2)
+        every { eventStore.getCurrentEvents(any()) }.returns(Observable.just(event1, event2))
         val importer = LocalEventImporter(eventStore, eventRepository, InMemoryStateProperty())
 
         // When
@@ -37,7 +36,7 @@ internal class LocalEventImporterTest {
 
         // Then
         verifySequence {
-            eventStore.getEvents(afterEventId = null)
+            eventStore.getCurrentEvents(afterEventId = null)
             eventRepository.addEvent(event1)
             eventRepository.addEvent(event2)
         }
@@ -46,10 +45,10 @@ internal class LocalEventImporterTest {
     @Test
     fun `only load new events`() {
         // Given
-        val event1 = modelNoteEvent(id = 1)
-        val event2 = modelNoteEvent(id = 2)
-        every { eventStore.getEvents(afterEventId = null) }.returns(Observable.just(event1))
-        every { eventStore.getEvents(afterEventId = 1) }.returns(Observable.empty<Event>())
+        val event1 = modelEvent(id = 1)
+        val event2 = modelEvent(id = 2)
+        every { eventStore.getCurrentEvents(afterEventId = null) }.returns(Observable.just(event1))
+        every { eventStore.getCurrentEvents(afterEventId = 1) }.returns(Observable.empty<Event>())
         val stateProperty = InMemoryStateProperty()
 
         // When
@@ -57,8 +56,8 @@ internal class LocalEventImporterTest {
         importer1.loadAndStoreLocalEvents()
 
         // Given
-        every { eventStore.getEvents(afterEventId = null) }.returns(Observable.just(event1, event2))
-        every { eventStore.getEvents(afterEventId = 1) }.returns(Observable.just(event2))
+        every { eventStore.getCurrentEvents(afterEventId = null) }.returns(Observable.just(event1, event2))
+        every { eventStore.getCurrentEvents(afterEventId = 1) }.returns(Observable.just(event2))
 
         // When
         val importer2 = LocalEventImporter(eventStore, eventRepository, stateProperty)
@@ -66,15 +65,15 @@ internal class LocalEventImporterTest {
 
         // Then
         verifySequence {
-            eventStore.getEvents(afterEventId = null)
+            eventStore.getCurrentEvents(afterEventId = null)
             eventRepository.addEvent(event1)
-            eventStore.getEvents(afterEventId = 1)
+            eventStore.getCurrentEvents(afterEventId = 1)
             eventRepository.addEvent(event2)
         }
     }
 
 }
 
-private fun modelNoteEvent(id: Int): NoteCreatedEvent {
+private fun modelEvent(id: Int): NoteCreatedEvent {
     return NoteCreatedEvent(id, "note-$id", "Title $id")
 }
