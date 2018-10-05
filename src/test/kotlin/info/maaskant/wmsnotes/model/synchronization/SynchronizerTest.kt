@@ -6,6 +6,8 @@ import info.maaskant.wmsnotes.server.api.GrpcConverters
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import io.mockk.*
 import io.reactivex.Observable
+import io.reactivex.observers.TestObserver
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -94,20 +96,14 @@ internal class SynchronizerTest {
         val remoteEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 1)
         val remoteEvent2 = modelEvent(eventId = 2, noteId = 1, revision = 2)
         val remoteEvent3 = modelEvent(eventId = 3, noteId = 3, revision = 1)
-        val command1 = modelCommand(1)
-        val command2 = modelCommand(2)
-        val command3 = modelCommand(3)
         val localEvent1 = modelEvent(eventId = 11, noteId = 1, revision = 11)
         val localEvent2 = modelEvent(eventId = 12, noteId = 1, revision = 12)
         val localEvent3 = modelEvent(eventId = 13, noteId = 3, revision = 31)
         every { localEvents.getCurrentEvents() }.returns(Observable.empty())
         every { remoteEvents.getCurrentEvents() }.returns(Observable.just(remoteEvent1, remoteEvent2, remoteEvent3))
-        every { remoteEventToLocalCommandMapper.map(remoteEvent1) }.returns(command1)
-        every { remoteEventToLocalCommandMapper.map(remoteEvent2) }.returns(command2)
-        every { remoteEventToLocalCommandMapper.map(remoteEvent3) }.returns(command3)
-        every { commandProcessor.blockingProcessCommand(command1, null) }.returns(localEvent1)
-        every { commandProcessor.blockingProcessCommand(command2, localEvent1.eventId) }.returns(localEvent2)
-        every { commandProcessor.blockingProcessCommand(command3, null) }.returns(localEvent3)
+        val command1 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent1, null, localEvent1)
+        val command2 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent2, localEvent1.eventId, localEvent2)
+        val command3 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent3, null, localEvent3)
         val s = createSynchronizer()
 
         // When
@@ -121,6 +117,53 @@ internal class SynchronizerTest {
         }
     }
 
+    @Test
+    fun `inbound sync, no local events, command fails`() {
+        // Given
+        val remoteEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 1)
+        val remoteEvent2 = modelEvent(eventId = 2, noteId = 1, revision = 2)
+        val remoteEvent3 = modelEvent(eventId = 3, noteId = 3, revision = 1)
+        val localEvent3 = modelEvent(eventId = 13, noteId = 3, revision = 31)
+        every { localEvents.getCurrentEvents() }.returns(Observable.empty())
+        every { remoteEvents.getCurrentEvents() }.returns(Observable.just(remoteEvent1, remoteEvent2, remoteEvent3))
+        val command1 = givenProcessingOfARemoteEventFails(remoteEvent1)
+        givenProcessingOfARemoteEventFails(remoteEvent2)
+        val command3 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent3, null, localEvent3)
+        val s = createSynchronizer()
+
+        // When
+        s.synchronize()
+
+        // Then
+        verifySequence {
+            commandProcessor.blockingProcessCommand(command1, null)
+            commandProcessor.blockingProcessCommand(command3, null)
+        }
+    }
+
+    @Test
+    fun `inbound and outbound sync, local and remote events for same note`() {
+        // Given
+        val localOutboundEvent = modelEvent(eventId = 11, noteId = 1, revision = 1)
+        val remoteInboundEvent = modelEvent(eventId = 2, noteId = 1, revision = 11)
+        every { localEvents.getCurrentEvents() }.returns(Observable.just(localOutboundEvent))
+        every { remoteEvents.getCurrentEvents() }.returns(Observable.just(remoteInboundEvent))
+        val s = createSynchronizer()
+        val testObserver = s.getConflicts().test()
+
+        // When
+        s.synchronize()
+
+        // Then
+        verify {
+            remoteCommandService.postCommand(any()).wasNot(Called)
+            commandProcessor.blockingProcessCommand(any(), any())?.wasNot(Called)
+        }
+        testObserver.assertNoErrors()
+        assertThat(testObserver.values()).isEqualTo(listOf(setOf(localOutboundEvent.eventId)))
+    }
+
+
     private fun createSynchronizer() =
             Synchronizer(
                     localEvents,
@@ -129,10 +172,25 @@ internal class SynchronizerTest {
                     remoteEventToLocalCommandMapper,
                     commandProcessor
             )
+
+    private fun givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent: Event, previousRevision: Int?, localEvent: Event): Command {
+        val command = modelCommand(remoteEvent.noteId)
+        every { remoteEventToLocalCommandMapper.map(remoteEvent) }.returns(command)
+        every { commandProcessor.blockingProcessCommand(command, previousRevision) }.returns(localEvent)
+        return command
+    }
+
+    private fun givenProcessingOfARemoteEventFails(remoteEvent: Event): Command {
+        val command = modelCommand(remoteEvent.noteId)
+        every { remoteEventToLocalCommandMapper.map(remoteEvent) }.returns(command)
+        every { commandProcessor.blockingProcessCommand(command, any()) }.throws(IllegalArgumentException())
+        return command
+    }
+
 }
 
-private fun modelCommand(noteId: Int): Command {
-    return CreateNoteCommand("note-$noteId", "Title $noteId")
+private fun modelCommand(noteId: String): Command {
+    return CreateNoteCommand(noteId, "Title $noteId")
 }
 
 private fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
