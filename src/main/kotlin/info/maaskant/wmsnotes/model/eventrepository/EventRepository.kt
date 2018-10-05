@@ -20,7 +20,7 @@ interface EventRepository {
 
 interface AppendableEventRepository : EventRepository {
     // TODO: Add synchronized
-    fun appendEvent(event: Event) // Add parameter for previous event id?
+    fun appendEvent(event: Event) // TODO: Add parameter for previous revision
 }
 
 interface ModifiableEventRepository : EventRepository {

@@ -18,8 +18,8 @@ class Synchronizer @Inject constructor(
 
     private val logger by logger()
 
-    private val lastLocalEventIds: MutableMap<String, Int?> = HashMap<String, Int?>().withDefault { null }
-    private val lastRemoteEventIds: MutableMap<String, Int?> = HashMap<String, Int?>().withDefault { null }
+    private val lastLocalRevisions: MutableMap<String, Int?> = HashMap<String, Int?>().withDefault { null }
+    private val lastRemoteRevisions: MutableMap<String, Int?> = HashMap<String, Int?>().withDefault { null }
 
     fun synchronize() {
         val noteIdsWithErrors: MutableSet<String> = HashSet<String>()
@@ -28,13 +28,13 @@ class Synchronizer @Inject constructor(
                 .getCurrentEvents()
                 .filter { it.noteId !in noteIdsWithErrors }
                 .forEach {
-                    logger.debug("Processing remote event: $it")
-                    val request = GrpcConverters.toGrpcPostCommandRequest(event = it, lastEventId = lastRemoteEventIds[it.noteId])
+                    logger.debug("Processing local event: $it")
+                    val request = GrpcConverters.toGrpcPostCommandRequest(event = it, lastRevision = lastRemoteRevisions[it.noteId])
                     logger.debug("Sending command to server: $request")
                     val response = remoteCommandService.postCommand(request)
                     if (response.status == Command.PostCommandResponse.Status.SUCCESS) {
                         localEvents.removeEvent(it)
-                        lastRemoteEventIds[it.noteId] = response.newEventId
+                        lastRemoteRevisions[it.noteId] = response.newRevision
                         logger.debug("Remote event successfully processed: $it")
                     } else {
                         noteIdsWithErrors += it.noteId
@@ -44,10 +44,10 @@ class Synchronizer @Inject constructor(
 
         remoteEvents.getCurrentEvents()
                 .forEach {
-                    logger.debug("Processing local event: $it")
+                    logger.debug("Processing remote event: $it")
                     val command = remoteEventToLocalCommandMapper.map(it)
-                    val event = commandProcessor.blockingProcessCommand(command, lastLocalEventIds[it.noteId])
-                    lastLocalEventIds[it.noteId] = event?.eventId
+                    val event = commandProcessor.blockingProcessCommand(command, lastLocalRevisions[it.noteId])
+                    lastLocalRevisions[it.noteId] = event?.revision
                 }
     }
 

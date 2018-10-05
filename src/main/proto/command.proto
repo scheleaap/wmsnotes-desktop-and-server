@@ -10,8 +10,8 @@ message PostCommandRequest {
     // The id of the note to which the command applies
     string note_id = 1;
 
-    // The id of the last known event of the note
-    int32 last_event_id = 2;
+    // The last known revision of the note
+    int32 last_revision = 2;
 
     oneof command {
         CreateNoteCommand create_note = 10;
@@ -36,4 +36,5 @@ message PostCommandResponse {
     Status status = 1;
     string errorDescription = 2;
     int32 new_event_id = 3;
+    int32 new_revision = 4;
 }

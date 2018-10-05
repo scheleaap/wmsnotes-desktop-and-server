@@ -27,10 +27,12 @@ class GrpcConverters {
                     Event.GetEventsResponse.EventCase.NOTE_CREATED -> NoteCreatedEvent(
                             eventId = eventId,
                             noteId = noteId,
+                            revision = revision,
                             title = noteCreated.title
                     )
                     Event.GetEventsResponse.EventCase.NOTE_DELETED -> NoteDeletedEvent(
                             eventId = eventId,
+                            revision = revision,
                             noteId = noteId
                     )
                     Event.GetEventsResponse.EventCase.EVENT_NOT_SET -> throw IllegalArgumentException("Event $eventId")
@@ -56,12 +58,12 @@ class GrpcConverters {
             }
         }
 
-        fun toGrpcPostCommandRequest(event: info.maaskant.wmsnotes.model.Event, lastEventId: Int?): Command.PostCommandRequest {
+        fun toGrpcPostCommandRequest(event: info.maaskant.wmsnotes.model.Event, lastRevision: Int?): Command.PostCommandRequest {
             with(event) {
                 val builder = Command.PostCommandRequest.newBuilder()
                         .setNoteId(noteId)
-                if (lastEventId != null) {
-                    builder.setLastEventId(lastEventId)
+                if (lastRevision != null) {
+                    builder.setLastRevision(lastRevision)
                 }
                 when (this) {
                     is info.maaskant.wmsnotes.model.NoteCreatedEvent -> {

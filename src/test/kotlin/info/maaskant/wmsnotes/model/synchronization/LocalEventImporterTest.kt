@@ -26,8 +26,8 @@ internal class LocalEventImporterTest {
     @Test
     fun `store new events`() {
         // Given
-        val event1 = modelEvent(id = 1)
-        val event2 = modelEvent(id = 2)
+        val event1 = modelEvent(i = 1)
+        val event2 = modelEvent(i = 2)
         every { eventStore.getCurrentEvents(any()) }.returns(Observable.just(event1, event2))
         val importer = LocalEventImporter(eventStore, eventRepository, InMemoryStateProperty())
 
@@ -45,8 +45,8 @@ internal class LocalEventImporterTest {
     @Test
     fun `only load new events`() {
         // Given
-        val event1 = modelEvent(id = 1)
-        val event2 = modelEvent(id = 2)
+        val event1 = modelEvent(i = 1)
+        val event2 = modelEvent(i = 2)
         every { eventStore.getCurrentEvents(afterEventId = null) }.returns(Observable.just(event1))
         every { eventStore.getCurrentEvents(afterEventId = 1) }.returns(Observable.empty<Event>())
         val stateProperty = InMemoryStateProperty()
@@ -74,6 +74,6 @@ internal class LocalEventImporterTest {
 
 }
 
-private fun modelEvent(id: Int): NoteCreatedEvent {
-    return NoteCreatedEvent(id, "note-$id", "Title $id")
+private fun modelEvent(i: Int): NoteCreatedEvent {
+    return NoteCreatedEvent(eventId = i, noteId = "note-$i", revision = i, title = "Title $i")
 }

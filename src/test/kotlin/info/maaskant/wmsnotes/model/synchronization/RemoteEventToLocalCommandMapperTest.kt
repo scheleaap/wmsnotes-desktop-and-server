@@ -13,8 +13,8 @@ internal class RemoteEventToLocalCommandMapperTest {
     @TestFactory
     fun test(): List<DynamicTest> {
         val pairs = listOf(
-                NoteCreatedEvent(1, "note-1", "Title 1") to CreateNoteCommand("note-1", "Title 1"),
-                NoteDeletedEvent(1, "note-1") to DeleteNoteCommand("note-1")
+                NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1") to CreateNoteCommand("note-1", "Title 1"),
+                NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1) to DeleteNoteCommand("note-1")
         )
         return pairs.map { (event, expectedCommand) ->
             DynamicTest.dynamicTest("${event::class.simpleName} to ${expectedCommand::class.simpleName}") {

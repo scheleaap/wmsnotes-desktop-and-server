@@ -12,7 +12,7 @@ import java.util.*
 import java.util.stream.Stream
 import javax.inject.Inject
 
-class KryoEventSerializer @Inject constructor(): EventSerializer {
+class KryoEventSerializer @Inject constructor() : EventSerializer {
 
     private val kryo = Kryo()
 
@@ -44,14 +44,16 @@ private class NoteCreatedEventSerializer : Serializer<NoteCreatedEvent>() {
     override fun write(kryo: Kryo, output: Output, it: NoteCreatedEvent) {
         output.writeInt(it.eventId, true)
         output.writeString(it.noteId)
+        output.writeInt(it.revision, true)
         output.writeString(it.title)
     }
 
     override fun read(kryo: Kryo, input: Input, clazz: Class<out NoteCreatedEvent>): NoteCreatedEvent {
         val eventId = input.readInt(true)
         val id = input.readString()
+        val revision = input.readInt(true)
         val title = input.readString()
-        return NoteCreatedEvent(noteId = id, title = title, eventId = eventId)
+        return NoteCreatedEvent(noteId = id, title = title, eventId = eventId, revision = revision)
     }
 }
 
@@ -59,12 +61,14 @@ private class NoteDeletedEventSerializer : Serializer<NoteDeletedEvent>() {
     override fun write(kryo: Kryo, output: Output, it: NoteDeletedEvent) {
         output.writeInt(it.eventId, true)
         output.writeString(it.noteId)
+        output.writeInt(it.revision, true)
     }
 
     override fun read(kryo: Kryo, input: Input, clazz: Class<out NoteDeletedEvent>): NoteDeletedEvent {
         val eventId = input.readInt(true)
         val id = input.readString()
-        return NoteDeletedEvent(noteId = id, eventId = eventId)
+        val revision = input.readInt(true)
+        return NoteDeletedEvent(noteId = id, eventId = eventId, revision = revision)
     }
 }
 

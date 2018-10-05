@@ -9,8 +9,8 @@ import org.junit.jupiter.api.TestFactory
 internal class KryoEventSerializerTest {
 
     private val events = listOf(
-            NoteCreatedEvent(1, "note-1", "Title 1"),
-            NoteDeletedEvent(1, "note-1")
+            NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1"),
+            NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1)
     )
 
     @TestFactory

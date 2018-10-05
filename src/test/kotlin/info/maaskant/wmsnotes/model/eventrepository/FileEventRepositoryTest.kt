@@ -15,9 +15,9 @@ import org.junit.jupiter.api.Test
 internal class FileEventRepositoryTest {
 
     private val events = listOf(
-            NoteCreatedEvent(eventId = 1, noteId = "note-1", title = "Title 1") to "DATA1",
-            NoteCreatedEvent(eventId = 2, noteId = "note-2", title = "Title 2") to "DATA2",
-            NoteCreatedEvent(eventId = 3, noteId = "note-3", title = "Title 3") to "DATA3"
+            NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1") to "DATA1",
+            NoteCreatedEvent(eventId = 2, noteId = "note-2", revision = 2, title = "Title 2") to "DATA2",
+            NoteCreatedEvent(eventId = 3, noteId = "note-3", revision = 3, title = "Title 3") to "DATA3"
     )
 
     private val eventSerializer: EventSerializer = mockk()

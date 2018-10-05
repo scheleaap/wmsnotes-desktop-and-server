@@ -25,8 +25,8 @@ internal class RemoteEventImporterTest {
     @Test
     fun `store new events`() {
         // Given
-        val event1 = remoteNoteEvent(id = 1) to modelEvent(id = 1)
-        val event2 = remoteNoteEvent(id = 2) to modelEvent(id = 2)
+        val event1 = remoteNoteEvent(i = 1) to modelEvent(i = 1)
+        val event2 = remoteNoteEvent(i = 2) to modelEvent(i = 2)
         every { eventService.getEvents(any()) }.returns(listOf(event1.first, event2.first).iterator())
         val importer = RemoteEventImporter(eventService, eventRepository, InMemoryStateProperty())
 
@@ -44,8 +44,8 @@ internal class RemoteEventImporterTest {
     @Test
     fun `only load new events`() {
         // Given
-        val event1 = remoteNoteEvent(id = 1) to modelEvent(id = 1)
-        val event2 = remoteNoteEvent(id = 2) to modelEvent(id = 2)
+        val event1 = remoteNoteEvent(i = 1) to modelEvent(i = 1)
+        val event2 = remoteNoteEvent(i = 2) to modelEvent(i = 2)
         every { eventService.getEvents(remoteEventServiceRequest()) }.returns(listOf(event1.first).iterator())
         every { eventService.getEvents(remoteEventServiceRequest(1)) }.returns(emptyList<Event.GetEventsResponse>().iterator())
         val stateProperty = InMemoryStateProperty()
@@ -81,12 +81,12 @@ private fun remoteEventServiceRequest(afterEventId: Int? = null): Event.GetEvent
     return builder.build()
 }
 
-private fun remoteNoteEvent(id: Int): Event.GetEventsResponse {
-    val builder = Event.GetEventsResponse.newBuilder().setEventId(id).setNoteId("note-$id")
-    builder.getNoteCreatedBuilder().setTitle("Title $id")
+private fun remoteNoteEvent(i: Int): Event.GetEventsResponse {
+    val builder = Event.GetEventsResponse.newBuilder().setEventId(i).setNoteId("note-$i").setRevision(i)
+    builder.getNoteCreatedBuilder().setTitle("Title $i")
     return builder.build()
 }
 
-private fun modelEvent(id: Int): NoteCreatedEvent {
-    return NoteCreatedEvent(id, "note-$id", "Title $id")
+private fun modelEvent(i: Int): NoteCreatedEvent {
+    return NoteCreatedEvent(eventId = i, noteId = "note-$i", revision = i, title = "Title $i")
 }

@@ -17,6 +17,8 @@ message GetEventsResponse {
     // The id of the note to which the note applies
     string note_id = 2;
 
+    int32 revision = 3;
+
     oneof event {
         NoteCreatedEvent note_created = 10;
         NoteDeletedEvent note_deleted = 11;

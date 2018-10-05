@@ -26,7 +26,7 @@ class CommandProcessor @Inject constructor(private val eventStore: EventStore) {
     }
 
     @Synchronized
-    fun blockingProcessCommand(command: Command, lastEventId: Int?): Event? { // TODO: Write test for lastEventId
+    fun blockingProcessCommand(command: Command, previousRevision: Int?): Event? { // TODO: Write test for previousRevision
         return Observable
                 .just(command)
                 .compose(processCommands())
@@ -74,10 +74,10 @@ class CommandProcessor @Inject constructor(private val eventStore: EventStore) {
     }
 
     private fun createNote(c: CreateNoteCommand): Event {
-        return NoteCreatedEvent(eventId = 1, noteId = c.noteId, title = c.title)
+        return NoteCreatedEvent(eventId = 1, noteId = c.noteId, revision = 1, title = c.title)
     }
 
     private fun deleteNote(c: DeleteNoteCommand): Event {
-        return NoteDeletedEvent(eventId = 1, noteId = c.noteId)
+        return NoteDeletedEvent(eventId = 1, noteId = c.noteId, revision = 1)
     }
 }
