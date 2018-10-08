@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.model.synchronization
+package info.maaskant.wmsnotes.client.synchronization
 
 import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.model.DeleteNoteCommand

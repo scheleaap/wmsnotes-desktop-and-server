@@ -46,10 +46,11 @@ dependencies {
     // TornadoFX
     compile 'no.tornado:tornadofx:1.7.15'
 
-    // Storage: SQLite, RxJava-JDBC, serialization
+    // Storage: SQLite, RxJava-JDBC, serialization, MapDB
     compile 'org.xerial:sqlite-jdbc:3.21.0.1'
     compile 'com.github.davidmoten:rxjava2-jdbc:0.1-RC38'
     compile 'com.esotericsoftware:kryo:5.0.0-RC1' // Selected based on https://github.com/eishay/jvm-serializers/wiki
+    compile 'org.mapdb:mapdb:3.0.7'
 
     // gRPC
     compile "io.grpc:grpc-netty-shaded:$grpcVersion"

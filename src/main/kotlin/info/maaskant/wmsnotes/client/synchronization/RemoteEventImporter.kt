@@ -1,7 +1,7 @@
-package info.maaskant.wmsnotes.model.synchronization
+package info.maaskant.wmsnotes.client.synchronization
 
 import info.maaskant.wmsnotes.desktop.app.logger
-import info.maaskant.wmsnotes.model.eventrepository.ModifiableEventRepository
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.server.api.GrpcConverters
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
@@ -13,7 +13,7 @@ import javax.inject.Singleton
 class RemoteEventImporter @Inject constructor(
         private val eventService: EventServiceGrpc.EventServiceBlockingStub,
         private val eventRepository: ModifiableEventRepository,
-        private val stateProperty: StateProperty
+        private val state: ImporterStateStorage
 ) {
 
     private val logger by logger()
@@ -27,7 +27,7 @@ class RemoteEventImporter @Inject constructor(
                 val event = GrpcConverters.toModelClass(it)
                 logger.debug("Storing new remote event: $event")
                 eventRepository.addEvent(event)
-                stateProperty.put(event.eventId)
+                state.lastEventId = event.eventId
             }
         } catch (e: StatusRuntimeException) {
             logger.warn("Error while retrieving events: ${e.status.code}")
@@ -37,8 +37,8 @@ class RemoteEventImporter @Inject constructor(
 
     private fun createGetEventsRequest(): Event.GetEventsRequest? {
         val builder = Event.GetEventsRequest.newBuilder()
-        if (stateProperty.get() != null) {
-            builder.afterEventId = stateProperty.get()!!
+        if (state.lastEventId != null) {
+            builder.afterEventId = state.lastEventId!!
         }
         return builder.build()
     }

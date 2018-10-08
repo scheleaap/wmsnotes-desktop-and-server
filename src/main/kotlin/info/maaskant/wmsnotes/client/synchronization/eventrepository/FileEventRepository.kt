@@ -1,20 +1,23 @@
-package info.maaskant.wmsnotes.model.eventrepository
+package info.maaskant.wmsnotes.client.synchronization.eventrepository
 
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.serialization.EventSerializer
-import io.reactivex.Completable
 import io.reactivex.Observable
-import io.reactivex.Single
 import java.io.File
 import javax.inject.Inject
 
 class FileEventRepository @Inject constructor(private val directory: File, private val eventSerializer: EventSerializer) : ModifiableEventRepository {
 
     override fun getEvent(eventId: Int): Event? {
-        return eventSerializer.deserialize(eventPath(eventId).readBytes())
+        val eventPath = eventPath(eventId)
+        return if (eventPath.exists()) {
+            eventSerializer.deserialize(eventPath.readBytes())
+        } else {
+            null
+        }
     }
 
-    override fun getCurrentEvents(afterEventId: Int?): Observable<Event> {
+    override fun getEvents(afterEventId: Int?): Observable<Event> {
         return Observable.create { emitter ->
             try {
                 val afterFileName: String? = "%010d".format(afterEventId)

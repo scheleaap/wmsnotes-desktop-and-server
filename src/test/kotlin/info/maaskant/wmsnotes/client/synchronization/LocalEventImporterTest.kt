@@ -1,9 +1,9 @@
-package info.maaskant.wmsnotes.model.synchronization
+package info.maaskant.wmsnotes.client.synchronization
 
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.EventStore
+import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.eventrepository.ModifiableEventRepository
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -28,15 +28,15 @@ internal class LocalEventImporterTest {
         // Given
         val event1 = modelEvent(i = 1)
         val event2 = modelEvent(i = 2)
-        every { eventStore.getCurrentEvents(any()) }.returns(Observable.just(event1, event2))
-        val importer = LocalEventImporter(eventStore, eventRepository, InMemoryStateProperty())
+        every { eventStore.getEvents(any()) }.returns(Observable.just(event1, event2))
+        val importer = LocalEventImporter(eventStore, eventRepository, InMemoryImporterStateStorage())
 
         // When
         importer.loadAndStoreLocalEvents()
 
         // Then
         verifySequence {
-            eventStore.getCurrentEvents(afterEventId = null)
+            eventStore.getEvents(afterEventId = null)
             eventRepository.addEvent(event1)
             eventRepository.addEvent(event2)
         }
@@ -47,27 +47,27 @@ internal class LocalEventImporterTest {
         // Given
         val event1 = modelEvent(i = 1)
         val event2 = modelEvent(i = 2)
-        every { eventStore.getCurrentEvents(afterEventId = null) }.returns(Observable.just(event1))
-        every { eventStore.getCurrentEvents(afterEventId = 1) }.returns(Observable.empty<Event>())
-        val stateProperty = InMemoryStateProperty()
+        every { eventStore.getEvents(afterEventId = null) }.returns(Observable.just(event1))
+        every { eventStore.getEvents(afterEventId = 1) }.returns(Observable.empty<Event>())
+        val stateStorage = InMemoryImporterStateStorage()
 
         // When
-        val importer1 = LocalEventImporter(eventStore, eventRepository, stateProperty)
+        val importer1 = LocalEventImporter(eventStore, eventRepository, stateStorage)
         importer1.loadAndStoreLocalEvents()
 
         // Given
-        every { eventStore.getCurrentEvents(afterEventId = null) }.returns(Observable.just(event1, event2))
-        every { eventStore.getCurrentEvents(afterEventId = 1) }.returns(Observable.just(event2))
+        every { eventStore.getEvents(afterEventId = null) }.returns(Observable.just(event1, event2))
+        every { eventStore.getEvents(afterEventId = 1) }.returns(Observable.just(event2))
 
         // When
-        val importer2 = LocalEventImporter(eventStore, eventRepository, stateProperty)
+        val importer2 = LocalEventImporter(eventStore, eventRepository, stateStorage)
         importer2.loadAndStoreLocalEvents()
 
         // Then
         verifySequence {
-            eventStore.getCurrentEvents(afterEventId = null)
+            eventStore.getEvents(afterEventId = null)
             eventRepository.addEvent(event1)
-            eventStore.getCurrentEvents(afterEventId = 1)
+            eventStore.getEvents(afterEventId = 1)
             eventRepository.addEvent(event2)
         }
     }

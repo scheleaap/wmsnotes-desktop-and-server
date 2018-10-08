@@ -1,8 +1,8 @@
-package info.maaskant.wmsnotes.model
+package info.maaskant.wmsnotes.model.eventstore
 
 import info.maaskant.wmsnotes.desktop.app.database
 import info.maaskant.wmsnotes.desktop.app.logger
-import info.maaskant.wmsnotes.model.eventrepository.AppendableEventRepository
+import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.serialization.EventSerializer
 import io.reactivex.Observable
 import io.reactivex.subjects.CompletableSubject
@@ -12,7 +12,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class EventStore @Inject constructor(private val eventSerializer: EventSerializer) : AppendableEventRepository {
+class DatabaseEventStore @Inject constructor(private val eventSerializer: EventSerializer) : EventStore {
 
     private val logger by logger()
 
@@ -58,7 +58,7 @@ class EventStore @Inject constructor(private val eventSerializer: EventSerialize
                 .blockingGet()
     }
 
-    override fun getCurrentEvents(afterEventId: Int?): Observable<Event> {
+    override fun getEvents(afterEventId: Int?): Observable<Event> {
 //        Thread.sleep(1000)
         return initDone
                 .toSingle { Unit }

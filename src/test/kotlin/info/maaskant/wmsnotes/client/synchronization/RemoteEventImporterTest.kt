@@ -1,7 +1,7 @@
-package info.maaskant.wmsnotes.model.synchronization
+package info.maaskant.wmsnotes.client.synchronization
 
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.eventrepository.ModifiableEventRepository
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import io.mockk.clearMocks
@@ -28,7 +28,7 @@ internal class RemoteEventImporterTest {
         val event1 = remoteNoteEvent(i = 1) to modelEvent(i = 1)
         val event2 = remoteNoteEvent(i = 2) to modelEvent(i = 2)
         every { eventService.getEvents(any()) }.returns(listOf(event1.first, event2.first).iterator())
-        val importer = RemoteEventImporter(eventService, eventRepository, InMemoryStateProperty())
+        val importer = RemoteEventImporter(eventService, eventRepository, InMemoryImporterStateStorage())
 
         // When
         importer.loadAndStoreRemoteEvents()
@@ -48,10 +48,10 @@ internal class RemoteEventImporterTest {
         val event2 = remoteNoteEvent(i = 2) to modelEvent(i = 2)
         every { eventService.getEvents(remoteEventServiceRequest()) }.returns(listOf(event1.first).iterator())
         every { eventService.getEvents(remoteEventServiceRequest(1)) }.returns(emptyList<Event.GetEventsResponse>().iterator())
-        val stateProperty = InMemoryStateProperty()
+        val stateStorage = InMemoryImporterStateStorage()
 
         // When
-        val importer1 = RemoteEventImporter(eventService, eventRepository, stateProperty)
+        val importer1 = RemoteEventImporter(eventService, eventRepository, stateStorage)
         importer1.loadAndStoreRemoteEvents()
 
         // Given
@@ -59,7 +59,7 @@ internal class RemoteEventImporterTest {
         every { eventService.getEvents(remoteEventServiceRequest(1)) }.returns(listOf(event2.first).iterator())
 
         // When
-        val importer2 = RemoteEventImporter(eventService, eventRepository, stateProperty)
+        val importer2 = RemoteEventImporter(eventService, eventRepository, stateStorage)
         importer2.loadAndStoreRemoteEvents()
 
         // Then

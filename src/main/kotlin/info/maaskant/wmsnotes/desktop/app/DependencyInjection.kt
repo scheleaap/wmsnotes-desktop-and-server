@@ -4,16 +4,18 @@ import dagger.Component
 import dagger.Module
 import dagger.Provides
 import info.maaskant.wmsnotes.model.CommandProcessor
-import info.maaskant.wmsnotes.model.EventStore
-import info.maaskant.wmsnotes.model.eventrepository.FileEventRepository
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileEventRepository
 import info.maaskant.wmsnotes.model.serialization.EventSerializer
 import info.maaskant.wmsnotes.model.serialization.KryoEventSerializer
-import info.maaskant.wmsnotes.model.synchronization.CachingStateProperty
-import info.maaskant.wmsnotes.model.synchronization.RemoteEventImporter
-import info.maaskant.wmsnotes.model.synchronization.SimpleFileStateProperty
+import info.maaskant.wmsnotes.client.synchronization.MapDbImporterStateStorage
+import info.maaskant.wmsnotes.client.synchronization.RemoteEventImporter
+import info.maaskant.wmsnotes.model.eventstore.DatabaseEventStore
+import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import org.mapdb.DB
+import org.mapdb.DBMaker
 import java.io.File
 import javax.inject.Singleton
 
@@ -37,20 +39,33 @@ class ApplicationModule {
     @Provides
     fun eventSerializer(kryoEventSerializer: KryoEventSerializer): EventSerializer = kryoEventSerializer
 
-//    @Provides
-//    fun eventRepository(fileEventRepository: FileEventRepository): EventRepository = fileEventRepository
+    @Provides
+    fun eventStore(eventSerializer: EventSerializer): EventStore = DatabaseEventStore(eventSerializer)
 
     @Provides
-    fun remoteEventImporter(eventService: EventServiceGrpc.EventServiceBlockingStub, eventSerializer: EventSerializer) =
+    fun mapDbDatabase(): DB {
+        return DBMaker
+                .fileDB("database.mapdb")
+                .fileMmapEnableIfSupported()
+                .closeOnJvmShutdown()
+                .make()
+    }
+
+    @Provides
+    fun remoteEventImporter(
+            eventService: EventServiceGrpc.EventServiceBlockingStub,
+            eventSerializer: EventSerializer,
+            database: DB
+    ) =
             RemoteEventImporter(
                     eventService,
                     FileEventRepository(File("importedRemoteEvents"), eventSerializer),
-                    CachingStateProperty(SimpleFileStateProperty(File("importedRemoteEvents").resolve(".state")))
+                    MapDbImporterStateStorage(MapDbImporterStateStorage.ImporterType.REMOTE, database)
             )
 
     @Provides
     fun eventService(managedChannel: ManagedChannel) =
-            EventServiceGrpc.newBlockingStub(managedChannel)
+            EventServiceGrpc.newBlockingStub(managedChannel)!!
 
     @Provides
     fun managedChannel(): ManagedChannel =

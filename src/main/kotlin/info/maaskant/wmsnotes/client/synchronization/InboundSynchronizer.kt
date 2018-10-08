@@ -1,7 +1,7 @@
-//package info.maaskant.wmsnotes.model.synchronization
+//package info.maaskant.wmsnotes.client.synchronization
 //
 //import info.maaskant.wmsnotes.desktop.app.logger
-//import info.maaskant.wmsnotes.model.EventStore
+//import info.maaskant.wmsnotes.model.eventstore.EventStore
 //import info.maaskant.wmsnotes.server.api.GrpcConverters
 //import info.maaskant.wmsnotes.server.command.grpc.Event
 //import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc

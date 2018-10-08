@@ -1,9 +1,9 @@
 package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.desktop.app.logger
+import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
-import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
