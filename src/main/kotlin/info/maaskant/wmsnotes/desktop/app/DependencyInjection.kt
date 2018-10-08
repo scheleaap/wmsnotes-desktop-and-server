@@ -3,14 +3,14 @@ package info.maaskant.wmsnotes.desktop.app
 import dagger.Component
 import dagger.Module
 import dagger.Provides
-import info.maaskant.wmsnotes.model.CommandProcessor
-import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileEventRepository
-import info.maaskant.wmsnotes.model.serialization.EventSerializer
-import info.maaskant.wmsnotes.model.serialization.KryoEventSerializer
 import info.maaskant.wmsnotes.client.synchronization.MapDbImporterStateStorage
 import info.maaskant.wmsnotes.client.synchronization.RemoteEventImporter
-import info.maaskant.wmsnotes.model.eventstore.DatabaseEventStore
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileEventRepository
+import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.model.eventstore.FileEventStore
+import info.maaskant.wmsnotes.model.serialization.EventSerializer
+import info.maaskant.wmsnotes.model.serialization.KryoEventSerializer
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
@@ -40,7 +40,7 @@ class ApplicationModule {
     fun eventSerializer(kryoEventSerializer: KryoEventSerializer): EventSerializer = kryoEventSerializer
 
     @Provides
-    fun eventStore(eventSerializer: EventSerializer): EventStore = DatabaseEventStore(eventSerializer)
+    fun eventStore(eventSerializer: EventSerializer): EventStore = FileEventStore(File("eventStore"), eventSerializer)
 
     @Provides
     fun mapDbDatabase(): DB {

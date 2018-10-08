@@ -22,7 +22,7 @@ class InMemoryEventRepository() : ModifiableEventRepository {
 
     override fun addEvent(event: Event) {
         if (event.eventId in events) {
-            throw IllegalStateException()
+            throw IllegalArgumentException()
         } else {
             events[event.eventId] = event
         }
@@ -32,7 +32,7 @@ class InMemoryEventRepository() : ModifiableEventRepository {
         if (event.eventId in events) {
             events -= event.eventId
         } else {
-            throw IllegalStateException()
+            throw IllegalArgumentException()
         }
     }
 

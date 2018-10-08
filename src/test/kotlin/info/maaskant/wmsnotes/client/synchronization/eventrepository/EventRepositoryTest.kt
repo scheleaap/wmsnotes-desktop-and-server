@@ -4,8 +4,8 @@ import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import io.reactivex.observers.TestObserver
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.catchThrowable
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 internal abstract class EventRepositoryTest {
 
@@ -21,11 +21,10 @@ internal abstract class EventRepositoryTest {
         val r = createInstance()
         r.addEvent(events[0].first)
 
-        // When
-        val throwable = catchThrowable { r.addEvent(events[0].first) }
-
-        // Then
-        assertThat(throwable).isInstanceOf(IllegalStateException::class.java)
+        // When / Then
+        assertThrows<IllegalArgumentException> {
+            r.addEvent(events[0].first)
+        }
     }
 
     @Test
@@ -42,7 +41,7 @@ internal abstract class EventRepositoryTest {
     }
 
     @Test
-    fun getCurrentEvents() {
+    fun getEvents() {
         // Given
         val r = createInstance()
         events.forEach {
@@ -78,11 +77,10 @@ internal abstract class EventRepositoryTest {
         // Given
         val r = createInstance()
 
-        // When
-        val throwable = catchThrowable { r.removeEvent(events[0].first) }
-
-        // Then
-        assertThat(throwable).isInstanceOf(IllegalStateException::class.java)
+        // When / Then
+        assertThrows<IllegalArgumentException> {
+            r.removeEvent(events[0].first)
+        }
     }
 
     protected abstract fun createInstance(): ModifiableEventRepository

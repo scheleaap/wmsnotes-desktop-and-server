@@ -35,15 +35,15 @@ class FileEventRepository @Inject constructor(private val directory: File, priva
     @Synchronized
     override fun addEvent(event: Event) {
         val eventPath = eventPath(event)
-        if (eventPath.exists()) throw IllegalStateException("Event ${event.eventId} already exists ($eventPath)")
-        directory.mkdirs()
+        if (eventPath.exists()) throw IllegalArgumentException("Event ${event.eventId} already exists ($eventPath)")
+        eventPath.parentFile.mkdirs()
         eventPath.writeBytes(eventSerializer.serialize(event))
     }
 
     @Synchronized
     override fun removeEvent(event: Event) {
         val eventPath = eventPath(event)
-        if (!eventPath.exists()) throw IllegalStateException("Event ${event.eventId} does not exist ($eventPath)")
+        if (!eventPath.exists()) throw IllegalArgumentException("Event ${event.eventId} does not exist ($eventPath)")
         eventPath.delete()
     }
 

@@ -24,6 +24,22 @@ internal class EventsTest {
     }
 
     @TestFactory
+    fun `withEventId for all event types`(): List<DynamicTest> {
+        return listOf(
+                NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1"),
+                NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1)
+        ).map {
+            DynamicTest.dynamicTest(it::class.simpleName) {
+                val copy = it.withEventId(eventId = 1)
+
+                assertThat(copy.eventId).isEqualTo(1)
+                assertThat(copy).isInstanceOf(it::class.java)
+                assertThat(copy.withEventId(0)).isEqualTo(it)
+            }
+        }
+    }
+
+    @TestFactory
     fun `equals and hashCode for all event types`(): List<DynamicTest> {
         return listOf(
                 Item(
@@ -36,18 +52,16 @@ internal class EventsTest {
                         sameButCopy = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
                         different = NoteDeletedEvent(eventId = 1, noteId = "note-2", revision = 1)
                 )
-        )
-                .map {
-                    DynamicTest.dynamicTest(it.o::class.simpleName) {
-                        assertThat(it.o).isEqualTo(it.o)
-                        assertThat(it.o.hashCode()).isEqualTo(it.o.hashCode())
-                        assertThat(it.o).isEqualTo(it.sameButCopy)
-                        assertThat(it.o.hashCode()).isEqualTo(it.sameButCopy.hashCode())
-                        assertThat(it.o).isNotEqualTo(it.different)
-                        assertThat(it.o.hashCode()).isNotEqualTo(it.different.hashCode())
-                        println(it.o)
-                    }
-                }
+        ).map {
+            DynamicTest.dynamicTest(it.o::class.simpleName) {
+                assertThat(it.o).isEqualTo(it.o)
+                assertThat(it.o.hashCode()).isEqualTo(it.o.hashCode())
+                assertThat(it.o).isEqualTo(it.sameButCopy)
+                assertThat(it.o.hashCode()).isEqualTo(it.sameButCopy.hashCode())
+                assertThat(it.o).isNotEqualTo(it.different)
+                assertThat(it.o.hashCode()).isNotEqualTo(it.different.hashCode())
+            }
+        }
     }
 }
 
