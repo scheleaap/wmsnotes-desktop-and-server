@@ -2,10 +2,9 @@ package info.maaskant.wmsnotes.model.eventstore
 
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.serialization.EventSerializer
+import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 

@@ -1,7 +1,7 @@
 package info.maaskant.wmsnotes.client.synchronization.eventrepository
 
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.serialization.EventSerializer
+import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
 import io.reactivex.Observable
 import java.io.File
 import javax.inject.Inject

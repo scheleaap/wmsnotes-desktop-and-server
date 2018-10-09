@@ -4,6 +4,8 @@ import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
+import info.maaskant.wmsnotes.model.CreateNoteCommand
+import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.server.api.GrpcConverters
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
@@ -18,6 +20,7 @@ class Synchronizer @Inject constructor(
         private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
         private val remoteEventToLocalCommandMapper: RemoteEventToLocalCommandMapper,
         private val commandProcessor: CommandProcessor,
+        private val noteProjector: NoteProjector,
         private val state: SynchronizerStateStorage
 ) {
 
@@ -76,8 +79,7 @@ class Synchronizer @Inject constructor(
                     logger.debug("Processing remote event: $it")
                     val command = remoteEventToLocalCommandMapper.map(it)
                     try {
-                        val event = commandProcessor.blockingProcessCommand(command, state.lastLocalRevisions[it.noteId])
-                        state.lastLocalRevisions[it.noteId] = event?.revision
+                        processCommandLocallyAndUpdateState(it.noteId, command)
                     } catch (t: Throwable) {
                         noteIdsWithErrors += it.noteId
                         logger.debug("Command not processed locally: $command + ${state.lastLocalRevisions[it.noteId]}", t)
@@ -105,7 +107,27 @@ class Synchronizer @Inject constructor(
                         .filter { it.revision <= lastLocalRevision }
                         .forEach { localEvents.removeEvent(it) }
             }
-            Synchronizer.ConflictResolutionChoice.BOTH -> {}
+            Synchronizer.ConflictResolutionChoice.BOTH -> {
+                val projectedNote = noteProjector.project(noteId, lastLocalRevision)
+                val command = CreateNoteCommand(noteId = null, title = projectedNote.title)
+                processCommandLocallyAndUpdateState(noteId = null, command = command)
+                localEvents
+                        .getEvents()
+                        .filter { it.noteId == noteId }
+                        .filter { it.revision <= lastLocalRevision }
+                        .forEach { localEvents.removeEvent(it) }
+
+            }
+        }
+    }
+
+    private fun processCommandLocallyAndUpdateState(noteId: String?, command: info.maaskant.wmsnotes.model.Command) {
+        val event = commandProcessor.blockingProcessCommand(
+                command = command,
+                previousRevision = if (noteId in state.lastLocalRevisions) state.lastLocalRevisions[noteId] else null
+        )
+        if (event != null) {
+            state.lastLocalRevisions[event.noteId] = event.revision
         }
     }
 

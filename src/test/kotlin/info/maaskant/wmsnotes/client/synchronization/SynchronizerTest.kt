@@ -4,12 +4,13 @@ import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
+import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.server.api.GrpcConverters
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import io.mockk.*
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -24,6 +25,7 @@ internal class SynchronizerTest {
     private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub = mockk()
     private val remoteEventToLocalCommandMapper: RemoteEventToLocalCommandMapper = mockk()
     private var stateStorage = InMemorySynchronizerStateStorage()
+    private val noteProjector: NoteProjector = mockk()
 
     @BeforeEach
     fun init() {
@@ -33,7 +35,8 @@ internal class SynchronizerTest {
                 eventStore,
                 commandProcessor,
                 remoteCommandService,
-                remoteEventToLocalCommandMapper
+                remoteEventToLocalCommandMapper,
+                noteProjector
         )
         stateStorage = InMemorySynchronizerStateStorage()
     }
@@ -248,12 +251,17 @@ internal class SynchronizerTest {
         val remoteInboundEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 10)
         val remoteInboundEvent2 = modelEvent(eventId = 2, noteId = 1, revision = 11)
         val remoteEvents = createInMemoryEventRepository(remoteInboundEvent1, remoteInboundEvent2)
-        val localEventForRemoteInboundEvent1 = modelEvent(eventId = localOutboundEvent2.eventId + 1, noteId = 1, revision = localOutboundEvent2.revision + 1)
-        val localEventForRemoteInboundEvent2 = modelEvent(eventId = localOutboundEvent2.eventId + 2, noteId = 1, revision = localOutboundEvent2.revision + 2)
-        val command1 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent1, localOutboundEvent2.revision, localEventForRemoteInboundEvent1)
-        val command2 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent2, localOutboundEvent2.revision + 1, localEventForRemoteInboundEvent2)
-        stateStorage.lastLocalRevisions[localOutboundEvent2.noteId] = null
-        stateStorage.lastRemoteRevisions[remoteInboundEvent2.noteId] = remoteInboundEvent2.revision - 1
+
+        val localEventForCopiedNote = modelEvent(eventId = localOutboundEvent2.eventId + 1, noteId = 2, revision = 1)
+        val localEventForRemoteInboundEvent1 = modelEvent(eventId = localOutboundEvent2.eventId + 2, noteId = 1, revision = localOutboundEvent2.revision + 1)
+        val localEventForRemoteInboundEvent2 = modelEvent(eventId = localOutboundEvent2.eventId + 3, noteId = 1, revision = localOutboundEvent2.revision + 2)
+        val projectedNoteForLocalOutboundEvent2 = givenAProjection(localOutboundEvent2, Note("Title P"))
+        val command1 = CreateNoteCommand(null, projectedNoteForLocalOutboundEvent2.title)
+        every { commandProcessor.blockingProcessCommand(command1, null) }.returns(localEventForCopiedNote)
+        val command2 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent1, localOutboundEvent2.revision, localEventForRemoteInboundEvent1)
+        val command3 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent2, localOutboundEvent2.revision+1, localEventForRemoteInboundEvent2)
+        stateStorage.lastLocalRevisions[localOutboundEvent2.noteId] = localOutboundEvent2.revision
+        stateStorage.lastRemoteRevisions[remoteInboundEvent2.noteId] = remoteInboundEvent2.revision
         val s = createSynchronizer(localEvents, remoteEvents)
         s.synchronize()
 
@@ -267,16 +275,19 @@ internal class SynchronizerTest {
         s.synchronize()
 
         // Then
-        fail<Unit>("We moeten eerst beter kunnen definiëren wat voor CreateNoteCommand gepost wordt, m.b.v. een projector")
         verifySequence {
-            // TODO:
-            // events for new note posted
-            // local events for conflicted note deleted
-//            remoteCommandService.postCommand(remoteRequest()).wasNot(Called)
-//            commandProcessor.blockingProcessCommand(CreateNoteCommand(any(), any()), localOutboundEvent2.revision)
-            commandProcessor.blockingProcessCommand(command1, localOutboundEvent2.revision + 1)
-            commandProcessor.blockingProcessCommand(command2, localOutboundEvent2.revision + 2)
+            remoteCommandService.postCommand(any()).wasNot(Called)
+            commandProcessor.blockingProcessCommand(command1, null)
+            commandProcessor.blockingProcessCommand(command2, localOutboundEvent2.revision)
+            commandProcessor.blockingProcessCommand(command3, localOutboundEvent2.revision + 1)
         }
+        assertThat(localEvents.getEvent(localOutboundEvent1.eventId)).isNull()
+        assertThat(localEvents.getEvent(localOutboundEvent2.eventId)).isNull()
+    }
+
+    private fun givenAProjection(event: Event, note: Note): Note {
+        every { noteProjector.project(event.noteId, event.revision) }.returns(note)
+        return note
     }
 
     private fun createInMemoryEventRepository(vararg events: Event): ModifiableEventRepository {
@@ -297,6 +308,7 @@ internal class SynchronizerTest {
                     remoteCommandService,
                     remoteEventToLocalCommandMapper,
                     commandProcessor,
+                    noteProjector,
                     stateStorage
             )
 

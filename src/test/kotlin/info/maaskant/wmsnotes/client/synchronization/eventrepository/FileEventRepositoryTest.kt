@@ -1,6 +1,6 @@
 package info.maaskant.wmsnotes.client.synchronization.eventrepository
 
-import info.maaskant.wmsnotes.model.serialization.EventSerializer
+import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk

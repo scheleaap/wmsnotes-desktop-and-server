@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.utilities.Optional
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
 import io.reactivex.schedulers.Schedulers
@@ -74,7 +75,8 @@ class CommandProcessor @Inject constructor(private val eventStore: EventStore) {
     }
 
     private fun createNote(c: CreateNoteCommand): Event {
-        return NoteCreatedEvent(eventId = 1, noteId = c.noteId, revision = 1, title = c.title)
+        // TODO Handle null noteId
+        return NoteCreatedEvent(eventId = 1, noteId = c.noteId!!, revision = 1, title = c.title)
     }
 
     private fun deleteNote(c: DeleteNoteCommand): Event {

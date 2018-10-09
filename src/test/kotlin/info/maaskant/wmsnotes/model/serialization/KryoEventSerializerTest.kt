@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.model.serialization
 
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.utilities.serialization.KryoEventSerializer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory

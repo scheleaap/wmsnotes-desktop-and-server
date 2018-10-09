@@ -3,7 +3,7 @@
 //import info.maaskant.wmsnotes.desktop.app.database
 //import info.maaskant.wmsnotes.desktop.app.logger
 //import info.maaskant.wmsnotes.model.Event
-//import info.maaskant.wmsnotes.model.serialization.EventSerializer
+//import info.maaskant.wmsnotes.utilities.EventSerializer
 //import io.reactivex.Observable
 //import io.reactivex.subjects.CompletableSubject
 //import io.reactivex.subjects.PublishSubject

@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.model.serialization
+package info.maaskant.wmsnotes.utilities.serialization
 
 import info.maaskant.wmsnotes.model.Event
 
