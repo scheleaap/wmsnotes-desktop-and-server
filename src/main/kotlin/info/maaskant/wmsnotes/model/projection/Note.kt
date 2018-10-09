@@ -34,8 +34,13 @@ class Note private constructor(
 
 
     fun apply(event: Event): Pair<Note, Event?> {
-        if (event.revision != revision + 1) throw IllegalArgumentException("The revision of $event must be ${revision + 1}")
-        if (event !is NoteCreatedEvent && event.noteId != noteId) throw IllegalArgumentException("The note id of $event must be $noteId")
+        if (revision == 0) {
+            if (event !is NoteCreatedEvent) throw IllegalArgumentException("$event can not be a note's first event")
+            if (event.revision != 1) throw IllegalArgumentException("The revision of $event must be ${revision + 1}")
+        } else {
+            if (event.revision != revision + 1) throw IllegalArgumentException("The revision of $event must be ${revision + 1}")
+            if (event.noteId != noteId) throw IllegalArgumentException("The note id of $event must be $noteId")
+        }
         return when (event) {
             is NoteCreatedEvent -> applyCreated(event)
             is NoteDeletedEvent -> applyDeleted(event)
@@ -44,6 +49,7 @@ class Note private constructor(
 
     private fun applyCreated(event: NoteCreatedEvent): Pair<Note, Event> {
         if (exists) throw IllegalStateException("An existing note cannot be created again ($event)")
+        if (event.noteId.isBlank()) throw IllegalArgumentException("Invalid note id $event")
         return copy(
                 noteId = event.noteId,
                 revision = event.revision,

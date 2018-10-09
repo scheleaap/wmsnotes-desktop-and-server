@@ -4,6 +4,7 @@ import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import io.reactivex.observers.TestObserver
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -132,6 +133,43 @@ internal abstract class EventStoreTest {
         assertThrows<IllegalArgumentException> {
             r.appendEvent(event)
         }
+    }
+
+    @Test
+    fun `getEventUpdates, initially`() {
+        // Given
+        val observer = TestObserver<Event>()
+        val r: EventStore = createInstance()
+        r.appendEvent(NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1"))
+
+        // When
+        r.getEventUpdates().subscribe(observer)
+
+        // Then
+        observer.assertValueCount(0)
+        observer.assertNotComplete()
+        observer.assertNoErrors()
+    }
+
+    @Test
+    fun `getEventUpdates, new event`() {
+        // Given
+        val observer = TestObserver<Event>()
+        val event1In = NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1")
+        val event2In = NoteCreatedEvent(eventId = 0, noteId = "note-2", revision = 1, title = "Title 2")
+        val event2Out = NoteCreatedEvent(eventId = 2, noteId = event2In.noteId, revision = event2In.revision, title = event2In.title)
+        val r: EventStore = createInstance()
+        r.appendEvent(event1In)
+        r.getEventUpdates().subscribe(observer)
+
+        // When
+        r.appendEvent(event2In)
+
+        // Then
+        observer.assertValueCount(1)
+        observer.assertValues(event2Out)
+        observer.assertNotComplete()
+        observer.assertNoErrors()
     }
 
     protected abstract fun createInstance(): EventStore

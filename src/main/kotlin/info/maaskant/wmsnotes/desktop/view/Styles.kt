@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.desktop.app
+package info.maaskant.wmsnotes.desktop.view
 
 import javafx.scene.paint.Color
 import javafx.scene.text.FontWeight

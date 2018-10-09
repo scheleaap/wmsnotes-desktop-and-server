@@ -22,13 +22,11 @@ class CommandProcessor @Inject constructor(
     private val logger by logger()
 
     val commands: Subject<Command> = PublishSubject.create()
-    val events: Subject<Event> = PublishSubject.create() // TODO: Move to EventStore
 
     init {
         commands
                 .compose(processCommands())
-                .compose(removeEmptyOptionalItems())
-                .subscribe(events)
+                .subscribe()
     }
 
     @Synchronized
@@ -42,23 +40,17 @@ class CommandProcessor @Inject constructor(
 
     private fun processCommands(): ObservableTransformer<Command, Optional<Event>> {
         return ObservableTransformer { it2 ->
-            it2.doOnNext { logger.debug("Received command: $it") }
-                    .map(this::executeCommand)
+            it2
                     .observeOn(Schedulers.io())
+                    .doOnNext { logger.debug("Received command: $it") }
+                    .map(this::executeCommand)
                     .map { storeEventIfPresent(it) }
-                    .doOnNext { logEventIfPresent(it) } // TODO: Move to EventStore
-        }
-    }
-
-    private fun logEventIfPresent(e: Optional<Event>) {
-        if (e.value != null) {
-            logger.debug("Generated event: $e.value")
         }
     }
 
     private fun storeEventIfPresent(e: Optional<Event>): Optional<Event> {
         if (e.value != null) {
-            logger.debug("Storing event: $e.value")
+            logger.debug("Storing event: ${e.value}")
             return Optional(eventStore.appendEvent(e.value))
         } else {
             return e

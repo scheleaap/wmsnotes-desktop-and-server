@@ -6,9 +6,12 @@ import dagger.Provides
 import info.maaskant.wmsnotes.client.synchronization.MapDbImporterStateStorage
 import info.maaskant.wmsnotes.client.synchronization.RemoteEventImporter
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileEventRepository
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryEventRepository
+import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.eventstore.FileEventStore
+import info.maaskant.wmsnotes.model.eventstore.InMemoryEventStore
 import info.maaskant.wmsnotes.model.projection.DefaultNoteProjector
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
@@ -30,6 +33,7 @@ object Injector {
 @Singleton
 @Component(modules = [ApplicationModule::class])
 interface ApplicationGraph {
+    fun applicationModel(): ApplicationModel
     fun commandProcessor(): CommandProcessor
     fun remoteEventImporter(): RemoteEventImporter
 }
@@ -38,16 +42,27 @@ interface ApplicationGraph {
 @Module
 class ApplicationModule {
 
+    private var inMemory = false
+
     @Provides
     fun eventSerializer(kryoEventSerializer: KryoEventSerializer): EventSerializer = kryoEventSerializer
 
+    @Singleton
     @Provides
     fun eventService(managedChannel: ManagedChannel) =
             EventServiceGrpc.newBlockingStub(managedChannel)!!
 
+    @Singleton
     @Provides
-    fun eventStore(eventSerializer: EventSerializer): EventStore = FileEventStore(File("eventStore"), eventSerializer)
+    fun eventStore(eventSerializer: EventSerializer): EventStore =
+            if (inMemory) {
+                InMemoryEventStore()
+            } else {
+                FileEventStore(File("data/events"), eventSerializer)
+            }
 
+
+    @Singleton
     @Provides
     fun managedChannel(): ManagedChannel =
             ManagedChannelBuilder
@@ -57,28 +72,44 @@ class ApplicationModule {
                     .usePlaintext()
                     .build()
 
+    // Qualify once we're using MapDB for indices as well
+    @Singleton
     @Provides
     fun mapDbDatabase(): DB {
-        return DBMaker
-                .fileDB("database.mapdb")
-                .fileMmapEnableIfSupported()
-                .closeOnJvmShutdown()
-                .make()
+        if (inMemory) {
+            return DBMaker
+                    .memoryDB()
+                    .closeOnJvmShutdown()
+                    .make()
+        } else {
+            val file = File("data/synchronization/state.db")
+            file.parentFile.mkdirs()
+            return DBMaker
+                    .fileDB(file)
+                    .fileMmapEnableIfSupported()
+                    .closeOnJvmShutdown()
+                    .make()
+        }
     }
 
+    @Singleton
     @Provides
-    fun noteProjector(): NoteProjector = DefaultNoteProjector()
+    fun noteProjector(eventStore: EventStore): NoteProjector = DefaultNoteProjector(eventStore)
 
+    @Singleton
     @Provides
     fun remoteEventImporter(
             eventService: EventServiceGrpc.EventServiceBlockingStub,
             eventSerializer: EventSerializer,
             database: DB
-    ) =
-            RemoteEventImporter(
-                    eventService,
-                    FileEventRepository(File("importedRemoteEvents"), eventSerializer),
-                    MapDbImporterStateStorage(MapDbImporterStateStorage.ImporterType.REMOTE, database)
-            )
+    ): RemoteEventImporter {
+        val eventRepository = if (inMemory) {
+            InMemoryEventRepository()
+        } else {
+            FileEventRepository(File("data/synchronization/remote_events"), eventSerializer)
+        }
+        val importerStateStorage = MapDbImporterStateStorage(MapDbImporterStateStorage.ImporterType.REMOTE, database)
+        return RemoteEventImporter(eventService, eventRepository, importerStateStorage)
+    }
 }
 

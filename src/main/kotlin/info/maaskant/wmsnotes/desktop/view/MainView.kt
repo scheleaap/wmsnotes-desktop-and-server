@@ -1,29 +1,37 @@
 package info.maaskant.wmsnotes.desktop.view
 
-import com.github.thomasnield.rxkotlinfx.actionEvents
-import javafx.application.Platform
+import info.maaskant.wmsnotes.desktop.app.Injector
+import info.maaskant.wmsnotes.desktop.model.ApplicationModel
+import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
 import javafx.geometry.Orientation
-import javafx.scene.Group
-import javafx.scene.control.TreeItem
 import javafx.scene.layout.BorderPane
 import tornadofx.*
 
 class MainView : View() {
     override val root = BorderPane()
 
-    private val testView: TestView by inject()
-    private val nodeView: NodeView by inject()
+    private val applicationModel: ApplicationModel = Injector.instance.applicationModel()
+
+    private val treeView: TreeView by inject()
 
     init {
         title = "WMS Notes"
 
         with(root) {
             setPrefSize(940.0, 610.0)
+            top<ToolbarView>()
             center = splitpane {
                 orientation = Orientation.VERTICAL
-                this += testView
-                this += nodeView
+                this += treeView
             }
+            bottom<StatusBarView>()
         }
+
+        applicationModel
+                .selectedNoteUpdates
+                .observeOn(JavaFxScheduler.platform())
+                .subscribe {
+                    title = "WMS Notes - ${it.title}"
+                }
     }
 }

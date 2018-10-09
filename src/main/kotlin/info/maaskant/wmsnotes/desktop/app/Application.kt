@@ -1,12 +1,14 @@
 package info.maaskant.wmsnotes.desktop.app
 
 import info.maaskant.wmsnotes.desktop.view.MainView
+import info.maaskant.wmsnotes.desktop.view.Styles
 import javafx.scene.image.Image
 import javafx.stage.Stage
 import tornadofx.*
 
 class Application : App(MainView::class, Styles::class) {
 
+    private val applicationModel = Injector.instance.applicationModel()
     private val remoteEventImporter = Injector.instance.remoteEventImporter()
 
     init {
@@ -25,6 +27,7 @@ class Application : App(MainView::class, Styles::class) {
 
     override fun start(stage: Stage) {
         super.start(stage)
+        applicationModel.start()
 //        remoteEventImporter.start()
     }
 

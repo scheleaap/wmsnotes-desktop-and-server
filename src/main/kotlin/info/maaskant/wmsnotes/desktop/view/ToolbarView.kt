@@ -3,19 +3,20 @@ package info.maaskant.wmsnotes.desktop.view
 import com.github.thomasnield.rxkotlinfx.actionEvents
 import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.app.logger
+import info.maaskant.wmsnotes.desktop.controller.ApplicationController
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.model.DeleteNoteCommand
 import javafx.geometry.Orientation
 import tornadofx.*
 
-class TestView : View() {
+class ToolbarView : View() {
 
     private val logger by logger()
 
-    private val commandProcessor: CommandProcessor = Injector.instance.commandProcessor()
+    private val applicationController: ApplicationController by inject()
 
-    private var i = 1
+    private val commandProcessor: CommandProcessor = Injector.instance.commandProcessor()
 
     override val root = toolbar {
         orientation = Orientation.HORIZONTAL
@@ -24,8 +25,7 @@ class TestView : View() {
             actionEvents()
                     .subscribe {
                         //                        logger.info("$i")
-                        commandProcessor.commands.onNext(CreateNoteCommand(i.toString(), "Note $i"))
-                        i++
+                        commandProcessor.commands.onNext(CreateNoteCommand(null, "New Note"))
                     }
 
 
@@ -34,9 +34,7 @@ class TestView : View() {
             tooltip("Delete the last note")
             actionEvents()
                     .subscribe {
-                        //                        logger.info("$i")
-                        i--
-                        commandProcessor.commands.onNext(DeleteNoteCommand(i.toString(), lastRevision = 1))
+                        applicationController.deleteCurrentNote.onNext(Unit)
                     }
 
 

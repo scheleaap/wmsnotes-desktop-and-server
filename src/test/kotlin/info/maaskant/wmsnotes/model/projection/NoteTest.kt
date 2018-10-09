@@ -46,6 +46,24 @@ internal class NoteTest {
         }
     }
 
+    @TestFactory
+    fun `events that are not allowed as first event`(): List<DynamicTest> {
+        return listOf(
+                NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 1)
+                // Add more event types here
+        ).map { event ->
+            DynamicTest.dynamicTest(event::class.simpleName) {
+                // Given
+                val note = Note()
+
+                // When / Then
+                assertThat(event.revision).isEqualTo(1)
+                assertThrows<IllegalArgumentException> { note.apply(event) }
+            }
+        }
+    }
+
+
     @Test
     fun `after construction`() {
         // When
@@ -95,6 +113,16 @@ internal class NoteTest {
 
         // When / Then
         assertThrows<IllegalStateException> { noteBefore.apply(eventIn) }
+    }
+
+    @Test
+    fun `create, note id blank string`() {
+        // Given
+        val noteBefore = Note()
+        val eventIn = NoteCreatedEvent(eventId = 0, noteId = " \t", revision = 1, title = "Title")
+
+        // When / Then
+        assertThrows<IllegalArgumentException> { noteBefore.apply(eventIn) }
     }
 
     @Test

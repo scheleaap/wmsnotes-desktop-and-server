@@ -2,5 +2,5 @@
 /.idea
 /build
 /out
-*.db
+/data
 _test
