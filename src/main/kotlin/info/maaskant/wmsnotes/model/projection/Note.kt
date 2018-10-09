@@ -4,20 +4,36 @@ import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
 
-class Note {
-    var exists = false
-        private set
+class Note private constructor(
+        val revision: Int,
+        val exists: Boolean,
+        val noteId: String,
+        val title: String
+) {
 
-    var noteId = ""
-        private set
+    constructor() : this(
+            revision = 0,
+            exists = false,
+            noteId = "",
+            title = ""
+    )
 
-    var revision: Int = 0
-        private set
+    private fun copy(
+            revision: Int = this.revision,
+            exists: Boolean = this.exists,
+            noteId: String = this.noteId,
+            title: String = this.title
+    ): Note {
+        return Note(
+                revision = revision,
+                exists = exists,
+                noteId = noteId,
+                title = title
+        )
+    }
 
-    var title = ""
-        private set
 
-    fun apply(event: Event): Event? {
+    fun apply(event: Event): Pair<Note, Event?> {
         if (event.revision != revision + 1) throw IllegalArgumentException("The revision of $event must be ${revision + 1}")
         if (event !is NoteCreatedEvent && event.noteId != noteId) throw IllegalArgumentException("The note id of $event must be $noteId")
         return when (event) {
@@ -26,23 +42,29 @@ class Note {
         }
     }
 
-    private fun applyCreated(event: NoteCreatedEvent): Event {
+    private fun applyCreated(event: NoteCreatedEvent): Pair<Note, Event> {
         if (exists) throw IllegalStateException("An existing note cannot be created again ($event)")
-        noteId = event.noteId
-        revision = event.revision
-        title = event.title
-        exists = true
-        return event
+        return copy(
+                noteId = event.noteId,
+                revision = event.revision,
+                title = event.title,
+                exists = true
+        ) to event
     }
 
-    private fun applyDeleted(event: NoteDeletedEvent): Event? {
+    private fun applyDeleted(event: NoteDeletedEvent): Pair<Note, Event?> {
         return if (exists) {
-            exists = false
-            revision = event.revision
-            event
+            copy(
+                    exists = false,
+                    revision = event.revision
+            ) to event
         } else {
-            null
+            noChanges()
         }
+    }
+
+    private fun noChanges(): Pair<Note, Event?> {
+        return Pair(this, null)
     }
 
 }

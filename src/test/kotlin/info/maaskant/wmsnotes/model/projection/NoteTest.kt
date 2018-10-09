@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.model.projection
 
+import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
 import org.assertj.core.api.Assertions.assertThat
@@ -19,14 +20,11 @@ internal class NoteTest {
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
                 // Given
-                val note = Note()
-                note.apply(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
+                val note = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
 
                 // When / Then
                 assertThat(event.revision).isGreaterThan(note.revision + 1)
                 assertThrows<IllegalArgumentException> { note.apply(event) }
-                assertThat(note.revision).isEqualTo(1)
-                assertThat(note.exists).isEqualTo(true)
             }
         }
     }
@@ -39,15 +37,11 @@ internal class NoteTest {
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
                 // Given
-                val note = Note()
-                note.apply(NoteCreatedEvent(eventId = 0, noteId = "original id", revision = 1, title = "Title"))
+                val note = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = "original id", revision = 1, title = "Title"))
 
                 // When / Then
                 assertThat(event.noteId).isNotEqualTo(note.noteId)
                 assertThrows<IllegalArgumentException> { note.apply(event) }
-                assertThat(note.revision).isEqualTo(1)
-                assertThat(note.exists).isEqualTo(true)
-                assertThat(note.noteId).isEqualTo("original id")
             }
         }
     }
@@ -65,18 +59,18 @@ internal class NoteTest {
     @Test
     fun `create`() {
         // Given
-        val note = Note()
+        val noteBefore = Note()
         val eventIn = NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title")
 
         // When
-        val eventOut = note.apply(eventIn)
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
 
         // Then
         assertThat(eventOut).isEqualTo(eventIn)
-        assertThat(note.revision).isEqualTo(eventIn.revision)
-        assertThat(note.exists).isEqualTo(true)
-        assertThat(note.noteId).isEqualTo(eventIn.noteId)
-        assertThat(note.title).isEqualTo(eventIn.title)
+        assertThat(noteAfter.revision).isEqualTo(eventIn.revision)
+        assertThat(noteAfter.exists).isEqualTo(true)
+        assertThat(noteAfter.noteId).isEqualTo(eventIn.noteId)
+        assertThat(noteAfter.title).isEqualTo(eventIn.title)
     }
 
     @TestFactory
@@ -96,45 +90,53 @@ internal class NoteTest {
     @Test
     fun `create, duplicate`() {
         // Given
-        val note = Note()
-        note.apply(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
+        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
         val eventIn = NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 2, title = "Title")
 
         // When / Then
-        assertThrows<IllegalStateException> { note.apply(eventIn) }
-        assertThat(note.revision).isEqualTo(1)
+        assertThrows<IllegalStateException> { noteBefore.apply(eventIn) }
     }
 
     @Test
     fun `delete`() {
         // Given
-        val note = Note()
-        note.apply(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
+        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
         val eventIn = NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
 
         // When
-        val eventOut = note.apply(eventIn)
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
 
         // Then
         assertThat(eventOut).isEqualTo(eventIn)
-        assertThat(note.revision).isEqualTo(2)
-        assertThat(note.exists).isEqualTo(false)
+        assertThat(noteAfter.revision).isEqualTo(2)
+        assertThat(noteAfter.exists).isEqualTo(false)
     }
 
     @Test
     fun `delete, idempotence`() {
         // Given
-        val note = Note()
-        note.apply(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
-        note.apply(NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2))
+        val noteBefore = noteWithEvents(
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"),
+                NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
+        )
         val eventIn = NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3)
 
         // When
-        val eventOut = note.apply(eventIn)
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
 
         // Then
         assertThat(eventOut).isNull()
-        assertThat(note.revision).isEqualTo(2)
-        assertThat(note.exists).isEqualTo(false)
+        assertThat(noteAfter.revision).isEqualTo(2)
+        assertThat(noteAfter.exists).isEqualTo(false)
     }
+
+}
+
+private fun noteWithEvents(vararg events: Event): Note {
+    var note = Note()
+    for (event in events) {
+        val (newNote, _) = note.apply(event)
+        note = newNote
+    }
+    return note
 }
