@@ -77,9 +77,9 @@ class Synchronizer @Inject constructor(
                 .filter { it.noteId !in noteIdsWithErrors }
                 .forEach {
                     logger.debug("Processing remote event: $it")
-                    val command = remoteEventToLocalCommandMapper.map(it)
+                    val command = remoteEventToLocalCommandMapper.map(it, state.lastLocalRevisions[it.noteId])
                     try {
-                        processCommandLocallyAndUpdateState(it.noteId, command)
+                        processCommandLocallyAndUpdateState(command)
                     } catch (t: Throwable) {
                         noteIdsWithErrors += it.noteId
                         logger.debug("Command not processed locally: $command + ${state.lastLocalRevisions[it.noteId]}", t)
@@ -110,7 +110,7 @@ class Synchronizer @Inject constructor(
             Synchronizer.ConflictResolutionChoice.BOTH -> {
                 val projectedNote = noteProjector.project(noteId, lastLocalRevision)
                 val command = CreateNoteCommand(noteId = null, title = projectedNote.title)
-                processCommandLocallyAndUpdateState(noteId = null, command = command)
+                processCommandLocallyAndUpdateState(command)
                 localEvents
                         .getEvents()
                         .filter { it.noteId == noteId }
@@ -121,11 +121,8 @@ class Synchronizer @Inject constructor(
         }
     }
 
-    private fun processCommandLocallyAndUpdateState(noteId: String?, command: info.maaskant.wmsnotes.model.Command) {
-        val event = commandProcessor.blockingProcessCommand(
-                command = command,
-                previousRevision = if (noteId in state.lastLocalRevisions) state.lastLocalRevisions[noteId] else null
-        )
+    private fun processCommandLocallyAndUpdateState(command: info.maaskant.wmsnotes.model.Command) {
+        val event = commandProcessor.blockingProcessCommand(command)
         if (event != null) {
             state.lastLocalRevisions[event.noteId] = event.revision
         }

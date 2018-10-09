@@ -13,7 +13,7 @@ internal class FileEventRepositoryTest : EventRepositoryTest() {
 
     private val eventSerializer: EventSerializer = mockk()
 
-    private var tempDir: File? = null
+    private lateinit var tempDir: File
 
     @BeforeEach
     fun init() {
@@ -46,7 +46,7 @@ internal class FileEventRepositoryTest : EventRepositoryTest() {
         r.addEvent(events[0].first)
 
         // Then
-        val expectedEventFile = tempDir!!.resolve("0000000001")
+        val expectedEventFile = tempDir.resolve("0000000001")
         assertThat(expectedEventFile).exists()
         assertThat(expectedEventFile.readBytes()).isEqualTo("DATA1".toByteArray())
     }
@@ -62,12 +62,12 @@ internal class FileEventRepositoryTest : EventRepositoryTest() {
         r.removeEvent(events[0].first)
 
         // Then
-        val expectedEventFile = tempDir!!.resolve("0000000001")
+        val expectedEventFile = tempDir.resolve("0000000001")
         assertThat(expectedEventFile).doesNotExist()
     }
 
     override fun createInstance(): ModifiableEventRepository {
-        return FileEventRepository(tempDir!!, eventSerializer)
+        return FileEventRepository(tempDir, eventSerializer)
     }
 
 }

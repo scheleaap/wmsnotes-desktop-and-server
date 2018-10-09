@@ -10,8 +10,8 @@ import java.io.File
 
 internal class FileEventStoreTest : EventStoreTest() {
 
-    private var tempDir: File? = null
-    private var eventSerializer: TestEventSerializer? = null
+    private lateinit var tempDir: File
+    private lateinit var eventSerializer: TestEventSerializer
 
     @BeforeEach
     fun init() {
@@ -40,14 +40,14 @@ internal class FileEventStoreTest : EventStoreTest() {
         r.appendEvent(eventIn)
 
         // Then
-        val expectedEventFile = tempDir!!.resolve("note").resolve("0000000001")
+        val expectedEventFile = tempDir.resolve("note").resolve("0000000001")
         assertThat(expectedEventFile).exists()
-        assertThat(expectedEventFile.readBytes()).isEqualTo(eventSerializer!!.serialize(eventOut))
+        assertThat(expectedEventFile.readBytes()).isEqualTo(eventSerializer.serialize(eventOut))
     }
 
 
     override fun createInstance(): EventStore {
-        return FileEventStore(tempDir!!, eventSerializer!!)
+        return FileEventStore(tempDir, eventSerializer)
     }
 
     private class TestEventSerializer : EventSerializer {

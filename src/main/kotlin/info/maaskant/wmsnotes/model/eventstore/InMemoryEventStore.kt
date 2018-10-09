@@ -23,7 +23,7 @@ class InMemoryEventStore : EventStore {
                 .toObservable()
     }
 
-    override fun appendEvent(event: Event) {
+    override fun appendEvent(event: Event): Event {
         if (event.eventId != 0) throw IllegalArgumentException()
         if (event.eventId in events) throw IllegalArgumentException()
         if (event.revision < 0) throw IllegalArgumentException()
@@ -35,6 +35,7 @@ class InMemoryEventStore : EventStore {
         }
         val eventWithId = event.withEventId(++lastEventId)
         events[eventWithId.eventId] = eventWithId
+        return eventWithId
     }
 
     private fun getLastRevisionOfNote(noteId: String): Int? {

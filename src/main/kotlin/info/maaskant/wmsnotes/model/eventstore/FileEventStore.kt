@@ -59,7 +59,7 @@ class FileEventStore @Inject constructor(private val rootDirectory: File, privat
     }
 
     @Synchronized
-    override fun appendEvent(event: Event) {
+    override fun appendEvent(event: Event): Event {
         if (event.eventId != 0) throw IllegalArgumentException("Expected id of event $event to be 0")
         val eventWithId = event.withEventId(++lastEventId)
 
@@ -71,6 +71,7 @@ class FileEventStore @Inject constructor(private val rootDirectory: File, privat
         if (eventFilePath.exists()) throw IllegalArgumentException("Event ${eventWithId} already exists ($eventFilePath)")
         eventFilePath.parentFile.mkdirs()
         eventFilePath.writeBytes(eventSerializer.serialize(eventWithId))
+        return eventWithId
     }
 
     private fun eventFilePath(noteId: String, revision: Int): File = rootDirectory.resolve(noteId).resolve("%010d".format(revision))

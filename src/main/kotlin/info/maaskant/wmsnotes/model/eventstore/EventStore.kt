@@ -14,5 +14,5 @@ interface EventStore {
      */
     fun getEventsOfNote(noteId: String): Observable<Event>
 
-    fun appendEvent(event: Event) // TODO: Add parameter for previous revision
+    fun appendEvent(event: Event): Event
 }

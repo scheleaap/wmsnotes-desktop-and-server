@@ -1,0 +1,41 @@
+package info.maaskant.wmsnotes.model
+
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
+import java.util.*
+
+internal class CommandToEventMapperTest {
+
+    @TestFactory
+    fun test(): List<DynamicTest> {
+        val noteId = "note-1"
+        val lastRevision = 11
+        val eventRevision = lastRevision + 1
+
+        val pairs = listOf(
+                CreateNoteCommand(noteId, "Title 1") to NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"),
+                DeleteNoteCommand(noteId, lastRevision) to NoteDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision)
+                // Add more types here
+        )
+        return pairs.map { (command, expectedEvent) ->
+            DynamicTest.dynamicTest("${command::class.simpleName} to ${expectedEvent::class.simpleName}") {
+                assertThat(CommandToEventMapper().map(command)).isEqualTo(expectedEvent)
+            }
+        }
+    }
+
+    @Test
+    fun `create, note id null`() {
+        // Given
+        val command = CreateNoteCommand(null, "Title 1")
+
+        // When
+        val event = CommandToEventMapper().map(command)
+
+        // Then
+        UUID.fromString(event.noteId) // Expected not to throw an exception
+    }
+
+}

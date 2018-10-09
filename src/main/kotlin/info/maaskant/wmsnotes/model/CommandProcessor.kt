@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.utilities.Optional
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
@@ -12,7 +13,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class CommandProcessor @Inject constructor(private val eventStore: EventStore) {
+class CommandProcessor @Inject constructor(
+        private val eventStore: EventStore,
+        private val projector: NoteProjector,
+        private val commandToEventMapper: CommandToEventMapper
+) {
 
     private val logger by logger()
 
@@ -27,7 +32,7 @@ class CommandProcessor @Inject constructor(private val eventStore: EventStore) {
     }
 
     @Synchronized
-    fun blockingProcessCommand(command: Command, previousRevision: Int?): Event? { // TODO: Write test for previousRevision
+    fun blockingProcessCommand(command: Command): Event? {
         return Observable
                 .just(command)
                 .compose(processCommands())
@@ -40,7 +45,7 @@ class CommandProcessor @Inject constructor(private val eventStore: EventStore) {
             it2.doOnNext { logger.debug("Received command: $it") }
                     .map(this::executeCommand)
                     .observeOn(Schedulers.io())
-                    .doOnNext { storeEventIfPresent(it) }
+                    .map { storeEventIfPresent(it) }
                     .doOnNext { logEventIfPresent(it) } // TODO: Move to EventStore
         }
     }
@@ -51,10 +56,12 @@ class CommandProcessor @Inject constructor(private val eventStore: EventStore) {
         }
     }
 
-    private fun storeEventIfPresent(e: Optional<Event>) {
+    private fun storeEventIfPresent(e: Optional<Event>): Optional<Event> {
         if (e.value != null) {
             logger.debug("Storing event: $e.value")
-            eventStore.appendEvent(e.value)
+            return Optional(eventStore.appendEvent(e.value))
+        } else {
+            return e
         }
     }
 
@@ -66,20 +73,11 @@ class CommandProcessor @Inject constructor(private val eventStore: EventStore) {
         }
     }
 
-    private fun executeCommand(c: Command): Optional<Event> {
-        return when (c) {
-            is CreateNoteCommand -> Optional(createNote(c))
-            is DeleteNoteCommand -> Optional(deleteNote(c))
-            // else -> Optional.empty()
-        }
+    private fun executeCommand(command: Command): Optional<Event> {
+        val event1 = commandToEventMapper.map(command)
+        val note1 = projector.project(event1.noteId, event1.revision - 1)
+        val (_, event2) = note1.apply(event1)
+        return Optional(event2)
     }
 
-    private fun createNote(c: CreateNoteCommand): Event {
-        // TODO Handle null noteId
-        return NoteCreatedEvent(eventId = 1, noteId = c.noteId!!, revision = 1, title = c.title)
-    }
-
-    private fun deleteNote(c: DeleteNoteCommand): Event {
-        return NoteDeletedEvent(eventId = 1, noteId = c.noteId, revision = 1)
-    }
 }

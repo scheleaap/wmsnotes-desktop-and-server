@@ -36,7 +36,7 @@ class TestView : View() {
                     .subscribe {
                         //                        logger.info("$i")
                         i--
-                        commandProcessor.commands.onNext(DeleteNoteCommand(i.toString()))
+                        commandProcessor.commands.onNext(DeleteNoteCommand(i.toString(), lastRevision = 1))
                     }
 
 
