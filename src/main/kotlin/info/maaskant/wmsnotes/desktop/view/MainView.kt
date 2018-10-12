@@ -13,6 +13,7 @@ class MainView : View() {
     private val applicationModel: ApplicationModel = Injector.instance.applicationModel()
 
     private val treeView: TreeView by inject()
+    private val detailView: DetailView by inject()
 
     init {
         title = "WMS Notes"
@@ -21,8 +22,9 @@ class MainView : View() {
             setPrefSize(940.0, 610.0)
             top<ToolbarView>()
             center = splitpane {
-                orientation = Orientation.VERTICAL
+                orientation = Orientation.HORIZONTAL
                 this += treeView
+                this += detailView
             }
             bottom<StatusBarView>()
         }
