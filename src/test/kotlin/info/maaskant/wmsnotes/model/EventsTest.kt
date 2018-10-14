@@ -27,7 +27,10 @@ internal class EventsTest {
     fun `withEventId for all event types`(): List<DynamicTest> {
         return listOf(
                 NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1"),
-                NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1)
+                NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
+                AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "DATA".toByteArray()),
+                AttachmentDeletedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1")
+                // Add more classes here
         ).map {
             DynamicTest.dynamicTest(it::class.simpleName) {
                 val copy = it.withEventId(eventId = 1)
@@ -45,24 +48,40 @@ internal class EventsTest {
                 Item(
                         o = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1"),
                         sameButCopy = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1"),
-                        different = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 2")
+                        differents = listOf(NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 2"))
                 ),
                 Item(
                         o = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
                         sameButCopy = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
-                        different = NoteDeletedEvent(eventId = 1, noteId = "note-2", revision = 1)
+                        differents = listOf(NoteDeletedEvent(eventId = 1, noteId = "note-2", revision = 1))
+                ),
+                Item(
+                        o = AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "DATA".toByteArray()),
+                        sameButCopy = AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "DATA".toByteArray()),
+                        differents = listOf(
+                                AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-2", content = "DATA".toByteArray()),
+                                AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "DIFFERENT".toByteArray())
+                        )
+                ),
+                Item(
+                        o = AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1"),
+                        sameButCopy = AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1"),
+                        differents = listOf(AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-2"))
                 )
+                // Add more classes here
         ).map {
             DynamicTest.dynamicTest(it.o::class.simpleName) {
                 assertThat(it.o).isEqualTo(it.o)
                 assertThat(it.o.hashCode()).isEqualTo(it.o.hashCode())
                 assertThat(it.o).isEqualTo(it.sameButCopy)
                 assertThat(it.o.hashCode()).isEqualTo(it.sameButCopy.hashCode())
-                assertThat(it.o).isNotEqualTo(it.different)
-                assertThat(it.o.hashCode()).isNotEqualTo(it.different.hashCode())
+                for (different in it.differents) {
+                    assertThat(it.o).isNotEqualTo(different)
+                    assertThat(it.o.hashCode()).isNotEqualTo(different.hashCode())
+                }
             }
         }
     }
 }
 
-private data class Item(val o: Event, val sameButCopy: Event, val different: Event)
+private data class Item(val o: Event, val sameButCopy: Event, val differents: List<Event>)

@@ -13,6 +13,8 @@ class CommandToEventMapper @Inject constructor() {
                 NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = command.title)
             }
             is DeleteNoteCommand -> NoteDeletedEvent(eventId = 0, noteId = command.noteId, revision = command.lastRevision + 1)
+            is AddAttachmentCommand -> AttachmentAddedEvent(eventId = 0, noteId = command.noteId, revision = command.lastRevision + 1, name = command.name, content = command.content)
+            is DeleteAttachmentCommand -> AttachmentDeletedEvent(eventId = 0, noteId = command.noteId, revision = command.lastRevision + 1, name = command.name)
         }
     }
 }

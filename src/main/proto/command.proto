@@ -16,6 +16,8 @@ message PostCommandRequest {
     oneof command {
         CreateNoteCommand create_note = 10;
         DeleteNoteCommand delete_note = 11;
+        AddAttachmentCommand add_attachment = 12;
+        DeleteAttachmentCommand delete_attachment = 13;
     }
 
     message CreateNoteCommand {
@@ -23,6 +25,15 @@ message PostCommandRequest {
     }
 
     message DeleteNoteCommand {
+    }
+
+    message AddAttachmentCommand {
+        string name = 1;
+        bytes content = 2;
+    }
+
+    message DeleteAttachmentCommand {
+        string name = 1;
     }
 }
 

@@ -33,3 +33,46 @@ class NoteDeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(even
 
     override fun toString() = kotlinToString(properties = arrayOf(NoteDeletedEvent::eventId, NoteDeletedEvent::noteId, NoteDeletedEvent::revision))
 }
+
+class AttachmentAddedEvent(eventId: Int, noteId: String, revision: Int, val name: String, val content: ByteArray) : Event(eventId, noteId, revision) {
+    override fun withEventId(eventId: Int): AttachmentAddedEvent {
+        return AttachmentAddedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name, content = content)
+    }
+
+    override fun toString() = kotlinToString(properties = arrayOf(AttachmentAddedEvent::eventId, AttachmentAddedEvent::noteId, AttachmentAddedEvent::revision, AttachmentAddedEvent::name, AttachmentAddedEvent::content))
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        if (!super.equals(other)) return false
+
+        other as AttachmentAddedEvent
+
+        if (name != other.name) return false
+        if (!Arrays.equals(content, other.content)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + name.hashCode()
+        result = 31 * result + Arrays.hashCode(content)
+        return result
+    }
+}
+
+class AttachmentDeletedEvent(eventId: Int, noteId: String, revision: Int, val name: String) : Event(eventId, noteId, revision) {
+    override fun withEventId(eventId: Int): AttachmentDeletedEvent {
+        return AttachmentDeletedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name)
+    }
+
+    override fun toString() = kotlinToString(properties = arrayOf(AttachmentDeletedEvent::eventId, AttachmentDeletedEvent::noteId, AttachmentDeletedEvent::revision))
+
+    override fun equals(other: Any?) = kotlinEquals(
+            other = other,
+            properties = arrayOf(AttachmentDeletedEvent::name),
+            superEquals = { super.equals(other) })
+
+    override fun hashCode() = Objects.hash(name, super.hashCode())
+}

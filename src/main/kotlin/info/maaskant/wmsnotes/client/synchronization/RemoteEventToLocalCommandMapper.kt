@@ -9,6 +9,8 @@ class RemoteEventToLocalCommandMapper {
         return when (source) {
             is NoteCreatedEvent -> CreateNoteCommand(source.noteId, source.title)
             is NoteDeletedEvent -> DeleteNoteCommand(source.noteId, lastRevision!!)
+            is AttachmentAddedEvent -> AddAttachmentCommand(source.noteId, lastRevision!!, source.name, source.content)
+            is AttachmentDeletedEvent -> DeleteAttachmentCommand(source.noteId, lastRevision!!, source.name)
         }
     }
 }

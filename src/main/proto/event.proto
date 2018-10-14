@@ -22,6 +22,8 @@ message GetEventsResponse {
     oneof event {
         NoteCreatedEvent note_created = 10;
         NoteDeletedEvent note_deleted = 11;
+        AttachmentAddedEvent attachment_added = 12;
+        AttachmentDeletedEvent attachment_deleted = 13;
     }
 
     message NoteCreatedEvent {
@@ -29,5 +31,14 @@ message GetEventsResponse {
     }
 
     message NoteDeletedEvent {
+    }
+
+    message AttachmentAddedEvent {
+        string name = 1;
+        bytes content = 2;
+    }
+
+    message AttachmentDeletedEvent {
+        string name = 1;
     }
 }

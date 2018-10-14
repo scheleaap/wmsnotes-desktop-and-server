@@ -1,9 +1,6 @@
 package info.maaskant.wmsnotes.client.synchronization
 
-import info.maaskant.wmsnotes.model.CreateNoteCommand
-import info.maaskant.wmsnotes.model.DeleteNoteCommand
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.model.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
@@ -19,6 +16,8 @@ internal class RemoteEventToLocalCommandMapperTest {
         val pairs = listOf(
                 NoteCreatedEvent(eventId = 1, noteId = noteId, revision = eventRevision, title = "Title 1") to CreateNoteCommand(noteId, "Title 1"),
                 NoteDeletedEvent(eventId = 1, noteId = noteId, revision = eventRevision) to DeleteNoteCommand(noteId, lastRevision),
+                AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1", content = "data".toByteArray()) to AddAttachmentCommand(noteId, lastRevision, "att-1", "data".toByteArray()),
+                AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1") to DeleteAttachmentCommand(noteId, lastRevision, "att-1")
                 // Add more classes here
         )
         return pairs.map { (event, expectedCommand) ->

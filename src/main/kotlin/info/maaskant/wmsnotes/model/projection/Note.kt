@@ -1,34 +1,37 @@
 package info.maaskant.wmsnotes.model.projection
 
-import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.model.*
+import java.util.*
 
 class Note private constructor(
         val revision: Int,
         val exists: Boolean,
         val noteId: String,
-        val title: String
+        val title: String,
+        val attachments: Map<String, ByteArray>
 ) {
 
     constructor() : this(
             revision = 0,
             exists = false,
             noteId = "",
-            title = ""
+            title = "",
+            attachments = emptyMap()
     )
 
     private fun copy(
             revision: Int = this.revision,
             exists: Boolean = this.exists,
             noteId: String = this.noteId,
-            title: String = this.title
+            title: String = this.title,
+            attachments: Map<String, ByteArray> = this.attachments
     ): Note {
         return Note(
                 revision = revision,
                 exists = exists,
                 noteId = noteId,
-                title = title
+                title = title,
+                attachments = attachments
         )
     }
 
@@ -44,6 +47,34 @@ class Note private constructor(
         return when (event) {
             is NoteCreatedEvent -> applyCreated(event)
             is NoteDeletedEvent -> applyDeleted(event)
+            is AttachmentAddedEvent -> applyAttachmentAdded(event)
+            is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
+        }
+    }
+
+    private fun applyAttachmentAdded(event: AttachmentAddedEvent): Pair<Note, Event?> {
+        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
+        return if (event.name in attachments) {
+            if (!Arrays.equals(attachments[event.name], event.content)) throw IllegalStateException("An attachment named ${event.name} already exists but with different data ($event)")
+            noChanges()
+        } else {
+            copy(
+                    revision = event.revision,
+                    attachments = attachments + (event.name to event.content)
+            ) to event
+        }
+    }
+
+    private fun applyAttachmentDeleted(event: AttachmentDeletedEvent): Pair<Note, Event?> {
+//        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
+        return if (event.name in attachments) {
+//            if (!Arrays.equals(attachments[event.name], event.content)) throw IllegalStateException("An attachment named ${event.name} already exists but with different data ($event)")
+            copy(
+                    revision = event.revision,
+                    attachments = attachments - event.name
+            ) to event
+        } else {
+            noChanges()
         }
     }
 
