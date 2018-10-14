@@ -16,8 +16,8 @@ internal class CommandToEventMapperTest {
 
         val pairs = listOf(
                 CreateNoteCommand(noteId, "Title 1") to NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"),
-                DeleteNoteCommand(noteId, lastRevision) to NoteDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision)
-                // Add more types here
+                DeleteNoteCommand(noteId, lastRevision) to NoteDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision),
+                // Add more classes here
         )
         return pairs.map { (command, expectedEvent) ->
             DynamicTest.dynamicTest("${command::class.simpleName} to ${expectedEvent::class.simpleName}") {

@@ -6,7 +6,8 @@ import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.model.projection.NoteProjector
-import info.maaskant.wmsnotes.server.api.GrpcConverters
+import info.maaskant.wmsnotes.server.api.GrpcCommandMapper
+import info.maaskant.wmsnotes.server.api.GrpcEventMapper
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import io.reactivex.Observable
@@ -19,6 +20,8 @@ class Synchronizer @Inject constructor(
         private val remoteEvents: ModifiableEventRepository,
         private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
         private val remoteEventToLocalCommandMapper: RemoteEventToLocalCommandMapper,
+        private val grpcCommandMapper: GrpcCommandMapper,
+        private val grpcEventMapper: GrpcEventMapper,
         private val commandProcessor: CommandProcessor,
         private val noteProjector: NoteProjector,
         private val state: SynchronizerStateStorage
@@ -56,7 +59,7 @@ class Synchronizer @Inject constructor(
                 .filter { it.noteId !in noteIdsWithErrors }
                 .forEach {
                     logger.debug("Processing local event: $it")
-                    val request = GrpcConverters.toGrpcPostCommandRequest(event = it, lastRevision = state.lastRemoteRevisions[it.noteId])
+                    val request = grpcCommandMapper.toGrpcPostCommandRequest(event = it, lastRevision = state.lastRemoteRevisions[it.noteId])
                     logger.debug("Sending command to server: $request")
                     val response = remoteCommandService.postCommand(request)
                     if (response.status == Command.PostCommandResponse.Status.SUCCESS) {

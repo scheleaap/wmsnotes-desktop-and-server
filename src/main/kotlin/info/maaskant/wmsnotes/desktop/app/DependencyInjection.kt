@@ -14,9 +14,10 @@ import info.maaskant.wmsnotes.model.eventstore.FileEventStore
 import info.maaskant.wmsnotes.model.eventstore.InMemoryEventStore
 import info.maaskant.wmsnotes.model.projection.DefaultNoteProjector
 import info.maaskant.wmsnotes.model.projection.NoteProjector
+import info.maaskant.wmsnotes.server.api.GrpcEventMapper
+import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
 import info.maaskant.wmsnotes.utilities.serialization.KryoEventSerializer
-import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import org.mapdb.DB
@@ -101,6 +102,7 @@ class ApplicationModule {
     fun remoteEventImporter(
             eventService: EventServiceGrpc.EventServiceBlockingStub,
             eventSerializer: EventSerializer,
+            grpcEventMapper: GrpcEventMapper,
             database: DB
     ): RemoteEventImporter {
         val eventRepository = if (inMemory) {
@@ -109,7 +111,7 @@ class ApplicationModule {
             FileEventRepository(File("data/synchronization/remote_events"), eventSerializer)
         }
         val importerStateStorage = MapDbImporterStateStorage(MapDbImporterStateStorage.ImporterType.REMOTE, database)
-        return RemoteEventImporter(eventService, eventRepository, importerStateStorage)
+        return RemoteEventImporter(eventService, eventRepository, grpcEventMapper, importerStateStorage)
     }
 }
 
