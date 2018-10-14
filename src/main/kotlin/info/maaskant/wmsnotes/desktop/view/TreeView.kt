@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.desktop.view
 
+import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.desktop.controller.ApplicationController
@@ -39,7 +40,7 @@ class TreeView : View() {
 
     init {
         applicationModel.allEventsWithUpdates
-                .observeOn(JavaFxScheduler.platform())
+                .observeOnFx()
                 .subscribe({
                     when (it) {
                         is NoteCreatedEvent -> noteCreated(it)

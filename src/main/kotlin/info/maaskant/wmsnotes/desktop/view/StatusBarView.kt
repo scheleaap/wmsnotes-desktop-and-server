@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.desktop.view
 
+import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
@@ -15,7 +16,7 @@ class StatusBarView : View() {
     init {
         applicationModel
                 .selectedNoteUpdates
-                .observeOn(JavaFxScheduler.platform())
+                .observeOnFx()
                 .subscribe {
                     root.text = if (it.isPresent) "Note ${it.value?.title}" else null
                 }

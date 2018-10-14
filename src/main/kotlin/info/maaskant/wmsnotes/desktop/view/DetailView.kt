@@ -1,17 +1,14 @@
 package info.maaskant.wmsnotes.desktop.view
 
 import com.github.thomasnield.rxkotlinfx.actionEvents
+import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.desktop.controller.ApplicationController
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.CommandProcessor
-import info.maaskant.wmsnotes.model.CreateNoteCommand
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.NoteDeletedEvent
-import info.maaskant.wmsnotes.utilities.Optional
-import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
-import javafx.scene.control.TreeItem
+import javafx.scene.layout.HBox
+import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
 import tornadofx.*
 import java.io.File
@@ -30,7 +27,7 @@ class DetailView : View() {
 
         center = textarea {
             applicationModel.selectedNoteUpdates
-                    .observeOn(JavaFxScheduler.platform())
+                    .observeOnFx()
                     .subscribe {
                         if (it.value == null) {
                             isDisable = true
@@ -44,22 +41,14 @@ class DetailView : View() {
 
         bottom = borderpane {
             center = vbox {
-                this += hbox {
-                    this += label {
-                        text = "HOI"
-                    }
-                    this += button {
-                        text = "X"
-                    }
-                }
-                this += hbox {
-                    this += label {
-                        text = "DOEI"
-                    }
-                    this += button {
-                        text = "X"
-                    }
-                }
+                val hboxesByAttachmentName: MutableMap<String, HBox> = mutableMapOf()
+
+                applicationModel.selectedNoteUpdates
+                        .observeOnFx()
+                        .map { it.value?.attachments?.keys?.sorted() ?: emptyList() }
+                        .subscribe { names ->
+                            updateAttachments(names, this, hboxesByAttachmentName)
+                        }
             }
 
             right = button {
@@ -76,6 +65,28 @@ class DetailView : View() {
         }
     }
 
+    private fun updateAttachments(attachmentNames: List<String>, vbox: VBox, hboxesByAttachmentName: MutableMap<String, HBox>) {
+        val namesToDelete = HashSet(hboxesByAttachmentName.keys)
+        for (name in attachmentNames) {
+            if (name !in hboxesByAttachmentName) {
+                val hbox = hbox {
+                    this += label {
+                        text = name
+                    }
+                    this += button {
+                        text = "X"
+                    }
+                }
+                vbox += hbox
+                hboxesByAttachmentName[name] = hbox
+                namesToDelete.remove(name)
+            }
+        }
+        for (name in namesToDelete) {
+            vbox.children.remove(hboxesByAttachmentName.remove(name))
+        }
+    }
+
     private fun chooseImage(): List<File> {
         return chooseFile(
                 title = "Please choose a file to attach",
@@ -86,7 +97,7 @@ class DetailView : View() {
 
     init {
 //        applicationModel.allEventsWithUpdates
-//                .observeOn(JavaFxScheduler.platform())
+//                .observeOnFx()
 //                .subscribe({
 //                    when (it) {
 //                        is NoteCreatedEvent -> noteCreated(it)
