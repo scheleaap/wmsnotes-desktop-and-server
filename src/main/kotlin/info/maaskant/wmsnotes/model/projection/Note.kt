@@ -11,6 +11,8 @@ class Note private constructor(
         val attachments: Map<String, ByteArray>
 ) {
 
+    private val nameReplacementPattern: Regex = Regex("""[\\\t ./&]""")
+
     constructor() : this(
             revision = 0,
             exists = false,
@@ -54,21 +56,22 @@ class Note private constructor(
 
     private fun applyAttachmentAdded(event: AttachmentAddedEvent): Pair<Note, Event?> {
         if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
-        return if (event.name in attachments) {
-            if (!Arrays.equals(attachments[event.name], event.content)) throw IllegalStateException("An attachment named ${event.name} already exists but with different data ($event)")
+        val sanitizedName = event.name.replace(nameReplacementPattern, "_")
+        return if (sanitizedName in attachments) {
+            if (!Arrays.equals(attachments[sanitizedName], event.content)) throw IllegalStateException("An attachment named $sanitizedName already exists but with different data ($event)")
             noChanges()
         } else {
             copy(
                     revision = event.revision,
-                    attachments = attachments + (event.name to event.content)
+                    attachments = attachments + (sanitizedName to event.content)
             ) to event
         }
     }
 
     private fun applyAttachmentDeleted(event: AttachmentDeletedEvent): Pair<Note, Event?> {
-//        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
+        // TODO: Implement test to enable this
+        // if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
         return if (event.name in attachments) {
-//            if (!Arrays.equals(attachments[event.name], event.content)) throw IllegalStateException("An attachment named ${event.name} already exists but with different data ($event)")
             copy(
                     revision = event.revision,
                     attachments = attachments - event.name

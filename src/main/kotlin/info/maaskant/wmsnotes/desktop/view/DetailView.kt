@@ -9,6 +9,7 @@ import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.utilities.Optional
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
 import javafx.scene.control.TreeItem
 import javafx.stage.FileChooser
@@ -28,7 +29,17 @@ class DetailView : View() {
     override val root = borderpane {
 
         center = textarea {
-            text = "SDF"
+            applicationModel.selectedNoteUpdates
+                    .observeOn(JavaFxScheduler.platform())
+                    .subscribe {
+                        if (it.value == null) {
+                            isDisable = true
+                            text = null
+                        } else {
+                            text = it.value.title
+                            isDisable = false
+                        }
+                    }
         }
 
         bottom = borderpane {
@@ -54,23 +65,26 @@ class DetailView : View() {
             right = button {
                 text = "Add attachment"
                 actionEvents()
-                        .map {
-                            chooseFile(
-                                    title = "Please choose a file to attach",
-                                    filters = arrayOf(FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.gif"))
-                                    // Make modal
-                            )
-                        }
+                        .map { chooseImage() }
                         .filter { it.isNotEmpty() }
-                        .subscribe {
-                            logger.info("NOW WOULD BE THE TIME TO ADD THE ATTACHMENT: $it")
-                        }
-
+                        .map { it.first() }
+                        .subscribe(applicationController.addAttachment)
+                applicationModel.selectedNoteIdUpdates
+                        .map { !it.isPresent }
+                        .subscribe(this::setDisable) { logger.warn("Error", it) }
             }
         }
     }
 
-//    init {
+    private fun chooseImage(): List<File> {
+        return chooseFile(
+                title = "Please choose a file to attach",
+                filters = arrayOf(FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.gif")),
+                owner = this.currentWindow
+        )
+    }
+
+    init {
 //        applicationModel.allEventsWithUpdates
 //                .observeOn(JavaFxScheduler.platform())
 //                .subscribe({
@@ -79,6 +93,7 @@ class DetailView : View() {
 //                        is NoteDeletedEvent -> noteDeleted(it)
 //                    }
 //                }, { logger.warn("Error", it) })
-//    }
+
+    }
 
 }

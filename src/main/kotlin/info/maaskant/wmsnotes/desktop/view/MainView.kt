@@ -8,6 +8,8 @@ import javafx.scene.layout.BorderPane
 import tornadofx.*
 
 class MainView : View() {
+    private val applicationTitle = "WMS Notes"
+
     override val root = BorderPane()
 
     private val applicationModel: ApplicationModel = Injector.instance.applicationModel()
@@ -16,13 +18,14 @@ class MainView : View() {
     private val detailView: DetailView by inject()
 
     init {
-        title = "WMS Notes"
+        title = applicationTitle
 
         with(root) {
             setPrefSize(940.0, 610.0)
             top<ToolbarView>()
             center = splitpane {
                 orientation = Orientation.HORIZONTAL
+                setDividerPosition(0, 0.3)
                 this += treeView
                 this += detailView
             }
@@ -33,7 +36,11 @@ class MainView : View() {
                 .selectedNoteUpdates
                 .observeOn(JavaFxScheduler.platform())
                 .subscribe {
-                    title = "WMS Notes - ${it.title}"
+                    if (it.value != null) {
+                        title = "$applicationTitle - ${it.value.title}"
+                    } else {
+                        title = applicationTitle
+                    }
                 }
     }
 }

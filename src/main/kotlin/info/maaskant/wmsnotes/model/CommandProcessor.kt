@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.model
 
+import com.github.thomasnield.rxkotlinfx.subscribeOnFx
 import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.projection.NoteProjector
@@ -26,7 +27,7 @@ class CommandProcessor @Inject constructor(
     init {
         commands
                 .compose(processCommands())
-                .subscribe()
+                .subscribe({}, { logger.warn("Error", it) })
     }
 
     @Synchronized

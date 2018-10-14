@@ -7,6 +7,7 @@ import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.utilities.Optional
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
 import javafx.scene.control.TreeItem
 import tornadofx.*
@@ -32,7 +33,7 @@ class TreeView : View() {
         cellFormat { text = it.title }
         onUserSelect {
             logger.debug("Selected: $it")
-            applicationController.selectNote.onNext(it.noteId)
+            applicationController.selectNote.onNext(Optional(it.noteId))
         }
     }
 

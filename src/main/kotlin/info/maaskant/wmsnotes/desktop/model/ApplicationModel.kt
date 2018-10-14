@@ -5,6 +5,7 @@ import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
+import info.maaskant.wmsnotes.utilities.Optional
 import io.reactivex.observables.ConnectableObservable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
@@ -25,20 +26,25 @@ class ApplicationModel @Inject constructor(val eventStore: EventStore, val noteP
     var selectedNote: Note? = null
         private set
 
-    val selectedNoteIdUpdates: Subject<String> = PublishSubject.create()
+    val selectedNoteIdUpdates: Subject<Optional<String>> = PublishSubject.create()
 
-    val selectedNoteUpdates: ConnectableObservable<Note> = selectedNoteIdUpdates
+    val selectedNoteUpdates: ConnectableObservable<Optional<Note>> = selectedNoteIdUpdates
             .subscribeOn(Schedulers.io())
-            .map { noteProjector.project(it, null) } // TODO: Move observable to NoteProjector?
+            .map {
+                it.map {
+                    noteProjector.project(it, null)
+                }
+            } // TODO: Move observable to NoteProjector?
             .publish()
 
     init {
-        selectedNoteUpdates.subscribe { selectedNote = it }
+        selectedNoteUpdates.subscribe { selectedNote = it.value }
     }
 
     fun start() {
         selectedNoteUpdates.connect()
         allEventsWithUpdates.connect()
+        selectedNoteIdUpdates.onNext(Optional())
     }
 
 }

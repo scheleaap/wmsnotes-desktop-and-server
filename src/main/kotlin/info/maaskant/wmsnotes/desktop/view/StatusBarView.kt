@@ -17,7 +17,7 @@ class StatusBarView : View() {
                 .selectedNoteUpdates
                 .observeOn(JavaFxScheduler.platform())
                 .subscribe {
-                    root.text = "Note ${it.title}"
+                    root.text = if (it.isPresent) "Note ${it.value?.title}" else null
                 }
 
     }

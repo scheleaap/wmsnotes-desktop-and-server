@@ -4,11 +4,8 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
-import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.model.*
 import java.io.ByteArrayOutputStream
-import java.util.*
 import java.util.stream.Stream
 import javax.inject.Inject
 
@@ -19,7 +16,9 @@ class KryoEventSerializer @Inject constructor() : EventSerializer {
     init {
         Stream.of(
                 Pair(NoteCreatedEvent::class.java, NoteCreatedEventSerializer()),
-                Pair(NoteDeletedEvent::class.java, NoteDeletedEventSerializer())
+                Pair(NoteDeletedEvent::class.java, NoteDeletedEventSerializer()),
+                Pair(AttachmentAddedEvent::class.java, AttachmentAddedEventSerializer()),
+                Pair(AttachmentDeletedEvent::class.java, AttachmentDeletedEventSerializer())
         ).forEach {
             kryo.register(it.first, it.second)
         }
@@ -53,7 +52,7 @@ private class NoteCreatedEventSerializer : Serializer<NoteCreatedEvent>() {
         val id = input.readString()
         val revision = input.readInt(true)
         val title = input.readString()
-        return NoteCreatedEvent(noteId = id, title = title, eventId = eventId, revision = revision)
+        return NoteCreatedEvent(eventId = eventId, noteId = id, revision = revision, title = title)
     }
 }
 
@@ -68,19 +67,58 @@ private class NoteDeletedEventSerializer : Serializer<NoteDeletedEvent>() {
         val eventId = input.readInt(true)
         val id = input.readString()
         val revision = input.readInt(true)
-        return NoteDeletedEvent(noteId = id, eventId = eventId, revision = revision)
+        return NoteDeletedEvent(eventId = eventId, noteId = id, revision = revision)
     }
 }
 
-private class UuidSerializer : Serializer<UUID>() {
-    override fun write(kryo: Kryo, output: Output, it: UUID) {
-        with(output) {
-            writeLong(it.mostSignificantBits)
-            writeLong(it.leastSignificantBits)
-        }
+private class AttachmentAddedEventSerializer : Serializer<AttachmentAddedEvent>() {
+    override fun write(kryo: Kryo, output: Output, it: AttachmentAddedEvent) {
+        output.writeInt(it.eventId, true)
+        output.writeString(it.noteId)
+        output.writeInt(it.revision, true)
+        output.writeString(it.name)
+        output.writeInt(it.content.size, true)
+        output.writeBytes(it.content)
     }
 
-    override fun read(kryo: Kryo, input: Input, clazz: Class<out UUID>): UUID {
-        return UUID(input.readLong(), input.readLong())
+    override fun read(kryo: Kryo, input: Input, clazz: Class<out AttachmentAddedEvent>): AttachmentAddedEvent {
+        val eventId = input.readInt(true)
+        val id = input.readString()
+        val revision = input.readInt(true)
+        val name = input.readString()
+        val contentLength = input.readInt(true)
+        val content = input.readBytes(contentLength)
+        return AttachmentAddedEvent(eventId = eventId, noteId = id, revision = revision, name = name, content = content)
     }
 }
+
+private class AttachmentDeletedEventSerializer : Serializer<AttachmentDeletedEvent>() {
+    override fun write(kryo: Kryo, output: Output, it: AttachmentDeletedEvent) {
+        output.writeInt(it.eventId, true)
+        output.writeString(it.noteId)
+        output.writeInt(it.revision, true)
+        output.writeString(it.name)
+    }
+
+    override fun read(kryo: Kryo, input: Input, clazz: Class<out AttachmentDeletedEvent>): AttachmentDeletedEvent {
+        val eventId = input.readInt(true)
+        val id = input.readString()
+        val revision = input.readInt(true)
+        val name = input.readString()
+        return AttachmentDeletedEvent(eventId = eventId, noteId = id, revision = revision, name = name)
+    }
+}
+
+
+//private class UuidSerializer : Serializer<UUID>() {
+//    override fun write(kryo: Kryo, output: Output, it: UUID) {
+//        with(output) {
+//            writeLong(it.mostSignificantBits)
+//            writeLong(it.leastSignificantBits)
+//        }
+//    }
+//
+//    override fun read(kryo: Kryo, input: Input, clazz: Class<out UUID>): UUID {
+//        return UUID(input.readLong(), input.readLong())
+//    }
+//}

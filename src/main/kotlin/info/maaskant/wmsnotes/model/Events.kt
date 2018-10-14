@@ -35,11 +35,13 @@ class NoteDeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(even
 }
 
 class AttachmentAddedEvent(eventId: Int, noteId: String, revision: Int, val name: String, val content: ByteArray) : Event(eventId, noteId, revision) {
+    private val contentLength = content.size
+
     override fun withEventId(eventId: Int): AttachmentAddedEvent {
         return AttachmentAddedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name, content = content)
     }
 
-    override fun toString() = kotlinToString(properties = arrayOf(AttachmentAddedEvent::eventId, AttachmentAddedEvent::noteId, AttachmentAddedEvent::revision, AttachmentAddedEvent::name, AttachmentAddedEvent::content))
+    override fun toString() = kotlinToString(properties = arrayOf(AttachmentAddedEvent::eventId, AttachmentAddedEvent::noteId, AttachmentAddedEvent::revision, AttachmentAddedEvent::name, AttachmentAddedEvent::contentLength))
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

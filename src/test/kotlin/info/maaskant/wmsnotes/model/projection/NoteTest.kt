@@ -235,6 +235,20 @@ internal class NoteTest {
     }
 
     @Test
+    fun `add attachment, special characters in name`() {
+        // Given
+        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
+        val eventIn = AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "att \t.\\/&", content = binaryData)
+
+        // When
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
+
+        // Then
+        assertThat(eventOut).isEqualTo(eventIn)
+        assertThat(noteAfter.attachments.keys).isEqualTo(setOf("att______"))
+    }
+
+    @Test
     fun `delete attachment`() {
         // Given
         val noteBefore = noteWithEvents(
@@ -253,6 +267,7 @@ internal class NoteTest {
         assertThat(noteAfter.revision).isEqualTo(3)
         assertThat(noteAfter.attachments).isEqualTo(emptyMap<String, ByteArray>())
     }
+
     @Test
     fun `delete attachment, idempotence`() {
         // Given
