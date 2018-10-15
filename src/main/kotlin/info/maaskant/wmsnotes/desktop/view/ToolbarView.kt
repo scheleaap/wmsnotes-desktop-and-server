@@ -1,18 +1,15 @@
 package info.maaskant.wmsnotes.desktop.view
 
 import com.github.thomasnield.rxkotlinfx.actionEvents
+import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.desktop.controller.ApplicationController
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.CreateNoteCommand
-import io.reactivex.rxjavafx.observables.JavaFxObservable
 import javafx.geometry.Orientation
-import tornadofx.View
-import tornadofx.button
-import tornadofx.toolbar
-import tornadofx.tooltip
+import tornadofx.*
 
 class ToolbarView : View() {
 
@@ -24,22 +21,24 @@ class ToolbarView : View() {
 
     private val commandProcessor: CommandProcessor = Injector.instance.commandProcessor()
 
+    private var i: Int = 1
+
     override val root = toolbar {
         orientation = Orientation.HORIZONTAL
         button("Create") {
             tooltip("Create new note")
             actionEvents()
-                    .subscribe {
-                        commandProcessor.commands.onNext(CreateNoteCommand(null, "New Note"))
-                    }
+                    .map { CreateNoteCommand(null, "New Note ${i++}") }
+                    .subscribe(commandProcessor.commands)
         }
         button("Delete") {
             tooltip("Delete the last note")
             actionEvents()
                     .map { Unit }
                     .subscribe(applicationController.deleteCurrentNote)
-            applicationModel.selectedNoteIdUpdates
+            applicationModel.selectedNoteId
                     .map { !it.isPresent }
+                    .observeOnFx()
                     .subscribe(this::setDisable) { logger.warn("Error", it) }
         }
         progressindicator {

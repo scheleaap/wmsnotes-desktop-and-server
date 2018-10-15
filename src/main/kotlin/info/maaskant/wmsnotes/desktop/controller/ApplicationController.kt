@@ -25,17 +25,17 @@ class ApplicationController : Controller() {
     val addAttachment: Subject<File> = PublishSubject.create()
 
     init {
-        selectNote.subscribe(applicationModel.selectedNoteIdUpdates)
+        selectNote.subscribe(applicationModel.selectedNoteId)
         deleteCurrentNote
-                .filter { applicationModel.selectedNote != null }
-                .map { DeleteNoteCommand(applicationModel.selectedNote!!.noteId, applicationModel.selectedNote!!.revision) }
+                .filter { applicationModel.selectedNoteValue != null }
+                .map { DeleteNoteCommand(applicationModel.selectedNoteValue!!.noteId, applicationModel.selectedNoteValue!!.revision) }
                 .subscribe(commandProcessor.commands)
         addAttachment
-                .filter { applicationModel.selectedNote != null }
+                .filter { applicationModel.selectedNoteValue != null }
                 .map {
                     AddAttachmentCommand(
-                            noteId = applicationModel.selectedNote!!.noteId,
-                            lastRevision = applicationModel.selectedNote!!.revision,
+                            noteId = applicationModel.selectedNoteValue!!.noteId,
+                            lastRevision = applicationModel.selectedNoteValue!!.revision,
                             name = it.name,
                             content = it.readBytes()
                     )

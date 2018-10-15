@@ -6,6 +6,7 @@ import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.utilities.Optional
+import io.reactivex.Observable
 import io.reactivex.observables.ConnectableObservable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
@@ -23,28 +24,38 @@ class ApplicationModel @Inject constructor(val eventStore: EventStore, val noteP
             .mergeWith(eventStore.getEventUpdates())
             .publish()
 
-    var selectedNote: Note? = null
+    var selectedNoteValue: Note? = null
         private set
 
-    val selectedNoteIdUpdates: Subject<Optional<String>> = PublishSubject.create()
+    val selectedNoteId: Subject<Optional<String>> = PublishSubject.create()
 
-    val selectedNoteUpdates: ConnectableObservable<Optional<Note>> = selectedNoteIdUpdates
-            .subscribeOn(Schedulers.io())
-            .map {
-                it.map {
-                    noteProjector.project(it, null)
-                }
-            } // TODO: Move observable to NoteProjector?
-            .publish()
+    val isSwitchingToNewlySelectedNote: Subject<Boolean> = PublishSubject.create()
+
+    val selectedNote: ConnectableObservable<Optional<Note>> =
+            Observable.merge(
+                    selectedNoteId
+                            .doOnNext { isSwitchingToNewlySelectedNote.onNext(true) },
+                    allEventsWithUpdates
+                            .filter { it.noteId == selectedNoteValue?.noteId }
+                            .map { Optional(it.noteId) }
+            )
+                    .observeOn(Schedulers.io())
+                    .switchMap {
+                        Observable.just(it.map {
+                            noteProjector.project(it, null)
+                        }).subscribeOn(Schedulers.io())
+                    }
+                    .doOnNext { isSwitchingToNewlySelectedNote.onNext(false) }
+                    .publish()
 
     init {
-        selectedNoteUpdates.subscribe { selectedNote = it.value }
+        selectedNote.subscribe { selectedNoteValue = it.value }
+        selectedNoteId.subscribe { logger.info("Selected: ${it.value}") }
     }
 
     fun start() {
-        selectedNoteUpdates.connect()
+        selectedNote.connect()
         allEventsWithUpdates.connect()
-        selectedNoteIdUpdates.onNext(Optional())
+        selectedNoteId.onNext(Optional())
     }
-
 }

@@ -23,10 +23,12 @@ class DetailView : View() {
 
     private val commandProcessor: CommandProcessor = Injector.instance.commandProcessor()
 
+    private val hboxesByAttachmentName: MutableMap<String, HBox> = mutableMapOf()
+
     override val root = borderpane {
 
         center = textarea {
-            applicationModel.selectedNoteUpdates
+            applicationModel.selectedNote
                     .observeOnFx()
                     .subscribe {
                         if (it.value == null) {
@@ -37,18 +39,17 @@ class DetailView : View() {
                             isDisable = false
                         }
                     }
+            applicationModel.isSwitchingToNewlySelectedNote
+                    .observeOnFx()
+                    .subscribe(this::setDisable)
         }
 
         bottom = borderpane {
             center = vbox {
-                val hboxesByAttachmentName: MutableMap<String, HBox> = mutableMapOf()
-
-                applicationModel.selectedNoteUpdates
+                applicationModel.selectedNote
                         .observeOnFx()
                         .map { it.value?.attachments?.keys?.sorted() ?: emptyList() }
-                        .subscribe { names ->
-                            updateAttachments(names, this, hboxesByAttachmentName)
-                        }
+                        .subscribe { updateAttachments(it, this) }
             }
 
             right = button {
@@ -58,14 +59,15 @@ class DetailView : View() {
                         .filter { it.isNotEmpty() }
                         .map { it.first() }
                         .subscribe(applicationController.addAttachment)
-                applicationModel.selectedNoteIdUpdates
-                        .map { !it.isPresent }
-                        .subscribe(this::setDisable) { logger.warn("Error", it) }
             }
+
+            applicationModel.isSwitchingToNewlySelectedNote
+                    .observeOnFx()
+                    .subscribe(this::setDisable) { logger.warn("Error", it) }
         }
     }
 
-    private fun updateAttachments(attachmentNames: List<String>, vbox: VBox, hboxesByAttachmentName: MutableMap<String, HBox>) {
+    private fun updateAttachments(attachmentNames: List<String>, vbox: VBox) {
         val namesToDelete = HashSet(hboxesByAttachmentName.keys)
         for (name in attachmentNames) {
             if (name !in hboxesByAttachmentName) {
@@ -79,8 +81,8 @@ class DetailView : View() {
                 }
                 vbox += hbox
                 hboxesByAttachmentName[name] = hbox
-                namesToDelete.remove(name)
             }
+            namesToDelete.remove(name)
         }
         for (name in namesToDelete) {
             vbox.children.remove(hboxesByAttachmentName.remove(name))

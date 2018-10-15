@@ -34,7 +34,7 @@ class MainView : View() {
         }
 
         applicationModel
-                .selectedNoteUpdates
+                .selectedNote
                 .observeOnFx()
                 .subscribe {
                     if (it.value != null) {

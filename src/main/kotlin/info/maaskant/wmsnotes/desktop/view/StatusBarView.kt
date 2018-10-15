@@ -15,7 +15,7 @@ class StatusBarView : View() {
 
     init {
         applicationModel
-                .selectedNoteUpdates
+                .selectedNote
                 .observeOnFx()
                 .subscribe {
                     root.text = if (it.isPresent) "Note ${it.value?.title}" else null
