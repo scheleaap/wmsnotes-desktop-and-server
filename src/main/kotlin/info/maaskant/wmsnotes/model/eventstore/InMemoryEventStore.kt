@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.model.eventstore
 
+import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.model.Event
 import io.reactivex.Observable
 import io.reactivex.rxkotlin.toObservable
@@ -10,6 +11,8 @@ import javax.inject.Singleton
 @Singleton
 class InMemoryEventStore : EventStore {
 
+    private val logger by logger()
+
     private val events: MutableMap<Int, Event> = HashMap()
     private var lastEventId = 0
     private val newEventSubject: Subject<Event> = PublishSubject.create()
@@ -19,6 +22,7 @@ class InMemoryEventStore : EventStore {
                 .values
                 .filter { afterEventId == null || it.eventId > afterEventId }
                 .toObservable()
+                .doOnSubscribe { logger.debug("Loading all events after event id $afterEventId") }
     }
 
     override fun getEventsOfNote(noteId: String): Observable<Event> {
@@ -26,6 +30,7 @@ class InMemoryEventStore : EventStore {
                 .values
                 .filter { it.noteId == noteId }
                 .toObservable()
+                .doOnSubscribe { logger.debug("Loading all events of note $noteId") }
     }
 
     override fun appendEvent(event: Event): Event {
