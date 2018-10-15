@@ -11,7 +11,7 @@ class Note private constructor(
         val attachments: Map<String, ByteArray>
 ) {
 
-    private val nameReplacementPattern: Regex = Regex("""[\\\t ./&]""")
+    private val nameReplacementPattern: Regex = Regex("""[\\\t /&]""")
 
     constructor() : this(
             revision = 0,

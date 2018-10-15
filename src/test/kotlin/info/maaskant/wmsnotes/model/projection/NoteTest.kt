@@ -238,14 +238,14 @@ internal class NoteTest {
     fun `add attachment, special characters in name`() {
         // Given
         val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
-        val eventIn = AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "att \t.\\/&", content = binaryData)
+        val eventIn = AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "att \t\\/&.jpg", content = binaryData)
 
         // When
         val (noteAfter, eventOut) = noteBefore.apply(eventIn)
 
         // Then
         assertThat(eventOut).isEqualTo(eventIn)
-        assertThat(noteAfter.attachments.keys).isEqualTo(setOf("att______"))
+        assertThat(noteAfter.attachments.keys).isEqualTo(setOf("att_____.jpg"))
     }
 
     @Test
