@@ -18,7 +18,7 @@ class DelayingEventStore @Inject constructor(private val wrapped: EventStore) : 
     override fun getEventsOfNote(noteId: String): Observable<Event> {
         return wrapped
                 .getEventsOfNote(noteId)
-                .delay(1, TimeUnit.SECONDS)
+                .concatMap { Observable.just(it).delay(500, TimeUnit.MILLISECONDS) }
     }
 
     override fun appendEvent(event: Event): Event {

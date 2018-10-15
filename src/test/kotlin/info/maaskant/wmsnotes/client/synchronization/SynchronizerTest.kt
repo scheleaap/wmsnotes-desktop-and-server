@@ -28,7 +28,6 @@ internal class SynchronizerTest {
     private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub = mockk()
     private val remoteEventToLocalCommandMapper: RemoteEventToLocalCommandMapper = mockk()
     private val grpcCommandMapper: GrpcCommandMapper = GrpcCommandMapper()
-    private val grpcEventMapper: GrpcEventMapper = GrpcEventMapper()
     private lateinit var stateStorage: InMemorySynchronizerStateStorage
     private val noteProjector: NoteProjector = mockk()
 
@@ -319,7 +318,6 @@ internal class SynchronizerTest {
                     remoteCommandService,
                     remoteEventToLocalCommandMapper,
                     grpcCommandMapper,
-                    grpcEventMapper,
                     commandProcessor,
                     noteProjector,
                     stateStorage

@@ -84,9 +84,9 @@ class FileEventStore @Inject constructor(private val rootDirectory: File, privat
             val previousEventFilePath = eventFilePath(eventWithId.noteId, eventWithId.revision - 1)
             if (!previousEventFilePath.exists()) throw IllegalArgumentException("Previous revision of note ${eventWithId.noteId} does not exist ($previousEventFilePath)")
         }
-        if (eventFilePath.exists()) throw IllegalArgumentException("Event ${eventWithId} already exists ($eventFilePath)")
+        if (eventFilePath.exists()) throw IllegalArgumentException("Event $eventWithId already exists ($eventFilePath)")
 
-        logger.debug("Appending event $eventWithId")
+        logger.debug("Appending event $eventWithId, saving to $eventFilePath")
         eventFilePath.parentFile.mkdirs()
         eventFilePath.writeBytes(eventSerializer.serialize(eventWithId))
         newEventSubject.onNext(eventWithId)

@@ -44,8 +44,8 @@ interface ApplicationGraph {
 @Module
 class ApplicationModule {
 
-    private var storeInMemory = true
-//    private var storeInMemory = false
+//    private var storeInMemory = true
+    private var storeInMemory = false
 
     private val delay = true
 //    private val delay = false

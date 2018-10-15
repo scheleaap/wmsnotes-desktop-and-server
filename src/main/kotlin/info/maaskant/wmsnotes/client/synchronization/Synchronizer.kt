@@ -21,7 +21,6 @@ class Synchronizer @Inject constructor(
         private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
         private val remoteEventToLocalCommandMapper: RemoteEventToLocalCommandMapper,
         private val grpcCommandMapper: GrpcCommandMapper,
-        private val grpcEventMapper: GrpcEventMapper,
         private val commandProcessor: CommandProcessor,
         private val noteProjector: NoteProjector,
         private val state: SynchronizerStateStorage
