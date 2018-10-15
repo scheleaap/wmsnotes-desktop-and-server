@@ -42,6 +42,9 @@ class ToolbarView : View() {
                     .map { !it.isPresent }
                     .subscribe(this::setDisable) { logger.warn("Error", it) }
         }
-
+        progressindicator {
+            progress = -1.0
+            setPrefSize(16.0, 16.0)
+        }
     }
 }
