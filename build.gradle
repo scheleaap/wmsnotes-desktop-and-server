@@ -45,9 +45,7 @@ dependencies {
     compile 'com.github.thomasnield:rxkotlinfx:2.2.2'
     compile 'commons-codec:commons-codec:1.11'
 
-    // Storage: SQLite, RxJava-JDBC, serialization, MapDB
-//    compile 'org.xerial:sqlite-jdbc:3.21.0.1'
-//    compile 'com.github.davidmoten:rxjava2-jdbc:0.1-RC38'
+    // Storage: Serialization, MapDB
     compile 'com.esotericsoftware:kryo:5.0.0-RC1' // Selected based on https://github.com/eishay/jvm-serializers/wiki
     compile 'org.mapdb:mapdb:3.0.7'
 
