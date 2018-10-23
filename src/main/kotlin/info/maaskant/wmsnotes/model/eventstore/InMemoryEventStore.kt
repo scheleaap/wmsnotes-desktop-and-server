@@ -10,7 +10,6 @@ import javax.inject.Singleton
 
 @Singleton
 class InMemoryEventStore : EventStore {
-
     private val logger by logger()
 
     private val events: MutableMap<Int, Event> = HashMap()
@@ -25,10 +24,11 @@ class InMemoryEventStore : EventStore {
                 .doOnSubscribe { logger.debug("Loading all events after event id $afterEventId") }
     }
 
-    override fun getEventsOfNote(noteId: String): Observable<Event> {
+    override fun getEventsOfNote(noteId: String, afterRevision: Int?): Observable<Event> {
         return events
                 .values
                 .filter { it.noteId == noteId }
+                .filter { afterRevision == null || it.revision > afterRevision }
                 .toObservable()
                 .doOnSubscribe { logger.debug("Loading all events of note $noteId") }
     }

@@ -1,6 +1,11 @@
 package info.maaskant.wmsnotes.model.projection
 
+import au.com.console.kassava.kotlinEquals
+import au.com.console.kassava.kotlinToString
+import com.google.common.hash.Hashing
 import info.maaskant.wmsnotes.model.*
+import org.apache.commons.codec.digest.DigestUtils
+import java.security.MessageDigest
 import java.util.*
 
 class Note private constructor(
@@ -8,7 +13,8 @@ class Note private constructor(
         val exists: Boolean,
         val noteId: String,
         val title: String,
-        val attachments: Map<String, ByteArray>
+        val attachments: Map<String, ByteArray>,
+        val attachmentHashes: Map<String, String>
 ) {
 
     private val nameReplacementPattern: Regex = Regex("""[\\\t /&]""")
@@ -18,22 +24,29 @@ class Note private constructor(
             exists = false,
             noteId = "",
             title = "",
-            attachments = emptyMap()
+            attachments = emptyMap(),
+            attachmentHashes = emptyMap()
     )
+
+    override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::title, Note::attachmentHashes))
+    override fun hashCode() = Objects.hash(revision, noteId, title, attachmentHashes)
+    override fun toString() = kotlinToString(properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::title, Note::attachmentHashes))
 
     private fun copy(
             revision: Int = this.revision,
             exists: Boolean = this.exists,
             noteId: String = this.noteId,
             title: String = this.title,
-            attachments: Map<String, ByteArray> = this.attachments
+            attachments: Map<String, ByteArray> = this.attachments,
+            attachmentHashes: Map<String, String> = this.attachmentHashes
     ): Note {
         return Note(
                 revision = revision,
                 exists = exists,
                 noteId = noteId,
                 title = title,
-                attachments = attachments
+                attachments = attachments,
+                attachmentHashes = attachmentHashes
         )
     }
 
@@ -63,7 +76,8 @@ class Note private constructor(
         } else {
             copy(
                     revision = event.revision,
-                    attachments = attachments + (sanitizedName to event.content)
+                    attachments = attachments + (sanitizedName to event.content),
+                    attachmentHashes = attachmentHashes + (sanitizedName to DigestUtils.md5Hex(event.content))
             ) to event
         }
     }
@@ -74,7 +88,8 @@ class Note private constructor(
         return if (event.name in attachments) {
             copy(
                     revision = event.revision,
-                    attachments = attachments - event.name
+                    attachments = attachments - event.name,
+                    attachmentHashes = attachmentHashes - event.name
             ) to event
         } else {
             noChanges()
@@ -107,4 +122,23 @@ class Note private constructor(
         return Pair(this, null)
     }
 
+    companion object {
+        fun deserialize(
+                revision: Int,
+                exists: Boolean,
+                noteId: String,
+                title: String,
+                attachments: Map<String, ByteArray>,
+                attachmentHashes: Map<String, String>
+        ): Note {
+            return Note(
+                    revision = revision,
+                    exists = exists,
+                    noteId = noteId,
+                    title = title,
+                    attachments = attachments,
+                    attachmentHashes = attachmentHashes
+            )
+        }
+    }
 }

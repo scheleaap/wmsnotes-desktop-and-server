@@ -3,20 +3,28 @@ package info.maaskant.wmsnotes.model.eventstore
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
+import io.mockk.MockKException
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.util.*
 
 internal class FileEventStoreTest : EventStoreTest() {
 
     private lateinit var tempDir: File
-    private lateinit var eventSerializer: TestEventSerializer
+    private var eventSerializer: EventSerializer = mockk()
 
     @BeforeEach
     fun init() {
         tempDir = createTempDir(this::class.simpleName!!)
-        eventSerializer = TestEventSerializer()
+        clearMocks(
+                eventSerializer
+        )
+        every { eventSerializer.serialize(any()) }.returns(UUID.randomUUID().toString().toByteArray())
     }
 
     @Test
@@ -50,17 +58,12 @@ internal class FileEventStoreTest : EventStoreTest() {
         return FileEventStore(tempDir, eventSerializer)
     }
 
-    private class TestEventSerializer : EventSerializer {
-        private val map: MutableMap<Int, Event> = HashMap()
-
-        override fun serialize(event: Event): ByteArray {
-            map[event.eventId] = event
-            return event.eventId.toString().toByteArray()
-        }
-
-        override fun deserialize(bytes: ByteArray): Event {
-            return map[String(bytes).toInt()]!!
-        }
+    override fun <T : Event> givenAnEvent(eventId: Int, event: T): T {
+        val content = UUID.randomUUID().toString().toByteArray()
+        val event2 = event.withEventId(eventId)
+        every { eventSerializer.serialize(event2) }.returns(content)
+        every { eventSerializer.deserialize(content) }.returns(event2)
+        return event
     }
 
 }

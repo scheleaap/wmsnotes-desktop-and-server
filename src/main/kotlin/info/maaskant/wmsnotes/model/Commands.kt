@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.model
 
+import au.com.console.kassava.kotlinToString
 import java.util.*
 
 sealed class Command
@@ -8,6 +9,10 @@ data class CreateNoteCommand(val noteId: String?, val title: String) : Command()
 data class DeleteNoteCommand(val noteId: String, val lastRevision: Int) : Command()
 
 data class AddAttachmentCommand(val noteId: String, val lastRevision: Int, val name: String, val content: ByteArray) : Command() {
+    private val contentLength = content.size
+
+    override fun toString() = kotlinToString(properties = arrayOf(AddAttachmentCommand::noteId, AddAttachmentCommand::lastRevision, AddAttachmentCommand::name, AddAttachmentCommand::contentLength))
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

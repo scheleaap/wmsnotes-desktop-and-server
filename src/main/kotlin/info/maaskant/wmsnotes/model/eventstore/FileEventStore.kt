@@ -14,7 +14,6 @@ import kotlin.system.measureNanoTime
 
 @Singleton
 class FileEventStore @Inject constructor(private val rootDirectory: File, private val eventSerializer: EventSerializer) : EventStore {
-
     private val logger by logger()
 
     private var lastEventId: Int = 0
@@ -35,7 +34,7 @@ class FileEventStore @Inject constructor(private val rootDirectory: File, privat
                             }
                         }
             }
-            logger.debug("Indexed all events in %.1f seconds".format(Locale.ROOT, time/1000000.0))
+            logger.debug("Indexed all events in %.1f seconds".format(Locale.ROOT, time / 1000000.0))
         } catch (e: NoSuchElementException) {
         }
     }
@@ -59,13 +58,20 @@ class FileEventStore @Inject constructor(private val rootDirectory: File, privat
         }
     }
 
-    override fun getEventsOfNote(noteId: String): Observable<Event> {
+    override fun getEventsOfNote(noteId: String, afterRevision: Int?): Observable<Event> {
         return Observable.create { emitter ->
             logger.debug("Loading all events of note $noteId")
             try {
+                val afterRevisionFileName: String? = if (afterRevision != null) {
+                    "%010d".format(afterRevision)
+                } else {
+                    null
+                }
                 noteDirectoryPath(noteId)
                         .walkTopDown()
                         .filter { it.isFile }
+                        .sortedBy { it.name }
+                        .filter { afterRevisionFileName == null || it.name > afterRevisionFileName }
                         .forEach { emitter.onNext(eventSerializer.deserialize(it.readBytes())) }
                 emitter.onComplete()
             } catch (t: Throwable) {
@@ -73,6 +79,7 @@ class FileEventStore @Inject constructor(private val rootDirectory: File, privat
             }
         }
     }
+
 
     @Synchronized
     override fun appendEvent(event: Event): Event {

@@ -8,16 +8,15 @@ import javax.inject.Singleton
 
 @Singleton
 class DelayingEventStore @Inject constructor(private val wrapped: EventStore) : EventStore {
-
     override fun getEvents(afterEventId: Int?): Observable<Event> {
         return wrapped
                 .getEvents(afterEventId)
                 .delaySubscription(2, TimeUnit.SECONDS)
     }
 
-    override fun getEventsOfNote(noteId: String): Observable<Event> {
+    override fun getEventsOfNote(noteId: String, afterRevision: Int?): Observable<Event> {
         return wrapped
-                .getEventsOfNote(noteId)
+                .getEventsOfNote(noteId, afterRevision)
                 .concatMap { Observable.just(it).delay(500, TimeUnit.MILLISECONDS) }
     }
 
@@ -28,5 +27,4 @@ class DelayingEventStore @Inject constructor(private val wrapped: EventStore) : 
     override fun getEventUpdates(): Observable<Event> {
         return wrapped.getEventUpdates()
     }
-
 }

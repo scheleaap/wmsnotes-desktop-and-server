@@ -32,18 +32,17 @@ class ApplicationModel @Inject constructor(val eventStore: EventStore, val noteP
     val isSwitchingToNewlySelectedNote: Subject<Boolean> = PublishSubject.create()
 
     val selectedNote: ConnectableObservable<Optional<Note>> =
-            Observable.merge(
-                    selectedNoteId
-                            .doOnNext { isSwitchingToNewlySelectedNote.onNext(true) },
-                    allEventsWithUpdates
-                            .filter { it.noteId == selectedNoteValue?.noteId }
-                            .map { Optional(it.noteId) }
-            )
+            selectedNoteId
+                    .doOnNext { isSwitchingToNewlySelectedNote.onNext(true) }
                     .observeOn(Schedulers.io())
-                    .switchMap {
-                        Observable.just(it.map {
-                            noteProjector.project(it, null)
-                        }).subscribeOn(Schedulers.io())
+                    .switchMap { noteIdOptional ->
+                        if (noteIdOptional.value != null) {
+                            noteProjector.projectAndUpdate(noteIdOptional.value)
+                                    .subscribeOn(Schedulers.io())
+                                    .map { Optional(it) }
+                        } else {
+                            Observable.just(Optional())
+                        }
                     }
                     .doOnNext { isSwitchingToNewlySelectedNote.onNext(false) }
                     .publish()

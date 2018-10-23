@@ -13,8 +13,9 @@ import info.maaskant.wmsnotes.model.eventstore.DelayingEventStore
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.eventstore.FileEventStore
 import info.maaskant.wmsnotes.model.eventstore.InMemoryEventStore
-import info.maaskant.wmsnotes.model.projection.DefaultNoteProjector
 import info.maaskant.wmsnotes.model.projection.NoteProjector
+import info.maaskant.wmsnotes.model.projection.CachingNoteProjector
+import info.maaskant.wmsnotes.model.projection.cache.*
 import info.maaskant.wmsnotes.server.api.GrpcEventMapper
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
@@ -44,7 +45,7 @@ interface ApplicationGraph {
 @Module
 class ApplicationModule {
 
-//    private var storeInMemory = true
+    //    private var storeInMemory = true
     private var storeInMemory = false
 
     private val delay = true
@@ -104,7 +105,16 @@ class ApplicationModule {
 
     @Singleton
     @Provides
-    fun noteProjector(eventStore: EventStore): NoteProjector = DefaultNoteProjector(eventStore)
+    fun noteCache(noteSerializer: NoteSerializer): NoteCache =
+            FileNoteCache(File("data/cache/projected_notes"), noteSerializer)
+//    fun noteCache(): NoteCache = NoopNoteCache
+
+    @Singleton
+    @Provides
+    fun noteProjector(cachingNoteProjector: CachingNoteProjector): NoteProjector = cachingNoteProjector
+
+    @Provides
+    fun noteSerializer(kryoNoteSerializer: KryoNoteSerializer): NoteSerializer = kryoNoteSerializer
 
     @Singleton
     @Provides

@@ -48,10 +48,10 @@ class KryoEventSerializer @Inject constructor() : EventSerializer {
 
         override fun read(kryo: Kryo, input: Input, clazz: Class<out NoteCreatedEvent>): NoteCreatedEvent {
             val eventId = input.readInt(true)
-            val id = input.readString()
+            val noteId = input.readString()
             val revision = input.readInt(true)
             val title = input.readString()
-            return NoteCreatedEvent(eventId = eventId, noteId = id, revision = revision, title = title)
+            return NoteCreatedEvent(eventId = eventId, noteId = noteId, revision = revision, title = title)
         }
     }
 
@@ -64,9 +64,9 @@ class KryoEventSerializer @Inject constructor() : EventSerializer {
 
         override fun read(kryo: Kryo, input: Input, clazz: Class<out NoteDeletedEvent>): NoteDeletedEvent {
             val eventId = input.readInt(true)
-            val id = input.readString()
+            val noteId = input.readString()
             val revision = input.readInt(true)
-            return NoteDeletedEvent(eventId = eventId, noteId = id, revision = revision)
+            return NoteDeletedEvent(eventId = eventId, noteId = noteId, revision = revision)
         }
     }
 
@@ -82,12 +82,12 @@ class KryoEventSerializer @Inject constructor() : EventSerializer {
 
         override fun read(kryo: Kryo, input: Input, clazz: Class<out AttachmentAddedEvent>): AttachmentAddedEvent {
             val eventId = input.readInt(true)
-            val id = input.readString()
+            val noteId = input.readString()
             val revision = input.readInt(true)
             val name = input.readString()
             val contentLength = input.readInt(true)
             val content = input.readBytes(contentLength)
-            return AttachmentAddedEvent(eventId = eventId, noteId = id, revision = revision, name = name, content = content)
+            return AttachmentAddedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name, content = content)
         }
     }
 
@@ -101,10 +101,10 @@ class KryoEventSerializer @Inject constructor() : EventSerializer {
 
         override fun read(kryo: Kryo, input: Input, clazz: Class<out AttachmentDeletedEvent>): AttachmentDeletedEvent {
             val eventId = input.readInt(true)
-            val id = input.readString()
+            val noteId = input.readString()
             val revision = input.readInt(true)
             val name = input.readString()
-            return AttachmentDeletedEvent(eventId = eventId, noteId = id, revision = revision, name = name)
+            return AttachmentDeletedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name)
         }
     }
 }

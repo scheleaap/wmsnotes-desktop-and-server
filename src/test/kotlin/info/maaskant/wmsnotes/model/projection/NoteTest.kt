@@ -10,6 +10,7 @@ internal class NoteTest {
 
     private val randomNoteId = UUID.randomUUID().toString()
     private val binaryData = "data".toByteArray()
+    private val dataHash = "8d777f385d3dfec8815d20f7496026dc"
 
     @TestFactory
     fun `wrong revision`(): List<DynamicTest> {
@@ -117,6 +118,7 @@ internal class NoteTest {
         assertThat(noteAfter.noteId).isEqualTo(eventIn.noteId)
         assertThat(noteAfter.title).isEqualTo(eventIn.title)
         assertThat(noteAfter.attachments).isEqualTo(emptyMap<String, ByteArray>())
+        assertThat(noteAfter.attachmentHashes).isEqualTo(emptyMap<String, String>())
     }
 
     @TestFactory
@@ -200,8 +202,10 @@ internal class NoteTest {
         assertThat(eventOut).isEqualTo(eventIn)
         assertThat(noteBefore.revision).isEqualTo(1)
         assertThat(noteBefore.attachments).isEqualTo(emptyMap<String, ByteArray>())
+        assertThat(noteBefore.attachmentHashes).isEqualTo(emptyMap<String, String>())
         assertThat(noteAfter.revision).isEqualTo(2)
         assertThat(noteAfter.attachments).isEqualTo(mapOf("att" to binaryData))
+        assertThat(noteAfter.attachmentHashes).isEqualTo(mapOf("att" to dataHash))
     }
 
     @Test
@@ -264,8 +268,10 @@ internal class NoteTest {
         assertThat(eventOut).isEqualTo(eventIn)
         assertThat(noteBefore.revision).isEqualTo(2)
         assertThat(noteBefore.attachments).isEqualTo(mapOf("att" to binaryData))
+        assertThat(noteBefore.attachmentHashes).isEqualTo(mapOf("att" to dataHash))
         assertThat(noteAfter.revision).isEqualTo(3)
         assertThat(noteAfter.attachments).isEqualTo(emptyMap<String, ByteArray>())
+        assertThat(noteAfter.attachmentHashes).isEqualTo(emptyMap<String, String>())
     }
 
     @Test
