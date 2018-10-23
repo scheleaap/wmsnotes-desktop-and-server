@@ -3,6 +3,7 @@ package info.maaskant.wmsnotes.desktop.app
 import dagger.Component
 import dagger.Module
 import dagger.Provides
+import info.maaskant.wmsnotes.client.indexing.NoteIndex
 import info.maaskant.wmsnotes.client.synchronization.MapDbImporterStateStorage
 import info.maaskant.wmsnotes.client.synchronization.RemoteEventImporter
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileEventRepository
@@ -14,7 +15,7 @@ import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.eventstore.FileEventStore
 import info.maaskant.wmsnotes.model.eventstore.InMemoryEventStore
 import info.maaskant.wmsnotes.model.projection.NoteProjector
-import info.maaskant.wmsnotes.model.projection.CachingNoteProjector
+import info.maaskant.wmsnotes.model.projection.cache.CachingNoteProjector
 import info.maaskant.wmsnotes.model.projection.cache.*
 import info.maaskant.wmsnotes.server.api.GrpcEventMapper
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
@@ -22,10 +23,14 @@ import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
 import info.maaskant.wmsnotes.utilities.serialization.KryoEventSerializer
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import io.reactivex.schedulers.Schedulers
 import org.mapdb.DB
 import org.mapdb.DBMaker
 import java.io.File
+import java.lang.annotation.Documented
 import javax.inject.Singleton
+import javax.inject.Qualifier
+
 
 object Injector {
     val instance: ApplicationGraph = DaggerApplicationGraph.builder()
@@ -41,6 +46,16 @@ interface ApplicationGraph {
     fun remoteEventImporter(): RemoteEventImporter
 }
 
+
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
+annotation class StateDatabase
+
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
+annotation class IndexDatabase
 
 @Module
 class ApplicationModule {
@@ -85,10 +100,10 @@ class ApplicationModule {
                     .usePlaintext()
                     .build()
 
-    // Qualify once we're using MapDB for indices as well
     @Singleton
     @Provides
-    fun mapDbDatabase(): DB = if (storeInMemory) {
+    @StateDatabase
+    fun mapDbStateDatabase(): DB = if (storeInMemory) {
         DBMaker
                 .memoryDB()
                 .closeOnJvmShutdown()
@@ -105,9 +120,32 @@ class ApplicationModule {
 
     @Singleton
     @Provides
+    @IndexDatabase
+    fun mapDbIndexDatabase(): DB = if (storeInMemory) {
+        DBMaker
+                .memoryDB()
+                .closeOnJvmShutdown()
+                .make()
+    } else {
+        val file = File("data/indices.db")
+        file.parentFile.mkdirs()
+        DBMaker
+                .fileDB(file)
+                .fileMmapEnableIfSupported()
+                .closeOnJvmShutdown()
+                .make()
+    }
+
+    @Singleton
+    @Provides
     fun noteCache(noteSerializer: NoteSerializer): NoteCache =
             FileNoteCache(File("data/cache/projected_notes"), noteSerializer)
-//    fun noteCache(): NoteCache = NoopNoteCache
+    //    fun noteCache(): NoteCache = NoopNoteCache
+
+    @Singleton
+    @Provides
+    fun noteIndex(eventStore: EventStore, @IndexDatabase database: DB): NoteIndex =
+            NoteIndex(eventStore, database, Schedulers.io())
 
     @Singleton
     @Provides
@@ -122,7 +160,7 @@ class ApplicationModule {
             eventService: EventServiceGrpc.EventServiceBlockingStub,
             eventSerializer: EventSerializer,
             grpcEventMapper: GrpcEventMapper,
-            database: DB
+            @StateDatabase database: DB
     ): RemoteEventImporter {
         val eventRepository = if (storeInMemory) {
             InMemoryEventRepository()

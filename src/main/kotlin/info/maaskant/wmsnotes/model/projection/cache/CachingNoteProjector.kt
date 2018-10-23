@@ -1,8 +1,9 @@
-package info.maaskant.wmsnotes.model.projection
+package info.maaskant.wmsnotes.model.projection.cache
 
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import info.maaskant.wmsnotes.model.projection.cache.NoteCache
+import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.projection.NoteProjector
 import io.reactivex.Observable
 import javax.inject.Inject
 import javax.inject.Singleton

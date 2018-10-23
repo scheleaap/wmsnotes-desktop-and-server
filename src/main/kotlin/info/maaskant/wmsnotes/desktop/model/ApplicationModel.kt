@@ -2,7 +2,9 @@ package info.maaskant.wmsnotes.desktop.model
 
 import info.maaskant.wmsnotes.desktop.app.logger
 import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.client.indexing.NoteIndex
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.utilities.Optional
@@ -15,12 +17,17 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ApplicationModel @Inject constructor(val eventStore: EventStore, val noteProjector: NoteProjector) {
+class ApplicationModel @Inject constructor(
+        eventStore: EventStore,
+        noteIndex: NoteIndex,
+        private val noteProjector: NoteProjector
+) {
 
     private val logger by logger()
 
-    val allEventsWithUpdates: ConnectableObservable<Event> = eventStore.getEvents()
+    val allEventsWithUpdates: ConnectableObservable<Event> = noteIndex.getNotes()
             .subscribeOn(Schedulers.io())
+            .map { NoteCreatedEvent(0, it.noteId, 0, it.title) as Event }
             .mergeWith(eventStore.getEventUpdates())
             .publish()
 

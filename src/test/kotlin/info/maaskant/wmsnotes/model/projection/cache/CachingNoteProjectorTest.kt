@@ -4,7 +4,6 @@ import info.maaskant.wmsnotes.model.AttachmentAddedEvent
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import info.maaskant.wmsnotes.model.projection.CachingNoteProjector
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import io.mockk.*
@@ -34,6 +33,7 @@ internal class CachingNoteProjectorTest {
     fun init() {
         clearMocks(
                 wrappedProjector,
+                eventStore,
                 noteCache
         )
         every { noteCache.put(any()) } just Runs
