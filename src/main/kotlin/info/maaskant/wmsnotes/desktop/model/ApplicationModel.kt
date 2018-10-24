@@ -64,4 +64,11 @@ class ApplicationModel @Inject constructor(
         allEventsWithUpdates.connect()
         selectedNoteId.onNext(Optional())
     }
+
+    // TODO use this
+    sealed class Selection {
+        object NoSelection : Selection()
+        data class NoteSelection(val noteId: String, val title: String) : Selection()
+        data class FolderSelection(val path: String, val title: String) : Selection()
+    }
 }
