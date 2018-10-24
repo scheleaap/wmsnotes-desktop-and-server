@@ -1,0 +1,46 @@
+apply plugin: 'kotlin-kapt'
+apply plugin: 'application'
+
+dependencies {
+    compile project(':shared')
+
+    // Infrastructure
+    compile 'org.slf4j:slf4j-simple:1.7.25'
+    // See also https://medium.com/@Zhuinden/that-missing-guide-how-to-use-dagger2-ef116fbea97
+    compile 'com.google.dagger:dagger:2.16'
+    kapt 'com.google.dagger:dagger-compiler:2.16'
+    compile 'com.github.thomasnield:rxkotlinfx:2.2.2'
+
+    // gRPC
+    compile "io.grpc:grpc-netty-shaded:$grpcVersion"
+
+    // JavaFX, TornadoFX, RxKotlinFX, ControlsFX
+    compile 'no.tornado:tornadofx:1.7.15'
+    compile 'no.tornado:tornadofx-controlsfx:0.1.1'
+    compile 'org.controlsfx:controlsfx:8.40.14'
+//    compile group: 'org.fxmisc.richtext', name: 'richtextfx', version: '0.9.1'
+
+    // Configuration
+//    compile 'com.natpryce:konfig:1.6.10.0'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+startScripts {
+    mainClassName 'info.maaskant.wmsnotes.desktop.app.Application'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
+                'Main-Class': 'info.maaskant.wmsnotes.desktop.app.Application'
+        )
+    }
+    from configurations.compile.collect { entry -> zipTree(entry) }
+}
