@@ -7,7 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-internal abstract class EventRepositoryTest {
+internal abstract class ModifiableEventRepositoryTest {
 
     protected val events = listOf(
             NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1") to "DATA1",
@@ -50,12 +50,12 @@ internal abstract class EventRepositoryTest {
         val observer = TestObserver<Event>()
 
         // When
-        r.getEvents(afterEventId = 1).subscribe(observer)
+        r.getEvents().subscribe(observer)
 
         // Then
         observer.assertComplete()
         observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(listOf(events[1].first, events[2].first))
+        assertThat(observer.values().toList()).isEqualTo(listOf(events[0].first, events[1].first, events[2].first))
     }
 
     @Test

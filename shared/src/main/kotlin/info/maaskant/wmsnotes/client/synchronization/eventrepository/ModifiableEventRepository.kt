@@ -12,9 +12,10 @@ interface ModifiableEventRepository {
     /**
      * Returns a completing observable that streams all events currently in the repository. Updates are not included.
      */
-    fun getEvents(afterEventId: Int? = null): Observable<Event>
+    fun getEvents(): Observable<Event>
 
     fun addEvent(event: Event)
+
     fun removeEvent(event: Event)
 }
 

@@ -1,14 +1,14 @@
 package info.maaskant.wmsnotes.client.synchronization
 
-import info.maaskant.wmsnotes.utilities.logger
-import info.maaskant.wmsnotes.model.CommandProcessor
-import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
-import info.maaskant.wmsnotes.model.CreateNoteCommand
-import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
+import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.CreateNoteCommand
+import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
+import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -100,6 +100,8 @@ class Synchronizer @Inject constructor(
                         .getEvents()
                         .filter { it.noteId == noteId }
                         .filter { it.revision <= lastRemoteRevision }
+                        .toList()
+                        .blockingGet() // Prevent modifying the underlying collection
                         .forEach { remoteEvents.removeEvent(it) }
             }
             Synchronizer.ConflictResolutionChoice.REMOTE -> {
@@ -107,6 +109,8 @@ class Synchronizer @Inject constructor(
                         .getEvents()
                         .filter { it.noteId == noteId }
                         .filter { it.revision <= lastLocalRevision }
+                        .toList()
+                        .blockingGet() // Prevent modifying the underlying collection
                         .forEach { localEvents.removeEvent(it) }
             }
             Synchronizer.ConflictResolutionChoice.BOTH -> {
@@ -117,6 +121,8 @@ class Synchronizer @Inject constructor(
                         .getEvents()
                         .filter { it.noteId == noteId }
                         .filter { it.revision <= lastLocalRevision }
+                        .toList()
+                        .blockingGet() // Prevent modifying the underlying collection
                         .forEach { localEvents.removeEvent(it) }
 
             }

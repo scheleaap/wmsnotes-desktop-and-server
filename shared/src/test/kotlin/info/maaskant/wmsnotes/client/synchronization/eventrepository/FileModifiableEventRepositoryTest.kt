@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 
-internal class FileEventRepositoryTest : EventRepositoryTest() {
+internal class FileModifiableEventRepositoryTest : ModifiableEventRepositoryTest() {
 
     private val eventSerializer: EventSerializer = mockk()
 
@@ -30,7 +30,7 @@ internal class FileEventRepositoryTest : EventRepositoryTest() {
     fun `check that directory is empty on initialization`() {
         // Given
         val tempDir = createTempDir(this::class.simpleName!!)
-        FileEventRepository(tempDir, eventSerializer)
+        FileModifiableEventRepository(tempDir, eventSerializer)
 
         // Then
         assertThat(tempDir.list()).isEmpty()
@@ -67,7 +67,7 @@ internal class FileEventRepositoryTest : EventRepositoryTest() {
     }
 
     override fun createInstance(): ModifiableEventRepository {
-        return FileEventRepository(tempDir, eventSerializer)
+        return FileModifiableEventRepository(tempDir, eventSerializer)
     }
 
 }

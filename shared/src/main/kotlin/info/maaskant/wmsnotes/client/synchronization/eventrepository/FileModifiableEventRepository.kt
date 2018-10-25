@@ -6,7 +6,7 @@ import io.reactivex.Observable
 import java.io.File
 import javax.inject.Inject
 
-class FileEventRepository @Inject constructor(private val directory: File, private val eventSerializer: EventSerializer) : ModifiableEventRepository {
+class FileModifiableEventRepository @Inject constructor(private val directory: File, private val eventSerializer: EventSerializer) : ModifiableEventRepository {
 
     override fun getEvent(eventId: Int): Event? {
         val eventPath = eventPath(eventId)
@@ -17,13 +17,12 @@ class FileEventRepository @Inject constructor(private val directory: File, priva
         }
     }
 
-    override fun getEvents(afterEventId: Int?): Observable<Event> {
+    override fun getEvents(): Observable<Event> {
         return Observable.create { emitter ->
             try {
-                val afterFileName: String? = "%010d".format(afterEventId)
                 directory
                         .walkTopDown()
-                        .filter { it.isFile && (afterFileName == null || it.name > afterFileName) }
+                        .filter { it.isFile }
                         .forEach { emitter.onNext(eventSerializer.deserialize(it.readBytes())) }
                 emitter.onComplete()
             } catch (t: Throwable) {

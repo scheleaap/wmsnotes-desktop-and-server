@@ -5,8 +5,8 @@ import dagger.Module
 import dagger.Provides
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.client.indexing.NoteIndex
-import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileEventRepository
-import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryEventRepository
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileModifiableEventRepository
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryModifiableEventRepository
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.eventstore.DelayingEventStore
@@ -159,9 +159,9 @@ class ApplicationModule {
     @LocalEventRepository
     fun modifiableEventRepositoryForLocalEvents(eventSerializer: EventSerializer) =
             if (storeInMemory) {
-                InMemoryEventRepository()
+                InMemoryModifiableEventRepository()
             } else {
-                FileEventRepository(File("desktop_data/synchronization/local_events"), eventSerializer)
+                FileModifiableEventRepository(File("desktop_data/synchronization/local_events"), eventSerializer)
             }
 
     @Singleton
@@ -169,9 +169,9 @@ class ApplicationModule {
     @RemoteEventRepository
     fun modifiableEventRepositoryForRemoteEvents(eventSerializer: EventSerializer) =
             if (storeInMemory) {
-                InMemoryEventRepository()
+                InMemoryModifiableEventRepository()
             } else {
-                FileEventRepository(File("desktop_data/synchronization/remote_events"), eventSerializer)
+                FileModifiableEventRepository(File("desktop_data/synchronization/remote_events"), eventSerializer)
             }
 
     @Singleton

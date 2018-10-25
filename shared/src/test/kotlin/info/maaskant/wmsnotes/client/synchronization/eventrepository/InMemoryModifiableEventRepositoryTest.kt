@@ -1,9 +1,9 @@
 package info.maaskant.wmsnotes.client.synchronization.eventrepository
 
-internal class InMemoryEventRepositoryTest : EventRepositoryTest() {
+internal class InMemoryModifiableEventRepositoryTest : ModifiableEventRepositoryTest() {
 
     override fun createInstance(): ModifiableEventRepository {
-        return InMemoryEventRepository()
+        return InMemoryModifiableEventRepository()
     }
 
 }

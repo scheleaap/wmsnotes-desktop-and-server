@@ -1,6 +1,6 @@
 package info.maaskant.wmsnotes.client.synchronization
 
-import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryEventRepository
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.eventstore.EventStore
@@ -64,7 +64,7 @@ internal class SynchronizerTest {
 
         // Then
         verifySequence {
-            localEvents.getEvents(any())
+            localEvents.getEvents()
             remoteCommandService.postCommand(remoteRequest1)
             localEvents.removeEvent(event1)
             remoteCommandService.postCommand(remoteRequest2)
@@ -93,7 +93,7 @@ internal class SynchronizerTest {
 
         // Then
         verifySequence {
-            localEvents.getEvents(any())
+            localEvents.getEvents()
             remoteCommandService.postCommand(remoteRequest1)
             remoteCommandService.postCommand(remoteRequest3)
             localEvents.removeEvent(event3)
@@ -289,7 +289,7 @@ internal class SynchronizerTest {
     }
 
     private fun createInMemoryEventRepository(vararg events: Event): ModifiableEventRepository {
-        val r = InMemoryEventRepository()
+        val r = InMemoryModifiableEventRepository()
         for (event in events) {
             r.addEvent(event)
         }

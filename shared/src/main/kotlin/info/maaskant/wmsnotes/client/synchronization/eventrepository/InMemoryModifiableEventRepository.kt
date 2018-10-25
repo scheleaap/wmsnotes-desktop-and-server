@@ -4,7 +4,7 @@ import info.maaskant.wmsnotes.model.Event
 import io.reactivex.Observable
 import io.reactivex.rxkotlin.toObservable
 
-class InMemoryEventRepository() : ModifiableEventRepository {
+class InMemoryModifiableEventRepository : ModifiableEventRepository {
 
     private val events: MutableMap<Int, Event> = HashMap()
 
@@ -16,8 +16,8 @@ class InMemoryEventRepository() : ModifiableEventRepository {
         }
     }
 
-    override fun getEvents(afterEventId: Int?): Observable<Event> {
-        return events.values.filter { afterEventId == null || it.eventId > afterEventId }.toObservable()
+    override fun getEvents(): Observable<Event> {
+        return events.values.toObservable()
     }
 
     override fun addEvent(event: Event) {
