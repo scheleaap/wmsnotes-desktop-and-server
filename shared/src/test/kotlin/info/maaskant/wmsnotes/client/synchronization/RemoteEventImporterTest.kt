@@ -2,7 +2,7 @@ package info.maaskant.wmsnotes.client.synchronization
 
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
-import info.maaskant.wmsnotes.server.api.GrpcEventMapper
+import info.maaskant.wmsnotes.client.api.GrpcEventMapper
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import io.mockk.clearMocks
@@ -25,7 +25,7 @@ internal class RemoteEventImporterTest {
     }
 
     @Test
-    fun `store new events`() {
+    fun `load and store events`() {
         // Given
         val event1 = remoteNoteEvent(i = 1) to modelEvent(i = 1)
         val event2 = remoteNoteEvent(i = 2) to modelEvent(i = 2)

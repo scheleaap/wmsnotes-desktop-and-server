@@ -44,6 +44,8 @@ class TreeView : View() {
                     when (it) {
                         is NoteCreatedEvent -> noteCreated(it)
                         is NoteDeletedEvent -> noteDeleted(it)
+                        else -> {
+                        }
                     }
                 }, { logger.warn("Error", it) })
     }

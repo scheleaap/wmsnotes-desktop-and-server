@@ -3,9 +3,8 @@ package info.maaskant.wmsnotes.desktop.app
 import dagger.Component
 import dagger.Module
 import dagger.Provides
+import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.client.indexing.NoteIndex
-import info.maaskant.wmsnotes.client.synchronization.MapDbImporterStateStorage
-import info.maaskant.wmsnotes.client.synchronization.RemoteEventImporter
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryEventRepository
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
@@ -17,7 +16,10 @@ import info.maaskant.wmsnotes.model.eventstore.InMemoryEventStore
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.model.projection.cache.CachingNoteProjector
 import info.maaskant.wmsnotes.model.projection.cache.*
-import info.maaskant.wmsnotes.server.api.GrpcEventMapper
+import info.maaskant.wmsnotes.client.api.GrpcEventMapper
+import info.maaskant.wmsnotes.client.synchronization.*
+import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
+import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
 import info.maaskant.wmsnotes.utilities.serialization.KryoEventSerializer
@@ -27,7 +29,6 @@ import io.reactivex.schedulers.Schedulers
 import org.mapdb.DB
 import org.mapdb.DBMaker
 import java.io.File
-import java.lang.annotation.Documented
 import javax.inject.Singleton
 import javax.inject.Qualifier
 
@@ -43,35 +44,34 @@ object Injector {
 interface ApplicationGraph {
     fun applicationModel(): ApplicationModel
     fun commandProcessor(): CommandProcessor
+    fun localEventImporter(): LocalEventImporter
     fun remoteEventImporter(): RemoteEventImporter
+    fun synchronizer(): Synchronizer
 }
 
-
-@Qualifier
-@MustBeDocumented
-@Retention(AnnotationRetention.RUNTIME)
-annotation class StateDatabase
-
-@Qualifier
-@MustBeDocumented
-@Retention(AnnotationRetention.RUNTIME)
-annotation class IndexDatabase
 
 @Module
 class ApplicationModule {
 
-    //    private var storeInMemory = true
-    private var storeInMemory = false
+    private var storeInMemory =
+//            true
+            false
 
-    private val delay = true
-//    private val delay = false
+    private val delay =
+//            true
+            false
 
     @Provides
     fun eventSerializer(kryoEventSerializer: KryoEventSerializer): EventSerializer = kryoEventSerializer
 
     @Singleton
     @Provides
-    fun eventService(managedChannel: ManagedChannel) =
+    fun grpcCommandService(managedChannel: ManagedChannel) =
+            CommandServiceGrpc.newBlockingStub(managedChannel)!!
+
+    @Singleton
+    @Provides
+    fun grpcEventService(managedChannel: ManagedChannel) =
             EventServiceGrpc.newBlockingStub(managedChannel)!!
 
     @Singleton
@@ -80,7 +80,7 @@ class ApplicationModule {
         val realStore = if (storeInMemory) {
             InMemoryEventStore()
         } else {
-            FileEventStore(File("data/events"), eventSerializer)
+            FileEventStore(File("desktop_data/events"), eventSerializer)
         }
         return if (delay) {
             DelayingEventStore(realStore)
@@ -109,7 +109,7 @@ class ApplicationModule {
                 .closeOnJvmShutdown()
                 .make()
     } else {
-        val file = File("data/synchronization/state.db")
+        val file = File("desktop_data/synchronization/state.db")
         file.parentFile.mkdirs()
         DBMaker
                 .fileDB(file)
@@ -127,7 +127,7 @@ class ApplicationModule {
                 .closeOnJvmShutdown()
                 .make()
     } else {
-        val file = File("data/indices.db")
+        val file = File("desktop_data/indices.db")
         file.parentFile.mkdirs()
         DBMaker
                 .fileDB(file)
@@ -139,7 +139,7 @@ class ApplicationModule {
     @Singleton
     @Provides
     fun noteCache(noteSerializer: NoteSerializer): NoteCache =
-            FileNoteCache(File("data/cache/projected_notes"), noteSerializer)
+            FileNoteCache(File("desktop_data/cache/projected_notes"), noteSerializer)
     //    fun noteCache(): NoteCache = NoopNoteCache
 
     @Singleton
@@ -156,19 +156,93 @@ class ApplicationModule {
 
     @Singleton
     @Provides
+    @LocalEventRepository
+    fun modifiableEventRepositoryForLocalEvents(eventSerializer: EventSerializer) =
+            if (storeInMemory) {
+                InMemoryEventRepository()
+            } else {
+                FileEventRepository(File("desktop_data/synchronization/local_events"), eventSerializer)
+            }
+
+    @Singleton
+    @Provides
+    @RemoteEventRepository
+    fun modifiableEventRepositoryForRemoteEvents(eventSerializer: EventSerializer) =
+            if (storeInMemory) {
+                InMemoryEventRepository()
+            } else {
+                FileEventRepository(File("desktop_data/synchronization/remote_events"), eventSerializer)
+            }
+
+    @Singleton
+    @Provides
+    fun localEventImporter(
+            eventStore: EventStore,
+            @LocalEventRepository eventRepository: ModifiableEventRepository,
+            @StateDatabase database: DB
+    ) =
+            LocalEventImporter(
+                    eventStore,
+                    eventRepository,
+                    MapDbImporterStateStorage(MapDbImporterStateStorage.ImporterType.LOCAL, database)
+            )
+
+    @Singleton
+    @Provides
     fun remoteEventImporter(
-            eventService: EventServiceGrpc.EventServiceBlockingStub,
-            eventSerializer: EventSerializer,
+            grpcEventService: EventServiceGrpc.EventServiceBlockingStub,
+            @RemoteEventRepository eventRepository: ModifiableEventRepository,
             grpcEventMapper: GrpcEventMapper,
             @StateDatabase database: DB
-    ): RemoteEventImporter {
-        val eventRepository = if (storeInMemory) {
-            InMemoryEventRepository()
-        } else {
-            FileEventRepository(File("data/synchronization/remote_events"), eventSerializer)
-        }
-        val importerStateStorage = MapDbImporterStateStorage(MapDbImporterStateStorage.ImporterType.REMOTE, database)
-        return RemoteEventImporter(eventService, eventRepository, grpcEventMapper, importerStateStorage)
-    }
+    ) =
+            RemoteEventImporter(
+                    grpcEventService,
+                    eventRepository,
+                    grpcEventMapper,
+                    MapDbImporterStateStorage(MapDbImporterStateStorage.ImporterType.REMOTE, database)
+            )
+
+    @Singleton
+    @Provides
+    fun synchronizer(
+            @LocalEventRepository localEvents: ModifiableEventRepository,
+            @RemoteEventRepository remoteEvents: ModifiableEventRepository,
+            remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
+            eventToCommandMapper: EventToCommandMapper,
+            grpcCommandMapper: GrpcCommandMapper,
+            commandProcessor: CommandProcessor,
+            noteProjector: NoteProjector,
+            @StateDatabase database: DB
+    ) = Synchronizer(
+            localEvents,
+            remoteEvents,
+            remoteCommandService,
+            eventToCommandMapper,
+            grpcCommandMapper,
+            commandProcessor,
+            noteProjector,
+            MapDbSynchronizerStateStorage(database)
+    )
+
+    @Qualifier
+    @MustBeDocumented
+    @Retention(AnnotationRetention.RUNTIME)
+    annotation class StateDatabase
+
+    @Qualifier
+    @MustBeDocumented
+    @Retention(AnnotationRetention.RUNTIME)
+    annotation class IndexDatabase
+
+    @Qualifier
+    @MustBeDocumented
+    @Retention(AnnotationRetention.RUNTIME)
+    annotation class LocalEventRepository
+
+    @Qualifier
+    @MustBeDocumented
+    @Retention(AnnotationRetention.RUNTIME)
+    annotation class RemoteEventRepository
+
 }
 

@@ -2,7 +2,10 @@ package info.maaskant.wmsnotes.model.projection
 
 import info.maaskant.wmsnotes.model.*
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.assertThrows
 import java.util.*
 
 @Suppress("RemoveRedundantBackticks")
@@ -88,7 +91,6 @@ internal class NoteTest {
             }
         }
     }
-
 
     @Test
     fun `after construction`() {
@@ -250,6 +252,18 @@ internal class NoteTest {
         // Then
         assertThat(eventOut).isEqualTo(eventIn)
         assertThat(noteAfter.attachments.keys).isEqualTo(setOf("att_____.jpg"))
+    }
+
+    @Test
+    fun `add attachment, empty name`() {
+        // Given
+        val noteBefore = noteWithEvents(
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title")
+        )
+        val eventIn = AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "", content = binaryData)
+
+        // When / Then
+        assertThrows<IllegalArgumentException> { noteBefore.apply(eventIn) }
     }
 
     @Test

@@ -6,8 +6,7 @@ import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
-import info.maaskant.wmsnotes.server.api.GrpcCommandMapper
-import info.maaskant.wmsnotes.server.api.GrpcEventMapper
+import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import io.mockk.*
 import io.reactivex.Observable
@@ -26,8 +25,8 @@ internal class SynchronizerTest {
     private val eventStore: EventStore = mockk()
     private val commandProcessor: CommandProcessor = mockk()
     private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub = mockk()
-    private val remoteEventToLocalCommandMapper: RemoteEventToLocalCommandMapper = mockk()
-    private val grpcCommandMapper: GrpcCommandMapper = GrpcCommandMapper()
+    private val eventToCommandMapper: EventToCommandMapper = mockk()
+    private val grpcCommandMapper: GrpcCommandMapper = mockk()
     private lateinit var stateStorage: InMemorySynchronizerStateStorage
     private val noteProjector: NoteProjector = mockk()
 
@@ -39,7 +38,7 @@ internal class SynchronizerTest {
                 eventStore,
                 commandProcessor,
                 remoteCommandService,
-                remoteEventToLocalCommandMapper,
+                eventToCommandMapper,
                 noteProjector
         )
         stateStorage = InMemorySynchronizerStateStorage()
@@ -55,9 +54,9 @@ internal class SynchronizerTest {
         every { localEvents.getEvents() }.returns(Observable.just(event1, event2, event3))
         every { localEvents.removeEvent(any()) }.answers {}
         every { remoteEvents.getEvents() }.returns(Observable.empty())
-        every { remoteCommandService.postCommand(createRemoteRequest(event1, null)) }.returns(remoteSuccess(event1.eventId, event1.revision))
-        every { remoteCommandService.postCommand(createRemoteRequest(event2, event1.revision)) }.returns(remoteSuccess(event2.eventId, event2.revision))
-        every { remoteCommandService.postCommand(createRemoteRequest(event3, null)) }.returns(remoteSuccess(event3.eventId, event3.revision))
+        val remoteRequest1 = givenARemoteResponseForALocalEvent(event1, null, remoteSuccess(event1.eventId, event1.revision))
+        val remoteRequest2 = givenARemoteResponseForALocalEvent(event2, event1.revision, remoteSuccess(event2.eventId, event2.revision))
+        val remoteRequest3 = givenARemoteResponseForALocalEvent(event3, null, remoteSuccess(event3.eventId, event3.revision))
         val s = createSynchronizer()
 
         // When
@@ -66,11 +65,11 @@ internal class SynchronizerTest {
         // Then
         verifySequence {
             localEvents.getEvents(any())
-            remoteCommandService.postCommand(createRemoteRequest(event1, null))
+            remoteCommandService.postCommand(remoteRequest1)
             localEvents.removeEvent(event1)
-            remoteCommandService.postCommand(createRemoteRequest(event2, event1.revision))
+            remoteCommandService.postCommand(remoteRequest2)
             localEvents.removeEvent(event2)
-            remoteCommandService.postCommand(createRemoteRequest(event3, null))
+            remoteCommandService.postCommand(remoteRequest3)
             localEvents.removeEvent(event3)
         }
     }
@@ -84,9 +83,9 @@ internal class SynchronizerTest {
         every { localEvents.getEvents() }.returns(Observable.just(event1, event2, event3))
         every { localEvents.removeEvent(any()) }.answers {}
         every { remoteEvents.getEvents() }.returns(Observable.empty())
-        every { remoteCommandService.postCommand(createRemoteRequest(event1, null)) }.returns(remoteError())
-        every { remoteCommandService.postCommand(createRemoteRequest(event2, event1.revision)) }.returns(remoteError())
-        every { remoteCommandService.postCommand(createRemoteRequest(event3, null)) }.returns(remoteSuccess(event3.eventId, event3.revision))
+        val remoteRequest1 = givenARemoteResponseForALocalEvent(event1, null, remoteError())
+        givenARemoteResponseForALocalEvent(event2, event1.revision, remoteError())
+        val remoteRequest3 = givenARemoteResponseForALocalEvent(event3, null, remoteSuccess(event3.eventId, event3.revision))
         val s = createSynchronizer()
 
         // When
@@ -95,8 +94,8 @@ internal class SynchronizerTest {
         // Then
         verifySequence {
             localEvents.getEvents(any())
-            remoteCommandService.postCommand(createRemoteRequest(event1, null))
-            remoteCommandService.postCommand(createRemoteRequest(event3, null))
+            remoteCommandService.postCommand(remoteRequest1)
+            remoteCommandService.postCommand(remoteRequest3)
             localEvents.removeEvent(event3)
         }
     }
@@ -183,8 +182,8 @@ internal class SynchronizerTest {
         val remoteInboundEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 10)
         val remoteInboundEvent2 = modelEvent(eventId = 2, noteId = 1, revision = 11)
         val remoteEvents = createInMemoryEventRepository(remoteInboundEvent1, remoteInboundEvent2)
-        every { remoteCommandService.postCommand(createRemoteRequest(localOutboundEvent1, remoteInboundEvent2.revision)) }.returns(remoteSuccess(remoteInboundEvent2.eventId + 1, remoteInboundEvent2.revision + 1))
-        every { remoteCommandService.postCommand(createRemoteRequest(localOutboundEvent2, remoteInboundEvent2.revision + 1)) }.returns(remoteSuccess(remoteInboundEvent2.eventId + 2, remoteInboundEvent2.revision + 2))
+        val remoteRequest1 = givenARemoteResponseForALocalEvent(localOutboundEvent1, remoteInboundEvent2.revision, remoteSuccess(remoteInboundEvent2.eventId + 1, remoteInboundEvent2.revision + 1))
+        val remoteRequest2 = givenARemoteResponseForALocalEvent(localOutboundEvent2, remoteInboundEvent2.revision + 1, remoteSuccess(remoteInboundEvent2.eventId + 2, remoteInboundEvent2.revision + 2))
         stateStorage.lastLocalRevisions[localOutboundEvent2.noteId] = null
         stateStorage.lastRemoteRevisions[remoteInboundEvent2.noteId] = remoteInboundEvent2.revision - 1
         val s = createSynchronizer(localEvents, remoteEvents)
@@ -201,8 +200,8 @@ internal class SynchronizerTest {
 
         // Then
         verifySequence {
-            remoteCommandService.postCommand(createRemoteRequest(localOutboundEvent1, remoteInboundEvent2.revision))
-            remoteCommandService.postCommand(createRemoteRequest(localOutboundEvent2, remoteInboundEvent2.revision + 1))
+            remoteCommandService.postCommand(remoteRequest1)
+            remoteCommandService.postCommand(remoteRequest2)
             commandProcessor.blockingProcessCommand(any())?.wasNot(Called)
         }
         assertThat(remoteEvents.getEvent(remoteInboundEvent1.eventId)).isNull()
@@ -304,10 +303,6 @@ internal class SynchronizerTest {
         return note
     }
 
-    private fun createRemoteRequest(event: Event, lastRevision: Int?): info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest {
-        return grpcCommandMapper.toGrpcPostCommandRequest(event, lastRevision)
-    }
-
     private fun createSynchronizer(
             localEvents: ModifiableEventRepository = this.localEvents,
             remoteEvents: ModifiableEventRepository = this.remoteEvents
@@ -316,7 +311,7 @@ internal class SynchronizerTest {
                     localEvents,
                     remoteEvents,
                     remoteCommandService,
-                    remoteEventToLocalCommandMapper,
+                    eventToCommandMapper,
                     grpcCommandMapper,
                     commandProcessor,
                     noteProjector,
@@ -325,14 +320,14 @@ internal class SynchronizerTest {
 
     private fun givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent: Event, lastRevision: Int?, localEvent: Event): Command {
         val command = modelCommand(remoteEvent.noteId, lastRevision)
-        every { remoteEventToLocalCommandMapper.map(remoteEvent, lastRevision) }.returns(command)
+        every { eventToCommandMapper.map(remoteEvent, lastRevision) }.returns(command)
         every { commandProcessor.blockingProcessCommand(command) }.returns(localEvent)
         return command
     }
 
     private fun givenProcessingOfARemoteEventFails(remoteEvent: Event): Command {
         val command = modelCommand(remoteEvent.noteId)
-        every { remoteEventToLocalCommandMapper.map(remoteEvent, any()) }.returns(command)
+        every { eventToCommandMapper.map(remoteEvent, any()) }.returns(command)
         every { commandProcessor.blockingProcessCommand(command) }.throws(IllegalArgumentException())
         return command
     }
@@ -342,6 +337,14 @@ internal class SynchronizerTest {
         return note
     }
 
+    private fun givenARemoteResponseForALocalEvent(localEvent: Event, lastRemoteRevision: Int?, postCommandResponse: info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse): info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest {
+        val command: Command = mockk()
+        every { eventToCommandMapper.map(localEvent, lastRemoteRevision) }.returns(command)
+        val remoteRequest: info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest = mockk()
+        every { grpcCommandMapper.toGrpcPostCommandRequest(command) }.returns(remoteRequest)
+        every { remoteCommandService.postCommand(remoteRequest) }.returns(postCommandResponse)
+        return remoteRequest
+    }
 }
 
 private fun modelCommand(noteId: String, lastRevision: Int? = null): Command {

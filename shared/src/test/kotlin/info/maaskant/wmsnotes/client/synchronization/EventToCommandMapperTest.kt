@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 
-internal class RemoteEventToLocalCommandMapperTest {
+internal class EventToCommandMapperTest {
 
     @TestFactory
     fun test(): List<DynamicTest> {
@@ -22,7 +22,7 @@ internal class RemoteEventToLocalCommandMapperTest {
         )
         return pairs.map { (event, expectedCommand) ->
             DynamicTest.dynamicTest("${event::class.simpleName} to ${expectedCommand::class.simpleName}") {
-                assertThat(RemoteEventToLocalCommandMapper().map(event, lastRevision = lastRevision))
+                assertThat(EventToCommandMapper().map(event, lastRevision = lastRevision))
                         .isEqualTo(expectedCommand)
             }
         }

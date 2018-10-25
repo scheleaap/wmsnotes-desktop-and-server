@@ -1,10 +1,10 @@
 package info.maaskant.wmsnotes.client.synchronization
 
+import info.maaskant.wmsnotes.client.api.GrpcEventMapper
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
-import info.maaskant.wmsnotes.utilities.logger
-import info.maaskant.wmsnotes.server.api.GrpcEventMapper
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
+import info.maaskant.wmsnotes.utilities.logger
 import io.grpc.StatusRuntimeException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,7 +20,8 @@ class RemoteEventImporter @Inject constructor(
     private val logger by logger()
 
     fun loadAndStoreRemoteEvents() {
-        logger.info("Getting and processing remote events")
+        logger.debug("Retrieving new remote events")
+        var numberOfNewEvents = 0
         try {
             val request = createGetEventsRequest()
             val response: Iterator<Event.GetEventsResponse> = eventService.getEvents(request)
@@ -29,10 +30,13 @@ class RemoteEventImporter @Inject constructor(
                 logger.debug("Storing new remote event: $event")
                 eventRepository.addEvent(event)
                 state.lastEventId = event.eventId
+                numberOfNewEvents++
             }
         } catch (e: StatusRuntimeException) {
             logger.warn("Error while retrieving events: ${e.status.code}")
             return
+        } finally {
+            if (numberOfNewEvents > 0) logger.info("Added $numberOfNewEvents new remote events")
         }
     }
 

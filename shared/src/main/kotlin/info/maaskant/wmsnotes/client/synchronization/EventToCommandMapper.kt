@@ -1,10 +1,11 @@
 package info.maaskant.wmsnotes.client.synchronization
 
 import info.maaskant.wmsnotes.model.*
+import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class RemoteEventToLocalCommandMapper {
+class EventToCommandMapper @Inject constructor() {
     fun map(source: Event, lastRevision: Int?): Command {
         return when (source) {
             is NoteCreatedEvent -> CreateNoteCommand(source.noteId, source.title)

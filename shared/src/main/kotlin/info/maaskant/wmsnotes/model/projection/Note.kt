@@ -2,10 +2,8 @@ package info.maaskant.wmsnotes.model.projection
 
 import au.com.console.kassava.kotlinEquals
 import au.com.console.kassava.kotlinToString
-import com.google.common.hash.Hashing
 import info.maaskant.wmsnotes.model.*
 import org.apache.commons.codec.digest.DigestUtils
-import java.security.MessageDigest
 import java.util.*
 
 class Note private constructor(
@@ -69,6 +67,7 @@ class Note private constructor(
 
     private fun applyAttachmentAdded(event: AttachmentAddedEvent): Pair<Note, Event?> {
         if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
+        if (event.name.isEmpty()) throw IllegalArgumentException("An attachment name must not be empty ($event)")
         val sanitizedName = event.name.replace(nameReplacementPattern, "_")
         return if (sanitizedName in attachments) {
             if (!Arrays.equals(attachments[sanitizedName], event.content)) throw IllegalStateException("An attachment named $sanitizedName already exists but with different data ($event)")

@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.server.api
+package info.maaskant.wmsnotes.client.api
 
 import info.maaskant.wmsnotes.model.AttachmentAddedEvent
 import info.maaskant.wmsnotes.model.AttachmentDeletedEvent
@@ -8,7 +8,6 @@ import info.maaskant.wmsnotes.server.command.grpc.Event
 import javax.inject.Inject
 
 class GrpcEventMapper @Inject constructor() {
-
     fun toModelClass(response: Event.GetEventsResponse): info.maaskant.wmsnotes.model.Event {
         with(response) {
             if (eventId == 0) throw IllegalArgumentException()
@@ -43,23 +42,4 @@ class GrpcEventMapper @Inject constructor() {
             }
         }
     }
-
-    fun toGrpcGetEventsResponse(event: info.maaskant.wmsnotes.model.Event): Event.GetEventsResponse {
-        val builder = Event.GetEventsResponse.newBuilder()
-                .setEventId(event.eventId)
-                .setNoteId(event.noteId)
-
-        when (event) {
-            is info.maaskant.wmsnotes.model.NoteCreatedEvent -> {
-                builder.noteCreatedBuilder.setTitle(event.title).build()
-            }
-            is NoteDeletedEvent -> {
-                builder.noteDeletedBuilder.build()
-            }
-            is AttachmentAddedEvent -> TODO()
-            is AttachmentDeletedEvent -> TODO()
-        }
-        return builder.build()
-    }
-
 }

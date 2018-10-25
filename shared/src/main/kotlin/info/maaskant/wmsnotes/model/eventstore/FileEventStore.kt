@@ -34,7 +34,7 @@ class FileEventStore @Inject constructor(private val rootDirectory: File, privat
                             }
                         }
             }
-            logger.debug("Indexed all events in %.1f seconds".format(Locale.ROOT, time / 1000000.0))
+            logger.debug("Indexed all events in %.2f seconds".format(Locale.ROOT, time * 0.000000001))
         } catch (e: NoSuchElementException) {
         }
     }

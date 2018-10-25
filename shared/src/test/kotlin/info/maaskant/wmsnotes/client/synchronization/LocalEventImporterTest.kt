@@ -24,7 +24,7 @@ internal class LocalEventImporterTest {
     }
 
     @Test
-    fun `store new events`() {
+    fun `load and store events`() {
         // Given
         val event1 = modelEvent(i = 1)
         val event2 = modelEvent(i = 2)

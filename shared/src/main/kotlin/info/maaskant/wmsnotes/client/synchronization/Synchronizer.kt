@@ -6,8 +6,7 @@ import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.model.projection.NoteProjector
-import info.maaskant.wmsnotes.server.api.GrpcCommandMapper
-import info.maaskant.wmsnotes.server.api.GrpcEventMapper
+import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import io.reactivex.Observable
@@ -19,7 +18,7 @@ class Synchronizer @Inject constructor(
         private val localEvents: ModifiableEventRepository,
         private val remoteEvents: ModifiableEventRepository,
         private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
-        private val remoteEventToLocalCommandMapper: RemoteEventToLocalCommandMapper,
+        private val eventToCommandMapper: EventToCommandMapper,
         private val grpcCommandMapper: GrpcCommandMapper,
         private val commandProcessor: CommandProcessor,
         private val noteProjector: NoteProjector,
@@ -58,7 +57,8 @@ class Synchronizer @Inject constructor(
                 .filter { it.noteId !in noteIdsWithErrors }
                 .forEach {
                     logger.debug("Processing local event: $it")
-                    val request = grpcCommandMapper.toGrpcPostCommandRequest(event = it, lastRevision = state.lastRemoteRevisions[it.noteId])
+                    val command = eventToCommandMapper.map(it, state.lastRemoteRevisions[it.noteId])
+                    val request = grpcCommandMapper.toGrpcPostCommandRequest(command)
                     logger.debug("Sending command to server: $request")
                     val response = remoteCommandService.postCommand(request)
                     if (response.status == Command.PostCommandResponse.Status.SUCCESS) {
@@ -79,7 +79,7 @@ class Synchronizer @Inject constructor(
                 .filter { it.noteId !in noteIdsWithErrors }
                 .forEach {
                     logger.debug("Processing remote event: $it")
-                    val command = remoteEventToLocalCommandMapper.map(it, state.lastLocalRevisions[it.noteId])
+                    val command = eventToCommandMapper.map(it, state.lastLocalRevisions[it.noteId])
                     try {
                         processCommandLocallyAndUpdateState(command)
                     } catch (t: Throwable) {
