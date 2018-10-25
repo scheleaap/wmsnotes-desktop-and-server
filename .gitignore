@@ -2,7 +2,8 @@
 .idea
 build
 out
-/data
+desktop_data
+server_data
 
 /build.gradle.bak
 _test

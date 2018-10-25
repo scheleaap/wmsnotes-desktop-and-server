@@ -1,0 +1,66 @@
+buildscript {
+    ext.springBootVersion = '2.0.5.RELEASE'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlinVersion"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
+    }
+}
+
+apply plugin: 'kotlin-spring'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+configurations {
+    all*.exclude module: 'spring-boot-starter-logging'
+}
+
+dependencies {
+    compile project(':shared')
+
+    // Infrastructure
+//    compile 'org.slf4j:slf4j-simple:1.7.25'
+//    compile 'com.github.jsr-330:core:1.4.0'
+
+    // Spring Boot
+    compile 'org.jetbrains.kotlin:kotlin-reflect'
+    compile 'org.springframework.boot:spring-boot-starter'
+    compile 'org.springframework.boot:spring-boot-starter-log4j2'
+
+    // gRPC
+    compile 'org.lognet:grpc-spring-boot-starter:2.4.1'
+//    compile "io.grpc:grpc-netty-shaded:$grpcVersion"
+
+    // Testing
+    testCompile('org.springframework.boot:spring-boot-starter-test') {
+        exclude module: 'junit'
+    }
+    testImplementation('org.junit.jupiter:junit-jupiter-api')
+    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine')
+    // See also https://blog.philipphauer.de/best-practices-unit-testing-kotlin/
+    testImplementation 'io.mockk:mockk:1.8.8'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+//startScripts {
+//    mainClassName 'info.maaskant.wmsnotes.desktop.app.Application'
+//}
+
+//jar {
+//    manifest {
+//        attributes(
+//                'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
+//                'Main-Class': 'info.maaskant.wmsnotes.desktop.app.Application'
+//        )
+//    }
+//    from configurations.compile.collect { entry -> zipTree(entry) }
+//}
