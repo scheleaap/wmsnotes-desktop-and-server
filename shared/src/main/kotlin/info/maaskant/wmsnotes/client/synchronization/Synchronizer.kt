@@ -56,18 +56,26 @@ class Synchronizer @Inject constructor(
                 .stream() // Necessary for filtering to work
                 .filter { it.noteId !in noteIdsWithErrors }
                 .forEach {
-                    logger.debug("Processing local event: $it")
-                    val command = eventToCommandMapper.map(it, state.lastRemoteRevisions[it.noteId])
-                    val request = grpcCommandMapper.toGrpcPostCommandRequest(command)
-                    logger.debug("Sending command to server: $request")
-                    val response = remoteCommandService.postCommand(request)
-                    if (response.status == Command.PostCommandResponse.Status.SUCCESS) {
-                        localEvents.removeEvent(it)
-                        state.lastRemoteRevisions[it.noteId] = response.newRevision
-                        logger.debug("Remote event successfully processed: $it")
+                    if (it.eventId !in state.localEventIdsToIgnore) {
+                        logger.debug("Processing local event: $it")
+                        val command = eventToCommandMapper.map(it, state.lastRemoteRevisions[it.noteId])
+                        val request = grpcCommandMapper.toGrpcPostCommandRequest(command)
+                        logger.debug("Sending command to server: $request")
+                        val response = remoteCommandService.postCommand(request)
+                        if (response.status == Command.PostCommandResponse.Status.SUCCESS) {
+                            localEvents.removeEvent(it)
+                            state.lastRemoteRevisions[it.noteId] = response.newRevision
+                            if (response.newEventId > 0) {
+                                state.remoteEventIdsToIgnore += response.newEventId
+                            }
+                            logger.debug("Local event successfully processed: $it")
+                        } else {
+                            noteIdsWithErrors += it.noteId
+                            logger.debug("Command not processed by server: $request -> ${response.status} ${response.errorDescription}")
+                        }
                     } else {
-                        noteIdsWithErrors += it.noteId
-                        logger.debug("Command not processed by server: $request -> ${response.status} ${response.errorDescription}")
+                        state.localEventIdsToIgnore -= it.eventId
+                        logger.debug("Ignored local event $it")
                     }
                 }
     }
@@ -78,13 +86,19 @@ class Synchronizer @Inject constructor(
                 .stream() // Necessary for filtering to work
                 .filter { it.noteId !in noteIdsWithErrors }
                 .forEach {
-                    logger.debug("Processing remote event: $it")
-                    val command = eventToCommandMapper.map(it, state.lastLocalRevisions[it.noteId])
-                    try {
-                        processCommandLocallyAndUpdateState(command)
-                    } catch (t: Throwable) {
-                        noteIdsWithErrors += it.noteId
-                        logger.debug("Command not processed locally: $command + ${state.lastLocalRevisions[it.noteId]}", t)
+                    if (it.eventId !in state.remoteEventIdsToIgnore) {
+                        logger.debug("Processing remote event: $it")
+                        val command = eventToCommandMapper.map(it, state.lastLocalRevisions[it.noteId])
+                        try {
+                            processCommandLocallyAndUpdateState(command)
+                            logger.debug("Remote event successfully processed: $it")
+                        } catch (t: Throwable) {
+                            noteIdsWithErrors += it.noteId
+                            logger.debug("Command not processed locally: $command + ${state.lastLocalRevisions[it.noteId]}", t)
+                        }
+                    } else {
+                        state.remoteEventIdsToIgnore -= it.eventId
+                        logger.debug("Ignored remote event $it")
                     }
                 }
     }
@@ -133,6 +147,7 @@ class Synchronizer @Inject constructor(
         val event = commandProcessor.blockingProcessCommand(command)
         if (event != null) {
             state.lastLocalRevisions[event.noteId] = event.revision
+            state.localEventIdsToIgnore += event.eventId
         }
     }
 

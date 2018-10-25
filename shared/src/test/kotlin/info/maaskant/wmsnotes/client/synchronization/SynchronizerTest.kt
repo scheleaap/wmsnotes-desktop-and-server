@@ -101,6 +101,33 @@ internal class SynchronizerTest {
     }
 
     @Test
+    fun `outbound sync, don't process newly created remote events`() {
+        // Given
+        val localEvent = modelEvent(eventId = 1, noteId = 1, revision = 1)
+        val remoteEventForLocalEvent = modelEvent(eventId = 11, noteId = 1, revision = 11)
+        every { localEvents.getEvents() }.returns(Observable.just(localEvent))
+        every { localEvents.removeEvent(any()) }.answers {}
+        every { remoteEvents.getEvents() }.returns(Observable.empty())
+        val remoteRequest = givenARemoteResponseForALocalEvent(localEvent, null, remoteSuccess(remoteEventForLocalEvent.eventId, remoteEventForLocalEvent.revision))
+        val s = createSynchronizer()
+        s.synchronize()
+        every { localEvents.getEvents() }.returns(Observable.empty())
+        every { remoteEvents.getEvents() }.returns(Observable.just(remoteEventForLocalEvent))
+        givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEventForLocalEvent, localEvent.revision, mockk())
+
+        // When
+        s.synchronize()
+
+        // Then
+        verifySequence {
+            remoteCommandService.postCommand(remoteRequest)
+        }
+        verify(exactly = 0) {
+            commandProcessor.blockingProcessCommand(any())
+        }
+    }
+
+    @Test
     fun `inbound sync, no local events, command successful`() {
         // Given
         val remoteEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 1)
@@ -148,6 +175,32 @@ internal class SynchronizerTest {
         verifySequence {
             commandProcessor.blockingProcessCommand(command1)
             commandProcessor.blockingProcessCommand(command3)
+        }
+    }
+
+    @Test
+    fun `inbound sync, don't process newly created local events`() {
+        // Given
+        val remoteEvent = modelEvent(eventId = 1, noteId = 1, revision = 1)
+        val localEventForRemoteEvent = modelEvent(eventId = 11, noteId = 1, revision = 11)
+        every { localEvents.getEvents() }.returns(Observable.empty())
+        every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent))
+        val command = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent, null, localEventForRemoteEvent)
+        val s = createSynchronizer()
+        s.synchronize()
+        every { localEvents.getEvents() }.returns(Observable.just(localEventForRemoteEvent))
+        every { remoteEvents.getEvents() }.returns(Observable.empty())
+        givenARemoteResponseForALocalEvent(localEventForRemoteEvent, remoteEvent.revision, remoteError())
+
+        // When
+        s.synchronize()
+
+        // Then
+        verifySequence {
+            commandProcessor.blockingProcessCommand(command)
+        }
+        verify(exactly = 0) {
+            remoteCommandService.postCommand(any())
         }
     }
 
