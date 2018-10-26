@@ -74,6 +74,7 @@ class Synchronizer @Inject constructor(
                             logger.debug("Command not processed by server: $request -> ${response.status} ${response.errorDescription}")
                         }
                     } else {
+                        localEvents.removeEvent(it)
                         state.localEventIdsToIgnore -= it.eventId
                         logger.debug("Ignored local event $it")
                     }
@@ -91,12 +92,14 @@ class Synchronizer @Inject constructor(
                         val command = eventToCommandMapper.map(it, state.lastLocalRevisions[it.noteId])
                         try {
                             processCommandLocallyAndUpdateState(command)
+                            remoteEvents.removeEvent(it)
                             logger.debug("Remote event successfully processed: $it")
                         } catch (t: Throwable) {
                             noteIdsWithErrors += it.noteId
                             logger.debug("Command not processed locally: $command + ${state.lastLocalRevisions[it.noteId]}", t)
                         }
                     } else {
+                        remoteEvents.removeEvent(it)
                         state.remoteEventIdsToIgnore -= it.eventId
                         logger.debug("Ignored remote event $it")
                     }

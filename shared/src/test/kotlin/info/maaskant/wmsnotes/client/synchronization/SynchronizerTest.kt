@@ -41,6 +41,8 @@ internal class SynchronizerTest {
                 eventToCommandMapper,
                 noteProjector
         )
+        every { localEvents.removeEvent(any()) }.just(Runs)
+        every { remoteEvents.removeEvent(any()) }.just(Runs)
         stateStorage = InMemorySynchronizerStateStorage()
     }
 
@@ -52,7 +54,6 @@ internal class SynchronizerTest {
         val event2 = modelEvent(eventId = 2, noteId = 1, revision = 12)
         val event3 = modelEvent(eventId = 3, noteId = 3, revision = 31)
         every { localEvents.getEvents() }.returns(Observable.just(event1, event2, event3))
-        every { localEvents.removeEvent(any()) }.answers {}
         every { remoteEvents.getEvents() }.returns(Observable.empty())
         val remoteRequest1 = givenARemoteResponseForALocalEvent(event1, null, remoteSuccess(event1.eventId, event1.revision))
         val remoteRequest2 = givenARemoteResponseForALocalEvent(event2, event1.revision, remoteSuccess(event2.eventId, event2.revision))
@@ -81,7 +82,6 @@ internal class SynchronizerTest {
         val event2 = modelEvent(eventId = -1, noteId = 1, revision = -1)
         val event3 = modelEvent(eventId = 1, noteId = 3, revision = 31)
         every { localEvents.getEvents() }.returns(Observable.just(event1, event2, event3))
-        every { localEvents.removeEvent(any()) }.answers {}
         every { remoteEvents.getEvents() }.returns(Observable.empty())
         val remoteRequest1 = givenARemoteResponseForALocalEvent(event1, null, remoteError())
         givenARemoteResponseForALocalEvent(event2, event1.revision, remoteError())
@@ -106,7 +106,6 @@ internal class SynchronizerTest {
         val localEvent = modelEvent(eventId = 1, noteId = 1, revision = 1)
         val remoteEventForLocalEvent = modelEvent(eventId = 11, noteId = 1, revision = 11)
         every { localEvents.getEvents() }.returns(Observable.just(localEvent))
-        every { localEvents.removeEvent(any()) }.answers {}
         every { remoteEvents.getEvents() }.returns(Observable.empty())
         val remoteRequest = givenARemoteResponseForALocalEvent(localEvent, null, remoteSuccess(remoteEventForLocalEvent.eventId, remoteEventForLocalEvent.revision))
         val s = createSynchronizer()
@@ -121,6 +120,9 @@ internal class SynchronizerTest {
         // Then
         verifySequence {
             remoteCommandService.postCommand(remoteRequest)
+        }
+        verify {
+            remoteEvents.removeEvent(remoteEventForLocalEvent)
         }
         verify(exactly = 0) {
             commandProcessor.blockingProcessCommand(any())
@@ -148,9 +150,13 @@ internal class SynchronizerTest {
 
         // Then
         verifySequence {
+            remoteEvents.getEvents()
             commandProcessor.blockingProcessCommand(command1)
+            remoteEvents.removeEvent(remoteEvent1)
             commandProcessor.blockingProcessCommand(command2)
+            remoteEvents.removeEvent(remoteEvent2)
             commandProcessor.blockingProcessCommand(command3)
+            remoteEvents.removeEvent(remoteEvent3)
         }
     }
 
@@ -198,6 +204,9 @@ internal class SynchronizerTest {
         // Then
         verifySequence {
             commandProcessor.blockingProcessCommand(command)
+        }
+        verify {
+            localEvents.removeEvent(localEventForRemoteEvent)
         }
         verify(exactly = 0) {
             remoteCommandService.postCommand(any())

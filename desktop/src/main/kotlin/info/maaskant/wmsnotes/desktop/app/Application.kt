@@ -28,7 +28,7 @@ class Application : App(MainView::class, Styles::class) {
         applicationModel.start()
         if (timerDisposable == null) {
             timerDisposable = Observable
-                    .interval(0, 10, TimeUnit.SECONDS)
+                    .interval(0, 5, TimeUnit.SECONDS)
                     .observeOn(Schedulers.io())
                     .subscribe {
                         synchronize()
