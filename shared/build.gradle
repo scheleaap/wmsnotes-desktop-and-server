@@ -11,25 +11,26 @@ plugins {
 
 dependencies {
     // Infrastructure
-    compile 'org.slf4j:slf4j-api:1.7.25'
-    compile 'au.com.console:kassava:1.0.0'
-    compile 'javax.inject:javax.inject:1'
-    compile 'commons-codec:commons-codec:1.11'
-    compile 'io.reactivex.rxjava2:rxkotlin:2.2.0'
+    api 'org.slf4j:slf4j-api:1.7.25'
+    testRuntime 'org.slf4j:slf4j-simple:1.7.25'
+    api 'au.com.console:kassava:1.0.0'
+    api 'javax.inject:javax.inject:1'
+    implementation 'commons-codec:commons-codec:1.11'
+    api 'io.reactivex.rxjava2:rxkotlin:2.2.0'
 
     // Storage: Serialization, MapDB
-    compile 'com.esotericsoftware:kryo:5.0.0-RC1' // Selected based on https://github.com/eishay/jvm-serializers/wiki
-    compile 'org.mapdb:mapdb:3.0.7'
+    api 'com.esotericsoftware:kryo:5.0.0-RC1' // Selected based on https://github.com/eishay/jvm-serializers/wiki
+    api 'org.mapdb:mapdb:3.0.7'
 
     // gRPC
-    compile "io.grpc:grpc-protobuf:$grpcVersion"
-    compile "io.grpc:grpc-stub:$grpcVersion"
+    api "io.grpc:grpc-protobuf:$grpcVersion"
+    api "io.grpc:grpc-stub:$grpcVersion"
 
     // Testing
-    testCompile("org.junit.jupiter:junit-jupiter-api:5.3.1")
-    testCompile("org.junit.jupiter:junit-jupiter-params:5.3.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.3.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.3.1")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:5.3.1")
-    testCompile("org.assertj:assertj-core:3.11.1")
+    testImplementation("org.assertj:assertj-core:3.11.1")
     // See also https://blog.philipphauer.de/best-practices-unit-testing-kotlin/
     testImplementation 'io.mockk:mockk:1.8.8'
 }
