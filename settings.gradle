@@ -3,3 +3,5 @@ rootProject.name = 'wmsnotes'
 include 'desktop'
 include 'server'
 include 'shared'
+
+enableFeaturePreview('STABLE_PUBLISHING')
