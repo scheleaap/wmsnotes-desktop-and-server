@@ -20,18 +20,24 @@ class GrpcEventMapper @Inject constructor() {
 
         @Suppress("UNUSED_VARIABLE")
         val a: Any = when (event) { // Assign to variable to force a compilation error if 'when' expression is not exhaustive.
-            is info.maaskant.wmsnotes.model.NoteCreatedEvent -> with(builder.noteCreatedBuilder) {
-                title = event.title
+            is info.maaskant.wmsnotes.model.NoteCreatedEvent -> builder.apply {
+                noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder().apply {
+                    title = event.title
+                }.build()
             }
-            is NoteDeletedEvent -> with(builder.noteDeletedBuilder) {
-                build()
+            is NoteDeletedEvent -> builder.apply {
+                noteDeleted = Event.GetEventsResponse.NoteDeletedEvent.newBuilder().build()
             }
-            is AttachmentAddedEvent -> with(builder.attachmentAddedBuilder) {
-                name = event.name
-                content = ByteString.copyFrom(event.content)
+            is AttachmentAddedEvent -> builder.apply {
+                attachmentAdded = Event.GetEventsResponse.AttachmentAddedEvent.newBuilder().apply {
+                    name = event.name
+                    content = ByteString.copyFrom(event.content)
+                }.build()
             }
-            is AttachmentDeletedEvent -> with(builder.attachmentDeletedBuilder) {
-                name = event.name
+            is AttachmentDeletedEvent -> builder.apply {
+                attachmentDeleted = Event.GetEventsResponse.AttachmentDeletedEvent.newBuilder().apply {
+                    name = event.name
+                }.build()
             }
         }
         return builder.build()

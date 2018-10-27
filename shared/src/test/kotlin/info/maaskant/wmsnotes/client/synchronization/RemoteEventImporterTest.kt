@@ -85,7 +85,7 @@ private fun remoteEventServiceRequest(afterEventId: Int? = null): Event.GetEvent
 
 private fun remoteNoteEvent(i: Int): Event.GetEventsResponse {
     val builder = Event.GetEventsResponse.newBuilder().setEventId(i).setNoteId("note-$i").setRevision(i)
-    builder.getNoteCreatedBuilder().setTitle("Title $i")
+    builder.noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder().setTitle("Title $i").build()
     return builder.build()
 }
 

@@ -23,7 +23,7 @@ dependencies {
     api 'org.mapdb:mapdb:3.0.7'
 
     // gRPC
-    api "io.grpc:grpc-protobuf:$grpcVersion"
+    api "io.grpc:grpc-protobuf-lite:$grpcVersion"
     api "io.grpc:grpc-stub:$grpcVersion"
 
     // Testing
@@ -36,12 +36,19 @@ dependencies {
 }
 
 protobuf {
-    protoc { artifact = 'com.google.protobuf:protoc:3.5.1-1' }
+    protoc { artifact = 'com.google.protobuf:protoc:3.0.0' }
     plugins {
+        javalite { artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0' }
         grpc { artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion" }
     }
     generateProtoTasks {
-        all()*.plugins { grpc {} }
+        all().each { task ->
+            task.builtins { remove java }
+            task.plugins {
+                javalite {}
+                grpc { option 'lite' }
+            }
+        }
     }
 }
 

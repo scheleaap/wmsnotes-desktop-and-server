@@ -22,30 +22,32 @@ internal class GrpcCommandMapperTest {
     @TestFactory
     fun test(): List<DynamicTest> {
         val items = mapOf(
-                CreateNoteCommand(noteId = "note", title = "Title") to with(Command.PostCommandRequest.newBuilder()) {
+                CreateNoteCommand(noteId = "note", title = "Title") to Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
-                    createNoteBuilder.title = "Title"
-                    build()
-                },
-                DeleteNoteCommand(noteId = "note", lastRevision = 1) to with(Command.PostCommandRequest.newBuilder()) {
-                    noteId = "note"
-                    lastRevision = 1
-                    deleteNoteBuilder.build()
-                    build()
-                },
-                AddAttachmentCommand(noteId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()) to with(Command.PostCommandRequest.newBuilder()) {
+                    createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
+                        title = "Title"
+                    }.build()
+                }.build(),
+                DeleteNoteCommand(noteId = "note", lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     lastRevision = 1
-                    addAttachmentBuilder.name = "att"
-                    addAttachmentBuilder.content = ByteString.copyFrom("data".toByteArray())
-                    build()
-                },
-                DeleteAttachmentCommand(noteId = "note", lastRevision = 1, name = "att") to with(Command.PostCommandRequest.newBuilder()) {
+                    deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
+                }.build(),
+                AddAttachmentCommand(noteId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()) to Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     lastRevision = 1
-                    deleteAttachmentBuilder.name = "att"
-                    build()
-                }
+                    addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
+                        name = "att"
+                        content = ByteString.copyFrom("data".toByteArray())
+                    }.build()
+                }.build(),
+                DeleteAttachmentCommand(noteId = "note", lastRevision = 1, name = "att") to Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
+                    deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
+                        name = "att"
+                    }.build()
+                }.build()
                 // Add more classes here
         )
         return items.map { (command, expectedRequest) ->

@@ -13,25 +13,31 @@ class GrpcCommandMapper @Inject constructor() {
         val builder = Command.PostCommandRequest.newBuilder()
         @Suppress("UNUSED_VARIABLE")
         val a: Any = when (command) { // Assign to variable to force a compilation error if 'when' expression is not exhaustive.
-            is CreateNoteCommand -> {
-                builder.noteId = command.noteId
-                builder.createNoteBuilder.title = command.title
+            is CreateNoteCommand -> builder.apply {
+                noteId = command.noteId
+                createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
+                    title = command.title
+                }.build()
             }
-            is DeleteNoteCommand -> {
-                builder.noteId = command.noteId
-                builder.lastRevision = command.lastRevision
-                builder.deleteNoteBuilder.build()
+            is DeleteNoteCommand -> builder.apply {
+                noteId = command.noteId
+                lastRevision = command.lastRevision
+                deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
             }
-            is AddAttachmentCommand -> {
-                builder.noteId = command.noteId
-                builder.lastRevision = command.lastRevision
-                builder.addAttachmentBuilder.name = command.name
-                builder.addAttachmentBuilder.content = ByteString.copyFrom(command.content)
+            is AddAttachmentCommand -> builder.apply {
+                noteId = command.noteId
+                lastRevision = command.lastRevision
+                addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
+                    name = command.name
+                    content = ByteString.copyFrom(command.content)
+                }.build()
             }
-            is DeleteAttachmentCommand -> {
-                builder.noteId = command.noteId
-                builder.lastRevision = command.lastRevision
-                builder.deleteAttachmentBuilder.name = command.name
+            is DeleteAttachmentCommand -> builder.apply {
+                noteId = command.noteId
+                lastRevision = command.lastRevision
+                deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
+                    name = command.name
+                }.build()
             }
         }
         return builder.build()

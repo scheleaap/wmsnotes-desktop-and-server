@@ -26,38 +26,40 @@ internal class GrpcEventMapperTest {
     fun test(): List<DynamicTest> {
         val items = mapOf(
                 NoteCreatedEvent(eventId = 1, noteId = "note", revision = 1, title = "Title")
-                        to with(Event.GetEventsResponse.newBuilder()) {
+                        to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"
                     revision = 1
-                    noteCreatedBuilder.title = "Title"
-                    build()
-                },
+                    noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder().apply {
+                        title = "Title"
+                    }.build()
+                }.build(),
                 NoteDeletedEvent(eventId = 1, noteId = "note", revision = 1)
-                        to with(Event.GetEventsResponse.newBuilder()) {
+                        to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"
                     revision = 1
-                    noteDeletedBuilder.build()
-                    build()
-                },
+                    noteDeleted = Event.GetEventsResponse.NoteDeletedEvent.newBuilder().build()
+                }.build(),
                 AttachmentAddedEvent(eventId = 1, noteId = "note", revision = 1, name = "att", content = "data".toByteArray())
-                        to with(Event.GetEventsResponse.newBuilder()) {
+                        to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"
                     revision = 1
-                    attachmentAddedBuilder.name = "att"
-                    attachmentAddedBuilder.content = ByteString.copyFrom("data".toByteArray())
-                    build()
-                },
+                    attachmentAdded = Event.GetEventsResponse.AttachmentAddedEvent.newBuilder().apply {
+                        name = "att"
+                        content = ByteString.copyFrom("data".toByteArray())
+                    }.build()
+                }.build(),
                 AttachmentDeletedEvent(eventId = 1, noteId = "note", revision = 1, name = "att")
-                        to with(Event.GetEventsResponse.newBuilder()) {
+                        to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"
                     revision = 1
-                    attachmentDeletedBuilder.name = "att"
-                    build()
-                }
+                    attachmentDeleted = Event.GetEventsResponse.AttachmentDeletedEvent.newBuilder().apply {
+                        name = "att"
+                    }.build()
+                }.build()
                 // Add more classes here
         )
         return items.map { (event, expectedResponse) ->

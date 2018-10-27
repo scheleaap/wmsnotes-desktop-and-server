@@ -38,18 +38,17 @@ internal class GrpcCommandMapperTest {
     @TestFactory
     fun `missing note id`(): List<DynamicTest> {
         val requests = listOf(
-                with(Command.PostCommandRequest.newBuilder()) {
+                Command.PostCommandRequest.newBuilder().apply {
                     // noteId
-                    createNoteBuilder.title = "Title"
-                    build()
-                },
-                with(Command.PostCommandRequest.newBuilder()) {
+                    createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
+                        title = "Title"
+                    }.build()
+                }.build(),
+                Command.PostCommandRequest.newBuilder().apply {
                     // noteId
                     lastRevision = 1
-                    deleteNoteBuilder.build()
-                    build()
-                }
-                // There's no need to add a check for every command.
+                    deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
+                }.build()                // There's no need to add a check for every command.
         )
         return requests.map { request ->
             DynamicTest.dynamicTest(request.commandCase.name) {
@@ -67,30 +66,32 @@ internal class GrpcCommandMapperTest {
     @TestFactory
     fun test(): List<DynamicTest> {
         val items = mapOf(
-                with(Command.PostCommandRequest.newBuilder()) {
+                Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
-                    createNoteBuilder.title = "Title"
-                    build()
-                } to CreateNoteCommand(noteId = "note", title = "Title"),
-                with(Command.PostCommandRequest.newBuilder()) {
-                    noteId = "note"
-                    lastRevision = 1
-                    deleteNoteBuilder.build()
-                    build()
-                } to DeleteNoteCommand(noteId = "note", lastRevision = 1),
-                with(Command.PostCommandRequest.newBuilder()) {
+                    createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
+                        title = "Title"
+                    }.build()
+                }.build() to CreateNoteCommand(noteId = "note", title = "Title"),
+                Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     lastRevision = 1
-                    addAttachmentBuilder.name = "att"
-                    addAttachmentBuilder.content = ByteString.copyFrom("data".toByteArray())
-                    build()
-                } to AddAttachmentCommand(noteId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()),
-                with(Command.PostCommandRequest.newBuilder()) {
+                    deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
+                }.build() to DeleteNoteCommand(noteId = "note", lastRevision = 1),
+                Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     lastRevision = 1
-                    deleteAttachmentBuilder.name = "att"
-                    build()
-                } to DeleteAttachmentCommand(noteId = "note", lastRevision = 1, name = "att")
+                    addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
+                        name = "att"
+                        content = ByteString.copyFrom("data".toByteArray())
+                    }.build()
+                }.build() to AddAttachmentCommand(noteId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()),
+                Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
+                    deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
+                        name = "att"
+                    }.build()
+                }.build() to DeleteAttachmentCommand(noteId = "note", lastRevision = 1, name = "att")
                 // Add more classes here
         )
         return items.map { (request, expectedCommand) ->
