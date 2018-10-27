@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.model.projection.cache
 
 import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -15,7 +16,7 @@ internal class FileNoteCacheTest : NoteCacheTest() {
 
     private lateinit var tempDir: File
 
-    private val noteSerializer: NoteSerializer = mockk()
+    private val noteSerializer: Serializer<Note> = mockk()
 
     @BeforeEach
     override fun init() {

@@ -1,8 +1,8 @@
 package info.maaskant.wmsnotes.model.eventstore
 
-import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
+import info.maaskant.wmsnotes.utilities.logger
+import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -13,7 +13,7 @@ import javax.inject.Singleton
 import kotlin.system.measureNanoTime
 
 @Singleton
-class FileEventStore @Inject constructor(private val rootDirectory: File, private val eventSerializer: EventSerializer) : EventStore {
+class FileEventStore @Inject constructor(private val rootDirectory: File, private val eventSerializer: Serializer<Event>) : EventStore {
     private val logger by logger()
 
     private var lastEventId: Int = 0
@@ -26,7 +26,7 @@ class FileEventStore @Inject constructor(private val rootDirectory: File, privat
             val time = measureNanoTime {
                 rootDirectory
                         .walkTopDown()
-                        .filter { it.isFile }
+                        .filter { it.isFile && !it.name.startsWith('.')}
                         .map { eventSerializer.deserialize(it.readBytes()) }
                         .forEach {
                             if (it.eventId > lastEventId) {

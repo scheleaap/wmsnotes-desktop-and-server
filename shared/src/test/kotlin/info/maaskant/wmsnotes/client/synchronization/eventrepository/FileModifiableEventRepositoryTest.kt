@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.client.synchronization.eventrepository
 
-import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
+import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -11,7 +12,7 @@ import java.io.File
 
 internal class FileModifiableEventRepositoryTest : ModifiableEventRepositoryTest() {
 
-    private val eventSerializer: EventSerializer = mockk()
+    private val eventSerializer: Serializer<Event> = mockk()
 
     private lateinit var tempDir: File
 

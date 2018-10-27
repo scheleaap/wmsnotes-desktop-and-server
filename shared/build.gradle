@@ -18,9 +18,8 @@ dependencies {
     implementation 'commons-codec:commons-codec:1.11'
     api 'io.reactivex.rxjava2:rxkotlin:2.2.0'
 
-    // Storage: Serialization, MapDB
+    // Storage: Serialization
     api 'com.esotericsoftware:kryo:5.0.0-RC1' // Selected based on https://github.com/eishay/jvm-serializers/wiki
-    api 'org.mapdb:mapdb:3.0.7'
 
     // gRPC
     api "io.grpc:grpc-protobuf-lite:$grpcVersion"

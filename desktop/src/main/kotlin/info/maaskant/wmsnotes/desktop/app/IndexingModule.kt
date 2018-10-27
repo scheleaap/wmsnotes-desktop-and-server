@@ -1,14 +1,18 @@
 package info.maaskant.wmsnotes.desktop.app
 
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.util.Pool
 import dagger.Module
 import dagger.Provides
+import info.maaskant.wmsnotes.client.indexing.KryoNoteIndexStateSerializer
 import info.maaskant.wmsnotes.client.indexing.NoteIndex
-import info.maaskant.wmsnotes.desktop.app.Configuration.storeInMemory
+import info.maaskant.wmsnotes.client.indexing.NoteIndexState
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.utilities.persistence.FileStateRepository
+import info.maaskant.wmsnotes.utilities.persistence.StateRepository
 import io.reactivex.schedulers.Schedulers
-import org.mapdb.DB
-import org.mapdb.DBMaker
 import java.io.File
+import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -17,24 +21,26 @@ class IndexingModule {
 
     @Singleton
     @Provides
-    @IndexDatabase
-    fun mapDbIndexDatabase(): DB = if (storeInMemory) {
-        DBMaker.memoryDB()
-                .closeOnJvmShutdown()
-                .make()
-    } else {
-        val file = File("desktop_data/indices.db")
-        file.parentFile.mkdirs()
-        DBMaker.fileDB(file)
-                .fileMmapEnableIfSupported()
-                .closeOnJvmShutdown()
-                .make()
-    }
+    fun synchronizerStateRepository(kryoPool: Pool<Kryo>): StateRepository<NoteIndexState> =
+            FileStateRepository<NoteIndexState>(
+                    serializer = KryoNoteIndexStateSerializer(kryoPool),
+                    file = File("desktop_data/cache/note_index"),
+                    scheduler = Schedulers.io(),
+                    timeout = 1,
+                    unit = TimeUnit.SECONDS
+            )
 
     @Singleton
     @Provides
-    fun noteIndex(eventStore: EventStore, @IndexDatabase database: DB): NoteIndex =
-            NoteIndex(eventStore, database, Schedulers.io())
+    fun noteIndex(eventStore: EventStore, stateRepository: StateRepository<NoteIndexState>): NoteIndex {
+        return NoteIndex(
+                eventStore,
+                stateRepository.load(),
+                Schedulers.io()
+        ).apply {
+            stateRepository.connect(this)
+        }
+    }
 
     @Qualifier
     @MustBeDocumented

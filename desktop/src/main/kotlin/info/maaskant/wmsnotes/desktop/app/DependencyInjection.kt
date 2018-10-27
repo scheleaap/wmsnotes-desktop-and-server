@@ -17,7 +17,7 @@ object Injector {
 }
 
 @Singleton
-@Component(modules = [ModelModule::class, IndexingModule::class, SynchronizationModule::class])
+@Component(modules = [ModelModule::class, IndexingModule::class, SynchronizationModule::class, OtherModule::class])
 interface ApplicationGraph {
     fun applicationModel(): ApplicationModel
     fun commandProcessor(): CommandProcessor
@@ -35,4 +35,8 @@ object Configuration {
     const val delay =
 //            true
             false
+
+    const val cache =
+            true
+//            false
 }

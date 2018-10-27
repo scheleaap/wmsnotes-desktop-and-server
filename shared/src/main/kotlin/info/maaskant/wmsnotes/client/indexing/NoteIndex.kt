@@ -1,36 +1,35 @@
 package info.maaskant.wmsnotes.client.indexing
 
-import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.utilities.logger
+import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.reactivex.Observable
 import io.reactivex.Scheduler
-import org.mapdb.DB
-import org.mapdb.DataInput2
-import org.mapdb.DataOutput2
-import org.mapdb.Serializer
-import org.mapdb.serializer.GroupSerializerObjectArray
+import io.reactivex.subjects.BehaviorSubject
 import javax.inject.Inject
 
-data class NoteMetadata(val noteId: String, val title: String)
+class NoteIndex @Inject constructor(
+        eventStore: EventStore,
+        initialState: NoteIndexState?,
+        scheduler: Scheduler
+) : StateProducer<NoteIndexState> {
 
-class NoteIndex @Inject constructor(eventStore: EventStore, database: DB, scheduler: Scheduler) {
     private val logger by logger()
 
-    private val isNoteIndexInitialized = database.atomicBoolean("isNoteIndexInitialized").createOrOpen()
-    private val notes = database
-            .treeMap("noteIndex", Serializer.STRING, MapDbNoteMetadataSerializer())
-            .createOrOpen()
+    private lateinit var state: NoteIndexState
+    private val stateUpdates: BehaviorSubject<NoteIndexState> = BehaviorSubject.create()
 
     init {
+        updateState(initialState ?: NoteIndexState(isInitialized = false))
         var source = eventStore.getEventUpdates()
-        if (!isNoteIndexInitialized.get()) {
+        if (!state.isInitialized) {
             source = Observable.concat(
                     eventStore.getEvents()
                             .doOnSubscribe { logger.debug("Creating initial note index") }
                             .doOnComplete {
-                                isNoteIndexInitialized.set(true)
+                                updateState(state.initializationFinished())
                                 logger.debug("Initial note index created")
                             },
                     source
@@ -42,33 +41,28 @@ class NoteIndex @Inject constructor(eventStore: EventStore, database: DB, schedu
                     when (it) {
                         is NoteCreatedEvent -> {
                             logger.debug("Adding note ${it.noteId} to index")
-                            notes[it.noteId] = NoteMetadata(it.noteId, it.title)
+                            updateState(state.addNote(NoteMetadata(it.noteId, it.title)))
                         }
                         is NoteDeletedEvent -> {
                             logger.debug("Removing note ${it.noteId} from index")
-                            notes.remove(it.noteId)!!
+                            updateState(state.removeNote(it.noteId))
                         }
                         else -> {
                         }
                     }
-                }, { logger.warn("Error", it) }, { logger.info("Finished") })
+                }, { logger.warn("Error", it) })
     }
 
     fun getNotes(): Observable<NoteMetadata> {
-        return Observable.fromIterable(notes.values)
-    }
-}
-
-internal class MapDbNoteMetadataSerializer : GroupSerializerObjectArray<NoteMetadata>() {
-    override fun deserialize(input: DataInput2, available: Int): NoteMetadata {
-        val noteId = input.readUTF()
-        val title = input.readUTF()
-        return NoteMetadata(noteId = noteId, title = title)
+        return Observable.fromIterable(state.notes.values)
     }
 
-    override fun serialize(output: DataOutput2, it: NoteMetadata) {
-        output.writeUTF(it.noteId)
-        output.writeUTF(it.title)
+    private fun updateState(state: NoteIndexState) {
+        this.state = state
+        stateUpdates.onNext(state)
     }
+
+    override fun getStateUpdates(): Observable<NoteIndexState> = stateUpdates
 
 }
+

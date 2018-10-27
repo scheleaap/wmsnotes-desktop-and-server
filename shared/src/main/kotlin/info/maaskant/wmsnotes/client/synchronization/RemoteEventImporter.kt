@@ -5,7 +5,10 @@ import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableE
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import info.maaskant.wmsnotes.utilities.logger
+import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.grpc.StatusRuntimeException
+import io.reactivex.Observable
+import io.reactivex.subjects.BehaviorSubject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,10 +17,12 @@ class RemoteEventImporter @Inject constructor(
         private val eventService: EventServiceGrpc.EventServiceBlockingStub,
         private val eventRepository: ModifiableEventRepository,
         private val grpcEventMapper: GrpcEventMapper,
-        private val state: ImporterStateStorage
-) {
+        initialState: EventImporterState?
+) : StateProducer<EventImporterState> {
 
     private val logger by logger()
+    private var state = initialState ?: EventImporterState(null)
+    private val stateUpdates: BehaviorSubject<EventImporterState> = BehaviorSubject.create()
 
     fun loadAndStoreRemoteEvents() {
         logger.debug("Retrieving new remote events")
@@ -29,7 +34,7 @@ class RemoteEventImporter @Inject constructor(
                 val event = grpcEventMapper.toModelClass(it)
                 logger.debug("Storing new remote event: $event")
                 eventRepository.addEvent(event)
-                state.lastEventId = event.eventId
+                updateLastEventId(it.eventId)
                 numberOfNewEvents++
             }
         } catch (e: StatusRuntimeException) {
@@ -48,4 +53,10 @@ class RemoteEventImporter @Inject constructor(
         return builder.build()
     }
 
+    private fun updateLastEventId(lastEventId: Int) {
+        state = state.copy(lastEventId = lastEventId)
+        stateUpdates.onNext(state)
+    }
+
+    override fun getStateUpdates(): Observable<EventImporterState> = stateUpdates
 }

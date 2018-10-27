@@ -1,43 +1,20 @@
-package info.maaskant.wmsnotes.utilities.serialization
+package info.maaskant.wmsnotes.model
 
 import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.Registration
 import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
-import info.maaskant.wmsnotes.model.*
-import java.io.ByteArrayOutputStream
-import java.util.stream.Stream
-import javax.inject.Inject
+import com.esotericsoftware.kryo.util.Pool
+import info.maaskant.wmsnotes.utilities.serialization.KryoSerializer
 
-class KryoEventSerializer @Inject constructor() : EventSerializer {
-
-    private val kryo = Kryo()
-
-    init {
-        Stream.of(
-                Pair(NoteCreatedEvent::class.java, NoteCreatedEventSerializer()),
-                Pair(NoteDeletedEvent::class.java, NoteDeletedEventSerializer()),
-                Pair(AttachmentAddedEvent::class.java, AttachmentAddedEventSerializer()),
-                Pair(AttachmentDeletedEvent::class.java, AttachmentDeletedEventSerializer())
-        ).forEach {
-            kryo.register(it.first, it.second)
-        }
-    }
-
-    override fun serialize(event: Event): ByteArray {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        byteArrayOutputStream.use { baos ->
-            Output(baos).use { ko -> kryo.writeClassAndObject(ko, event) }
-        }
-        return byteArrayOutputStream.toByteArray()
-    }
-
-    override fun deserialize(bytes: ByteArray): Event {
-        return Input(bytes).use { ki ->
-            kryo.readClassAndObject(ki) as Event
-        }
-    }
-
+class KryoEventSerializer(kryoPool: Pool<Kryo>) : KryoSerializer<Event>(
+        kryoPool,
+        Registration(NoteCreatedEvent::class.java, NoteCreatedEventSerializer(), 11),
+        Registration(NoteDeletedEvent::class.java, NoteDeletedEventSerializer(), 12),
+        Registration(AttachmentAddedEvent::class.java, AttachmentAddedEventSerializer(), 13),
+        Registration(AttachmentDeletedEvent::class.java, AttachmentDeletedEventSerializer(), 14)
+) {
     private class NoteCreatedEventSerializer : Serializer<NoteCreatedEvent>() {
         override fun write(kryo: Kryo, output: Output, it: NoteCreatedEvent) {
             output.writeInt(it.eventId, true)

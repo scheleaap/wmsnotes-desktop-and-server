@@ -1,16 +1,19 @@
 package info.maaskant.wmsnotes.client.indexing
 
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.NoteDeletedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import io.mockk.*
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mapdb.DB
-import org.mapdb.DBMaker
 
 // Future tests to add:
 // - Event: Change title
@@ -23,14 +26,14 @@ internal class NoteIndexTest {
 
     private val eventStore: EventStore = mockk()
 
-    private lateinit var database: DB
+    private lateinit var noteIndexState: NoteIndexState
 
     private lateinit var eventUpdatesSubject: PublishSubject<Event>
 
     @BeforeEach
     fun init() {
         eventUpdatesSubject = PublishSubject.create<Event>()
-        database = DBMaker.heapDB().make()
+        noteIndexState = NoteIndexState(isInitialized = false)
         clearMocks(
                 eventStore
         )
@@ -41,7 +44,7 @@ internal class NoteIndexTest {
     @Test
     fun `note created`() {
         // Given
-        val index = NoteIndex(eventStore, database, scheduler)
+        val index = NoteIndex(eventStore, noteIndexState, scheduler)
 
         // When
         eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"))
@@ -56,7 +59,7 @@ internal class NoteIndexTest {
     @Test
     fun `note deleted`() {
         // Given
-        val index = NoteIndex(eventStore, database, scheduler)
+        val index = NoteIndex(eventStore, noteIndexState, scheduler)
         eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"))
 
         // When
@@ -71,37 +74,39 @@ internal class NoteIndexTest {
     }
 
     @Test
-    fun persistence() {
-        // Given
-        NoteIndex(eventStore, database, scheduler) // This instance is supposed to save the index
-        eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"))
-        val index = NoteIndex(eventStore, database, scheduler) // This instance is supposed to read the index from disk
-
-        // When
-        val observer = index.getNotes().test()
-
-        // Then
-        observer.assertComplete()
-        observer.assertNoErrors()
-        assertThat(observer.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, "Title 1")))
-    }
-
-    @Test
     fun initialize() {
         // Given
         every { eventStore.getEvents() }.returns(Observable.just(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1")))
-        NoteIndex(eventStore, database, scheduler) // Instantiate twice to test double initialization
-        val index = NoteIndex(eventStore, database, scheduler)
+        val index1 = NoteIndex(eventStore, noteIndexState, scheduler) // Instantiate twice to test double initialization
+        val stateObserver = index1.getStateUpdates().test()
+        val index2 = NoteIndex(eventStore, stateObserver.values().last(), scheduler)
 
         // When
-        val observer = index.getNotes().test()
+        val notesObserver = index2.getNotes().test()
 
         // Then
-        observer.assertComplete()
-        observer.assertNoErrors()
-        assertThat(observer.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, "Title 1")))
+        notesObserver.assertComplete()
+        notesObserver.assertNoErrors()
+        assertThat(notesObserver.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, "Title 1")))
         verify(exactly = 1) {
             eventStore.getEvents(any())
         }
+    }
+
+    @Test
+    fun `read state`() {
+        // Given
+        val index1 = NoteIndex(eventStore, noteIndexState, scheduler) // This instance is supposed to save the state
+        val stateObserver = index1.getStateUpdates().test()
+        eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"))
+        val index2 = NoteIndex(eventStore, stateObserver.values().last(), scheduler) // This instance is supposed to read the state
+
+        // When
+        val notesObserver = index2.getNotes().test()
+
+        // Then
+        notesObserver.assertComplete()
+        notesObserver.assertNoErrors()
+        assertThat(notesObserver.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, "Title 1")))
     }
 }

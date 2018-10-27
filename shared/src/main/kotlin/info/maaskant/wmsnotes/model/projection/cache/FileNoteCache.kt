@@ -2,9 +2,10 @@ package info.maaskant.wmsnotes.model.projection.cache
 
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import java.io.File
 
-class FileNoteCache(private val rootDirectory: File, private val serializer: NoteSerializer) : NoteCache {
+class FileNoteCache(private val rootDirectory: File, private val serializer: Serializer<Note>) : NoteCache {
     private val logger by logger()
 
     override fun get(noteId: String, revision: Int): Note? {

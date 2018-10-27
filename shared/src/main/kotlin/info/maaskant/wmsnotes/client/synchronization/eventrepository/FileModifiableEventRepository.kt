@@ -1,12 +1,12 @@
 package info.maaskant.wmsnotes.client.synchronization.eventrepository
 
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
+import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.reactivex.Observable
 import java.io.File
 import javax.inject.Inject
 
-class FileModifiableEventRepository @Inject constructor(private val directory: File, private val eventSerializer: EventSerializer) : ModifiableEventRepository {
+class FileModifiableEventRepository @Inject constructor(private val directory: File, private val eventSerializer: Serializer<Event>) : ModifiableEventRepository {
 
     override fun getEvent(eventId: Int): Event? {
         val eventPath = eventPath(eventId)
@@ -22,7 +22,7 @@ class FileModifiableEventRepository @Inject constructor(private val directory: F
             try {
                 directory
                         .walkTopDown()
-                        .filter { it.isFile }
+                        .filter { it.isFile && !it.name.startsWith('.') }
                         .forEach { emitter.onNext(eventSerializer.deserialize(it.readBytes())) }
                 emitter.onComplete()
             } catch (t: Throwable) {

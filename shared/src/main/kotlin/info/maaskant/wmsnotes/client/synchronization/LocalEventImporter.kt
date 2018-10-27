@@ -3,7 +3,10 @@ package info.maaskant.wmsnotes.client.synchronization
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.logger
+import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.grpc.StatusRuntimeException
+import io.reactivex.Observable
+import io.reactivex.subjects.BehaviorSubject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -11,10 +14,12 @@ import javax.inject.Singleton
 class LocalEventImporter @Inject constructor(
         private val eventStore: EventStore,
         private val eventRepository: ModifiableEventRepository,
-        private val state: ImporterStateStorage
-) {
+        initialState: EventImporterState?
+) : StateProducer<EventImporterState> {
 
     private val logger by logger()
+    private var state = initialState ?: EventImporterState(null)
+    private val stateUpdates: BehaviorSubject<EventImporterState> = BehaviorSubject.create()
 
     fun loadAndStoreLocalEvents() {
         logger.debug("Retrieving new local events")
@@ -23,7 +28,7 @@ class LocalEventImporter @Inject constructor(
             eventStore.getEvents(state.lastEventId).blockingSubscribe {
                 logger.debug("Storing new local event: $it")
                 eventRepository.addEvent(it)
-                state.lastEventId = it.eventId
+                updateLastEventId(it.eventId)
                 numberOfNewEvents++
             }
         } catch (e: StatusRuntimeException) {
@@ -35,4 +40,10 @@ class LocalEventImporter @Inject constructor(
 
     }
 
+    private fun updateLastEventId(lastEventId: Int) {
+        state = state.copy(lastEventId = lastEventId)
+        stateUpdates.onNext(state)
+    }
+
+    override fun getStateUpdates(): Observable<EventImporterState> = stateUpdates
 }

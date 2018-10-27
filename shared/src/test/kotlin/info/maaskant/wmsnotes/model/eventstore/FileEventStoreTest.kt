@@ -2,8 +2,7 @@ package info.maaskant.wmsnotes.model.eventstore
 
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.utilities.serialization.EventSerializer
-import io.mockk.MockKException
+import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -16,7 +15,7 @@ import java.util.*
 internal class FileEventStoreTest : EventStoreTest() {
 
     private lateinit var tempDir: File
-    private var eventSerializer: EventSerializer = mockk()
+    private var eventSerializer: Serializer<Event> = mockk()
 
     @BeforeEach
     fun init() {
@@ -30,7 +29,6 @@ internal class FileEventStoreTest : EventStoreTest() {
     @Test
     fun `check that directory is empty on initialization`() {
         // Given
-        val tempDir = createTempDir(this::class.simpleName!!)
         createInstance()
 
         // Then

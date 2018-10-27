@@ -30,7 +30,7 @@ internal class RemoteEventImporterTest {
         val event1 = remoteNoteEvent(i = 1) to modelEvent(i = 1)
         val event2 = remoteNoteEvent(i = 2) to modelEvent(i = 2)
         every { eventService.getEvents(any()) }.returns(listOf(event1.first, event2.first).iterator())
-        val importer = RemoteEventImporter(eventService, eventRepository, grpcEventMapper, InMemoryImporterStateStorage())
+        val importer = RemoteEventImporter(eventService, eventRepository, grpcEventMapper, EventImporterState(null))
 
         // When
         importer.loadAndStoreRemoteEvents()
@@ -50,10 +50,10 @@ internal class RemoteEventImporterTest {
         val event2 = remoteNoteEvent(i = 2) to modelEvent(i = 2)
         every { eventService.getEvents(remoteEventServiceRequest()) }.returns(listOf(event1.first).iterator())
         every { eventService.getEvents(remoteEventServiceRequest(1)) }.returns(emptyList<Event.GetEventsResponse>().iterator())
-        val stateStorage = InMemoryImporterStateStorage()
 
         // When
-        val importer1 = RemoteEventImporter(eventService, eventRepository, grpcEventMapper, stateStorage)
+        val importer1 = RemoteEventImporter(eventService, eventRepository, grpcEventMapper, EventImporterState(null))
+        val stateObserver = importer1.getStateUpdates().test()
         importer1.loadAndStoreRemoteEvents()
 
         // Given
@@ -61,7 +61,7 @@ internal class RemoteEventImporterTest {
         every { eventService.getEvents(remoteEventServiceRequest(1)) }.returns(listOf(event2.first).iterator())
 
         // When
-        val importer2 = RemoteEventImporter(eventService, eventRepository, grpcEventMapper, stateStorage)
+        val importer2 = RemoteEventImporter(eventService, eventRepository, grpcEventMapper, stateObserver.values().last())
         importer2.loadAndStoreRemoteEvents()
 
         // Then
@@ -72,7 +72,6 @@ internal class RemoteEventImporterTest {
             eventRepository.addEvent(event2.second)
         }
     }
-
 }
 
 private fun remoteEventServiceRequest(afterEventId: Int? = null): Event.GetEventsRequest {

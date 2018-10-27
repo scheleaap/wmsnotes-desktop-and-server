@@ -17,34 +17,11 @@ import org.springframework.context.annotation.Configuration
 import java.io.File
 
 @Configuration
-class ModelConfiguration {
-
+class OtherConfiguration {
     @Bean
-    fun eventStore(kryoPool: Pool<Kryo>): EventStore =
-            FileEventStore(
-                    File("server_data/events"),
-                    KryoEventSerializer(kryoPool)
-            )
-
-    @Bean
-    fun model(eventStore: EventStore, noteProjector: NoteProjector): CommandProcessor =
-            CommandProcessor(
-                    eventStore,
-                    noteProjector,
-                    CommandToEventMapper()
-            )
-
-    @Bean
-    fun noteCache(kryoPool: Pool<Kryo>): NoteCache = FileNoteCache(
-            File("desktop_data/cache/projected_notes"),
-            KryoNoteSerializer(kryoPool)
-    )
-
-    @Bean
-    fun noteProjector(eventStore: EventStore, noteCache: NoteCache): NoteProjector =
-            CachingNoteProjector(
-                    eventStore,
-                    noteCache
-            )
-
+    fun kryoPool(): Pool<Kryo> {
+        return object : Pool<Kryo>(true, true) {
+            override fun create(): Kryo = Kryo()
+        }
+    }
 }

@@ -1,38 +1,22 @@
-package info.maaskant.wmsnotes.model.serialization
+package info.maaskant.wmsnotes.model.projection.cache
 
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.Serializer
+import com.esotericsoftware.kryo.util.Pool
 import info.maaskant.wmsnotes.model.AttachmentAddedEvent
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.projection.Note
-import info.maaskant.wmsnotes.model.projection.cache.KryoNoteSerializer
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.TestFactory
+import info.maaskant.wmsnotes.utilities.serialization.KryoSerializerTest
+import kotlin.reflect.KClass
 
-internal class KryoNoteSerializerTest {
-
+internal class KryoNoteSerializerTest : KryoSerializerTest<Note>() {
     private val noteId = "note"
-    private val notes = listOf(
-            Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = "Title")).component1()
-                    .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = "att-1", content = "data1".toByteArray())).component1()
-                    .apply(AttachmentAddedEvent(eventId = 3, noteId = noteId, revision = 3, name = "att-2", content = "data2".toByteArray())).component1()
+
+    override val items: List<Note> = listOf(Note()
+            .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = "Title")).component1()
+            .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = "att-1", content = "data1".toByteArray())).component1()
+            .apply(AttachmentAddedEvent(eventId = 3, noteId = noteId, revision = 3, name = "att-2", content = "data2".toByteArray())).component1()
     )
 
-    @TestFactory
-    fun `serialization and deserialization`(): List<DynamicTest> {
-        return notes.map { noteBefore ->
-            DynamicTest.dynamicTest(noteBefore.toString()) {
-                // Given
-                val serializer = KryoNoteSerializer()
-
-                // When
-                val noteAfter = serializer.deserialize(serializer.serialize(noteBefore))
-
-                // Then
-                assertThat(noteAfter).isEqualTo(noteBefore)
-                assertThat(noteAfter.hashCode()).isEqualTo(noteBefore.hashCode())
-            }
-        }
-    }
-
+    override fun createInstance(kryoPool: Pool<Kryo>) = KryoNoteSerializer(kryoPool)
 }

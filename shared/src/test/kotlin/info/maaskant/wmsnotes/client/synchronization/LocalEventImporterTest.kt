@@ -29,7 +29,7 @@ internal class LocalEventImporterTest {
         val event1 = modelEvent(i = 1)
         val event2 = modelEvent(i = 2)
         every { eventStore.getEvents(any()) }.returns(Observable.just(event1, event2))
-        val importer = LocalEventImporter(eventStore, eventRepository, InMemoryImporterStateStorage())
+        val importer = LocalEventImporter(eventStore, eventRepository, EventImporterState(null))
 
         // When
         importer.loadAndStoreLocalEvents()
@@ -49,10 +49,10 @@ internal class LocalEventImporterTest {
         val event2 = modelEvent(i = 2)
         every { eventStore.getEvents(afterEventId = null) }.returns(Observable.just(event1))
         every { eventStore.getEvents(afterEventId = 1) }.returns(Observable.empty<Event>())
-        val stateStorage = InMemoryImporterStateStorage()
 
         // When
-        val importer1 = LocalEventImporter(eventStore, eventRepository, stateStorage)
+        val importer1 = LocalEventImporter(eventStore, eventRepository, EventImporterState(null))
+        val stateObserver = importer1.getStateUpdates().test()
         importer1.loadAndStoreLocalEvents()
 
         // Given
@@ -60,7 +60,7 @@ internal class LocalEventImporterTest {
         every { eventStore.getEvents(afterEventId = 1) }.returns(Observable.just(event2))
 
         // When
-        val importer2 = LocalEventImporter(eventStore, eventRepository, stateStorage)
+        val importer2 = LocalEventImporter(eventStore, eventRepository, stateObserver.values().last())
         importer2.loadAndStoreLocalEvents()
 
         // Then
@@ -71,7 +71,6 @@ internal class LocalEventImporterTest {
             eventRepository.addEvent(event2)
         }
     }
-
 }
 
 private fun modelEvent(i: Int): NoteCreatedEvent {
