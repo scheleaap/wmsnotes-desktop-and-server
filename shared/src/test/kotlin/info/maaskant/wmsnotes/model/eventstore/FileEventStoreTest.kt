@@ -19,20 +19,11 @@ internal class FileEventStoreTest : EventStoreTest() {
 
     @BeforeEach
     fun init() {
-        tempDir = createTempDir(this::class.simpleName!!)
+        tempDir = createTempDir(this::class.simpleName!!).resolve("events")
         clearMocks(
                 eventSerializer
         )
         every { eventSerializer.serialize(any()) }.returns(UUID.randomUUID().toString().toByteArray())
-    }
-
-    @Test
-    fun `check that directory is empty on initialization`() {
-        // Given
-        createInstance()
-
-        // Then
-        assertThat(tempDir.list()).isEmpty()
     }
 
     @Test

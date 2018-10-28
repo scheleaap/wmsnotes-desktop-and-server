@@ -4,4 +4,3 @@ interface Serializer<T> {
     fun serialize(o: T): ByteArray
     fun deserialize(bytes: ByteArray): T
 }
-

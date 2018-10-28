@@ -21,7 +21,7 @@ class IndexingModule {
 
     @Singleton
     @Provides
-    fun synchronizerStateRepository(kryoPool: Pool<Kryo>): StateRepository<NoteIndexState> =
+    fun noteIndexStateRepository(kryoPool: Pool<Kryo>): StateRepository<NoteIndexState> =
             FileStateRepository<NoteIndexState>(
                     serializer = KryoNoteIndexStateSerializer(kryoPool),
                     file = File("desktop_data/cache/note_index"),
