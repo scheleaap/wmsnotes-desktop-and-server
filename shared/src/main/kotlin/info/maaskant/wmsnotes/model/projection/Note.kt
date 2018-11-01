@@ -3,6 +3,7 @@ package info.maaskant.wmsnotes.model.projection
 import au.com.console.kassava.kotlinEquals
 import au.com.console.kassava.kotlinToString
 import info.maaskant.wmsnotes.model.*
+import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.*
 
@@ -76,7 +77,7 @@ class Note private constructor(
             copy(
                     revision = event.revision,
                     attachments = attachments + (sanitizedName to event.content),
-                    attachmentHashes = attachmentHashes + (sanitizedName to DigestUtils.md5Hex(event.content))
+                    attachmentHashes = attachmentHashes + (sanitizedName to hash(event.content))
             ) to event
         }
     }
@@ -122,6 +123,13 @@ class Note private constructor(
     }
 
     companion object {
+        private fun hash(content: ByteArray): String {
+            // The following does not work on Android:
+            // return DigestUtils.md5Hex(content)
+            // Source: https://stackoverflow.com/a/9284092
+            return String(Hex.encodeHex(DigestUtils.md5(content)))
+        }
+
         fun deserialize(
                 revision: Int,
                 exists: Boolean,
