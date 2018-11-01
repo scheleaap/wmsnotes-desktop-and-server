@@ -36,11 +36,14 @@ class SynchronizationModule {
     @Provides
     fun grpcCommandService(managedChannel: ManagedChannel) =
             CommandServiceGrpc.newBlockingStub(managedChannel)!!
+                    .withDeadlineAfter(1000, TimeUnit.MILLISECONDS)
+
 
     @Singleton
     @Provides
     fun grpcEventService(managedChannel: ManagedChannel) =
             EventServiceGrpc.newBlockingStub(managedChannel)!!
+                    .withDeadlineAfter(1000, TimeUnit.MILLISECONDS)
 
     @Singleton
     @Provides
@@ -166,11 +169,6 @@ class SynchronizationModule {
     ).apply {
         stateRepository.connect(this)
     }
-
-    @Qualifier
-    @MustBeDocumented
-    @Retention(AnnotationRetention.RUNTIME)
-    annotation class ForSynchronization
 
     @Qualifier
     @MustBeDocumented
