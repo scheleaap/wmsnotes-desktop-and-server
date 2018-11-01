@@ -19,7 +19,6 @@ import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import info.maaskant.wmsnotes.utilities.persistence.FileStateRepository
 import info.maaskant.wmsnotes.utilities.persistence.StateRepository
-import info.maaskant.wmsnotes.utilities.serialization.KryoSerializer
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
@@ -138,7 +137,7 @@ class SynchronizationModule {
     fun synchronizerStateRepository(kryoPool: Pool<Kryo>): StateRepository<SynchronizerState> =
             FileStateRepository(
                     serializer = KryoSynchronizerStateSerializer(kryoPool),
-                    file = File("desktop_data/synchronization/.state"),
+                    file = File("desktop_data/synchronization/synchronizer.state"),
                     scheduler = Schedulers.io(),
                     timeout = 1,
                     unit = TimeUnit.SECONDS
