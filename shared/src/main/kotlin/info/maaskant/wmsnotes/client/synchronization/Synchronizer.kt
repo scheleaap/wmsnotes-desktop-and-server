@@ -12,6 +12,7 @@ import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.grpc.StatusRuntimeException
 import io.reactivex.Observable
+import io.reactivex.rxkotlin.toObservable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -41,17 +42,17 @@ class Synchronizer @Inject constructor(
         val remoteInboundNoteIds = remoteInboundEvents.map { it.noteId }
         val conflictingNoteIds = localOutboundNoteIds.intersect(remoteInboundNoteIds)
         updateLastRevisions(localOutboundEvents, remoteInboundEvents)
-        processLocalOutboundEvents(localOutboundEvents.filter { it.noteId !in conflictingNoteIds })
-        processRemoteInboundEvents(remoteInboundEvents.filter { it.noteId !in conflictingNoteIds })
+        processLocalOutboundEvents(localOutboundEvents.toObservable().filter { it.noteId !in conflictingNoteIds })
+        processRemoteInboundEvents(remoteInboundEvents.toObservable().filter { it.noteId !in conflictingNoteIds })
         conflictingNoteIdsSubject.onNext(conflictingNoteIds)
     }
 
     private fun updateLastRevisions(localOutboundEvents: List<Event>, remoteInboundEvents: List<Event>) {
         var stateInUpdate = state
-        localOutboundEvents.stream().forEach { event ->
+        localOutboundEvents.forEach { event ->
             stateInUpdate = stateInUpdate.updateLastLocalRevision(event.noteId, event.revision)
         }
-        remoteInboundEvents.stream().forEach { event ->
+        remoteInboundEvents.forEach { event ->
             stateInUpdate = stateInUpdate.updateLastRemoteRevision(event.noteId, event.revision)
         }
         if (stateInUpdate != state) {
@@ -59,11 +60,10 @@ class Synchronizer @Inject constructor(
         }
     }
 
-    private fun processLocalOutboundEvents(localOutboundEvents: List<Event>) {
+    private fun processLocalOutboundEvents(localOutboundEvents: Observable<Event>) {
         var connectionProblem = false
         val noteIdsWithErrors: MutableSet<String> = HashSet<String>()
         localOutboundEvents
-                .stream() // Necessary for filtering to work
                 .filter { !connectionProblem && it.noteId !in noteIdsWithErrors }
                 .forEach {
                     if (it.eventId !in state.localEventIdsToIgnore) {
@@ -98,10 +98,9 @@ class Synchronizer @Inject constructor(
                 }
     }
 
-    private fun processRemoteInboundEvents(remoteInboundEvents: List<Event>) {
+    private fun processRemoteInboundEvents(remoteInboundEvents: Observable<Event>) {
         val noteIdsWithErrors: MutableSet<String> = HashSet<String>()
         remoteInboundEvents
-                .stream() // Necessary for filtering to work
                 .filter { it.noteId !in noteIdsWithErrors }
                 .forEach {
                     if (it.eventId !in state.remoteEventIdsToIgnore) {

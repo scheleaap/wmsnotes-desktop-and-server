@@ -84,6 +84,7 @@ internal class SynchronizerTest {
         every { localEvents.getEvents() }.returns(Observable.just(event1, event2, event3))
         every { remoteEvents.getEvents() }.returns(Observable.empty())
         val remoteRequest1 = givenARemoteResponseForALocalEvent(event1, null, remoteError())
+        givenARemoteResponseForALocalEvent(event2, null, remoteError())
         givenARemoteResponseForALocalEvent(event2, event1.revision, remoteError())
         val remoteRequest3 = givenARemoteResponseForALocalEvent(event3, null, remoteSuccess(event3.eventId, event3.revision))
         val s = createSynchronizer()

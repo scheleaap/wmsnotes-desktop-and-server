@@ -5,6 +5,7 @@ dependencies {
     compile project(':shared')
 
     // Infrastructure
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     compile 'org.slf4j:slf4j-simple:1.7.25'
     // See also https://medium.com/@Zhuinden/that-missing-guide-how-to-use-dagger2-ef116fbea97
     compile 'com.google.dagger:dagger:2.16'
@@ -22,6 +23,11 @@ dependencies {
 
     // Configuration
 //    compile 'com.natpryce:konfig:1.6.10.0'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+    kotlinOptions.freeCompilerArgs = ['-Xjsr305=strict']
 }
 
 test {

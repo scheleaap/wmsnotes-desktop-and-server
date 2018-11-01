@@ -11,6 +11,7 @@ plugins {
 
 dependencies {
     // Infrastructure
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
     api 'org.slf4j:slf4j-api:1.7.25'
     testRuntime 'org.slf4j:slf4j-simple:1.7.25'
     api 'au.com.console:kassava:1.0.0'
@@ -49,6 +50,11 @@ protobuf {
             }
         }
     }
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '1.6'
+    kotlinOptions.freeCompilerArgs = ['-Xjsr305=strict']
 }
 
 test {

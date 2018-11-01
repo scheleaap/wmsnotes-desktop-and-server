@@ -30,7 +30,7 @@ class RemoteEventImporter @Inject constructor(
         try {
             val request = createGetEventsRequest()
             val response: Iterator<Event.GetEventsResponse> = eventService.getEvents(request)
-            response.forEachRemaining {
+            response.forEach {
                 val event = grpcEventMapper.toModelClass(it)
                 logger.debug("Storing new remote event: $event")
                 eventRepository.addEvent(event)
