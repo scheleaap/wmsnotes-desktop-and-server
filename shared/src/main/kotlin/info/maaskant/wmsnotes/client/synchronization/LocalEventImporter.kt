@@ -4,7 +4,6 @@ import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableE
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
-import io.grpc.StatusRuntimeException
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
 import javax.inject.Inject
@@ -31,9 +30,6 @@ class LocalEventImporter @Inject constructor(
                 updateLastEventId(it.eventId)
                 numberOfNewEvents++
             }
-        } catch (e: StatusRuntimeException) {
-            logger.warn("Error while retrieving events: ${e.status.code}")
-            return
         } finally {
             if (numberOfNewEvents > 0) logger.info("Added $numberOfNewEvents new local events")
         }

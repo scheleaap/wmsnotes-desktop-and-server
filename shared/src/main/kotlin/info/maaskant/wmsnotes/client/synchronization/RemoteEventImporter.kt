@@ -6,9 +6,11 @@ import info.maaskant.wmsnotes.server.command.grpc.Event
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
+import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -38,8 +40,10 @@ class RemoteEventImporter @Inject constructor(
                 numberOfNewEvents++
             }
         } catch (e: StatusRuntimeException) {
-            logger.warn("Error while retrieving events: ${e.status.code}")
-            return
+            when (e.status.code) {
+                Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED -> logger.debug("Could not retrieve events: server not available")
+                else -> logger.warn("Error while retrieving events: ${e.status.code}, ${e.status.description}")
+            }
         } finally {
             if (numberOfNewEvents > 0) logger.info("Added $numberOfNewEvents new remote events")
         }

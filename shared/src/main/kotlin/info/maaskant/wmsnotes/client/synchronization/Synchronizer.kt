@@ -10,6 +10,7 @@ import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
+import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import io.reactivex.Observable
 import io.reactivex.rxkotlin.toObservable
@@ -87,8 +88,13 @@ class Synchronizer @Inject constructor(
                                 logger.debug("Command not processed by server: $request -> ${response.status} ${response.errorDescription}")
                             }
                         } catch (e: StatusRuntimeException) {
-                            connectionProblem = true
-                            logger.warn("Error sending command to server: ${e.status.code}")
+                            when (e.status.code) {
+                                Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED -> {
+                                    logger.debug("Could not send command for event $it to server: server not available")
+                                    connectionProblem = true
+                                }
+                                else -> logger.warn("Error sending command for event $it to server: ${e.status.code}, ${e.status.description}")
+                            }
                         }
                     } else {
                         localEvents.removeEvent(it)
