@@ -22,7 +22,7 @@ class IndexingModule {
     @Singleton
     @Provides
     fun noteIndexStateRepository(kryoPool: Pool<Kryo>): StateRepository<NoteIndexState> =
-            FileStateRepository<NoteIndexState>(
+            FileStateRepository(
                     serializer = KryoNoteIndexStateSerializer(kryoPool),
                     file = File("desktop_data/cache/note_index"),
                     scheduler = Schedulers.io(),
@@ -41,10 +41,5 @@ class IndexingModule {
             stateRepository.connect(this)
         }
     }
-
-    @Qualifier
-    @MustBeDocumented
-    @Retention(AnnotationRetention.RUNTIME)
-    annotation class IndexDatabase
 
 }

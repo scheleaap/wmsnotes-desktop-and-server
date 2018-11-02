@@ -41,7 +41,8 @@ class RemoteEventImporter @Inject constructor(
             }
         } catch (e: StatusRuntimeException) {
             when (e.status.code) {
-                Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED -> logger.debug("Could not retrieve events: server not available")
+                Status.Code.UNAVAILABLE -> logger.debug("Could not retrieve events: server not available")
+                Status.Code.DEADLINE_EXCEEDED -> logger.debug("Could not retrieve events: server is taking too long to respond")
                 else -> logger.warn("Error while retrieving events: ${e.status.code}, ${e.status.description}")
             }
         } finally {

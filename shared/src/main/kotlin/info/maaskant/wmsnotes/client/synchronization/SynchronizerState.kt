@@ -6,7 +6,6 @@ import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import com.esotericsoftware.kryo.util.Pool
-import info.maaskant.wmsnotes.client.indexing.NoteMetadata
 import info.maaskant.wmsnotes.utilities.serialization.*
 import javax.inject.Inject
 
@@ -36,10 +35,10 @@ data class SynchronizerState internal constructor(
 
     companion object {
         fun create(
-                lastLocalRevisions: Map<String, Int?> = emptyMap<String, Int?>(),
-                lastRemoteRevisions: Map<String, Int?> = emptyMap<String, Int?>().withDefault { null },
-                localEventIdsToIgnore: Set<Int> = emptySet<Int>(),
-                remoteEventIdsToIgnore: Set<Int> = emptySet<Int>()
+                lastLocalRevisions: Map<String, Int?> = emptyMap(),
+                lastRemoteRevisions: Map<String, Int?> = emptyMap(),
+                localEventIdsToIgnore: Set<Int> = emptySet(),
+                remoteEventIdsToIgnore: Set<Int> = emptySet()
         ) = SynchronizerState(
                 lastLocalRevisions = lastLocalRevisions.withDefault { null },
                 lastRemoteRevisions = lastRemoteRevisions.withDefault { null },
@@ -56,11 +55,11 @@ class KryoSynchronizerStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) 
 
     private class KryoSynchronizerStateSerializer : Serializer<SynchronizerState>() {
         override fun write(kryo: Kryo, output: Output, it: SynchronizerState) {
-            output.writeMap(it.lastLocalRevisions) { key, value ->
+            output.writeMapWithNullableValues(it.lastLocalRevisions) { key, value ->
                 output.writeString(key)
                 output.writeNullableInt(value)
             }
-            output.writeMap(it.lastRemoteRevisions) { key, value ->
+            output.writeMapWithNullableValues(it.lastRemoteRevisions) { key, value ->
                 output.writeString(key)
                 output.writeNullableInt(value)
             }
@@ -73,10 +72,10 @@ class KryoSynchronizerStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) 
         }
 
         override fun read(kryo: Kryo, input: Input, clazz: Class<out SynchronizerState>): SynchronizerState {
-            val lastLocalRevisions = input.readMap<String, Int?> {
+            val lastLocalRevisions = input.readMapWithNullableValues<String, Int?> {
                 input.readString() to input.readNullableInt(true)
             }
-            val lastRemoteRevisions = input.readMap<String, Int?> {
+            val lastRemoteRevisions = input.readMapWithNullableValues<String, Int?> {
                 input.readString() to input.readNullableInt(true)
             }
             val localEventIdsToIgnore = input.readSet<Int> {

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test
 internal class NoteIndexTest {
 
     private val noteId = "note-1"
+    private val title = "Title 1"
 
     private val scheduler = Schedulers.trampoline()
 
@@ -47,20 +48,20 @@ internal class NoteIndexTest {
         val index = NoteIndex(eventStore, noteIndexState, scheduler)
 
         // When
-        eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"))
+        eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = title))
         val observer = index.getNotes().test()
 
         // Then
         observer.assertComplete()
         observer.assertNoErrors()
-        assertThat(observer.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, "Title 1")))
+        assertThat(observer.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, title)))
     }
 
     @Test
     fun `note deleted`() {
         // Given
         val index = NoteIndex(eventStore, noteIndexState, scheduler)
-        eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"))
+        eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = title))
 
         // When
         eventUpdatesSubject.onNext(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 1))
@@ -76,7 +77,7 @@ internal class NoteIndexTest {
     @Test
     fun initialize() {
         // Given
-        every { eventStore.getEvents() }.returns(Observable.just(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1")))
+        every { eventStore.getEvents() }.returns(Observable.just(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = title)))
         val index1 = NoteIndex(eventStore, noteIndexState, scheduler) // Instantiate twice to test double initialization
         val stateObserver = index1.getStateUpdates().test()
         val index2 = NoteIndex(eventStore, stateObserver.values().last(), scheduler)
@@ -87,7 +88,7 @@ internal class NoteIndexTest {
         // Then
         notesObserver.assertComplete()
         notesObserver.assertNoErrors()
-        assertThat(notesObserver.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, "Title 1")))
+        assertThat(notesObserver.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, title)))
         verify(exactly = 1) {
             eventStore.getEvents(any())
         }
@@ -98,7 +99,7 @@ internal class NoteIndexTest {
         // Given
         val index1 = NoteIndex(eventStore, noteIndexState, scheduler) // This instance is supposed to save the state
         val stateObserver = index1.getStateUpdates().test()
-        eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"))
+        eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = title))
         val index2 = NoteIndex(eventStore, stateObserver.values().last(), scheduler) // This instance is supposed to read the state
 
         // When
@@ -107,6 +108,6 @@ internal class NoteIndexTest {
         // Then
         notesObserver.assertComplete()
         notesObserver.assertNoErrors()
-        assertThat(notesObserver.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, "Title 1")))
+        assertThat(notesObserver.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, title)))
     }
 }

@@ -34,10 +34,14 @@ class SynchronizationModule {
 
     @Singleton
     @Provides
+    @ServerHostname
+    fun serverHostname(): String = "localhost"
+
+    @Singleton
+    @Provides
     fun grpcCommandService(managedChannel: ManagedChannel) =
             CommandServiceGrpc.newBlockingStub(managedChannel)!!
                     .withDeadlineAfter(1000, TimeUnit.MILLISECONDS)
-
 
     @Singleton
     @Provides
@@ -47,8 +51,8 @@ class SynchronizationModule {
 
     @Singleton
     @Provides
-    fun managedChannel(): ManagedChannel =
-            ManagedChannelBuilder.forAddress("localhost", 6565)
+    fun managedChannel(@ServerHostname hostname: String): ManagedChannel =
+            ManagedChannelBuilder.forAddress(hostname, 6565)
                     // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
                     // needing certificates.
                     .usePlaintext()
@@ -169,6 +173,11 @@ class SynchronizationModule {
     ).apply {
         stateRepository.connect(this)
     }
+
+    @Qualifier
+    @MustBeDocumented
+    @Retention(AnnotationRetention.RUNTIME)
+    annotation class ServerHostname
 
     @Qualifier
     @MustBeDocumented

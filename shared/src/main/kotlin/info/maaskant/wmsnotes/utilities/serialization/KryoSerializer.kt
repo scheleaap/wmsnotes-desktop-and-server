@@ -62,7 +62,17 @@ fun Output.writeNullableInt(value: Int?, optimizePositive: Boolean = true) {
     }
 }
 
-fun <T, U> Input.readMap(function: () -> Pair<T, U?>): Map<T, U?> {
+fun <T, U> Input.readMap(function: () -> Pair<T, U>): Map<T, U> {
+    val numberOfItems = readInt()
+    val items: MutableMap<T, U> = HashMap()
+    for (i in 1..numberOfItems) {
+        val (key, value) = function()
+        items[key] = value
+    }
+    return items
+}
+
+fun <T, U> Input.readMapWithNullableValues(function: () -> Pair<T, U?>): Map<T, U?> {
     val numberOfItems = readInt()
     val items: MutableMap<T, U?> = HashMap()
     for (i in 1..numberOfItems) {
@@ -72,7 +82,14 @@ fun <T, U> Input.readMap(function: () -> Pair<T, U?>): Map<T, U?> {
     return items
 }
 
-fun <T, U> Output.writeMap(items: Map<T, U?>, function: (key: T, value: U?) -> Unit) {
+fun <T, U> Output.writeMap(items: Map<T, U>, function: (key: T, value: U) -> Unit) {
+    writeInt(items.size)
+    for ((key, value) in items) {
+        function(key, value)
+    }
+}
+
+fun <T, U> Output.writeMapWithNullableValues(items: Map<T, U?>, function: (key: T, value: U?) -> Unit) {
     writeInt(items.size)
     for ((key, value) in items) {
         function(key, value)

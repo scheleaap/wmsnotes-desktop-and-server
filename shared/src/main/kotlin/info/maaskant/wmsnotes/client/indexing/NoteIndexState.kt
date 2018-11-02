@@ -7,6 +7,8 @@ import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import com.esotericsoftware.kryo.util.Pool
 import info.maaskant.wmsnotes.utilities.serialization.KryoSerializer
+import info.maaskant.wmsnotes.utilities.serialization.readMap
+import info.maaskant.wmsnotes.utilities.serialization.writeMapWithNullableValues
 import javax.inject.Inject
 
 data class NoteIndexState(val isInitialized: Boolean, val notes: Map<String, NoteMetadata> = emptyMap()) {
@@ -24,19 +26,16 @@ class KryoNoteIndexStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) : K
     private class KryoNoteIndexStateSerializer : Serializer<NoteIndexState>() {
         override fun write(kryo: Kryo, output: Output, it: NoteIndexState) {
             output.writeBoolean(it.isInitialized)
-            output.writeInt(it.notes.size)
-            for ((_, metadata) in it.notes) {
+            output.writeMapWithNullableValues(it.notes) { _, metadata ->
                 kryo.writeObject(output, metadata)
             }
         }
 
         override fun read(kryo: Kryo, input: Input, clazz: Class<out NoteIndexState>): NoteIndexState {
             val isInitialized = input.readBoolean()
-            val numberOfNotes = input.readInt()
-            val notes: MutableMap<String, NoteMetadata> = HashMap()
-            for (i in 1..numberOfNotes) {
+            val notes = input.readMap {
                 val metadata = kryo.readObject(input, NoteMetadata::class.java) as NoteMetadata
-                notes[metadata.noteId] = metadata
+                metadata.noteId to metadata
             }
             return NoteIndexState(isInitialized = isInitialized, notes = notes)
         }

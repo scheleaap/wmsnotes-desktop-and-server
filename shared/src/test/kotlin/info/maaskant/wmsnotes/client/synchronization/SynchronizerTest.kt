@@ -27,7 +27,7 @@ internal class SynchronizerTest {
     private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub = mockk()
     private val eventToCommandMapper: EventToCommandMapper = mockk()
     private val grpcCommandMapper: GrpcCommandMapper = mockk()
-    private lateinit var stateStorage: SynchronizerState
+    private lateinit var state: SynchronizerState
     private val noteProjector: NoteProjector = mockk()
 
     @BeforeEach
@@ -43,9 +43,8 @@ internal class SynchronizerTest {
         )
         every { localEvents.removeEvent(any()) }.just(Runs)
         every { remoteEvents.removeEvent(any()) }.just(Runs)
-        stateStorage = SynchronizerState.create()
+        state = SynchronizerState.create()
     }
-
 
     @Test
     fun `outbound sync, no remote events, call successful`() {
@@ -247,7 +246,7 @@ internal class SynchronizerTest {
         val remoteEvents = createInMemoryEventRepository(remoteInboundEvent1, remoteInboundEvent2)
         val remoteRequest1 = givenARemoteResponseForALocalEvent(localOutboundEvent1, remoteInboundEvent2.revision, remoteSuccess(remoteInboundEvent2.eventId + 1, remoteInboundEvent2.revision + 1))
         val remoteRequest2 = givenARemoteResponseForALocalEvent(localOutboundEvent2, remoteInboundEvent2.revision + 1, remoteSuccess(remoteInboundEvent2.eventId + 2, remoteInboundEvent2.revision + 2))
-        stateStorage = stateStorage.updateLastRemoteRevision(remoteInboundEvent2.noteId, remoteInboundEvent2.revision - 1)
+        state = state.updateLastRemoteRevision(remoteInboundEvent2.noteId, remoteInboundEvent2.revision - 1)
         val s = createSynchronizer(localEvents, remoteEvents)
         s.synchronize()
 
@@ -283,7 +282,7 @@ internal class SynchronizerTest {
         val localEventForRemoteInboundEvent2 = modelEvent(eventId = localOutboundEvent2.eventId + 2, noteId = 1, revision = localOutboundEvent2.revision + 2)
         val command1 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent1, localOutboundEvent2.revision, localEventForRemoteInboundEvent1)
         val command2 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent2, localOutboundEvent2.revision + 1, localEventForRemoteInboundEvent2)
-        stateStorage = stateStorage.updateLastRemoteRevision(remoteInboundEvent2.noteId, remoteInboundEvent2.revision - 1)
+        state = state.updateLastRemoteRevision(remoteInboundEvent2.noteId, remoteInboundEvent2.revision - 1)
         val s = createSynchronizer(localEvents, remoteEvents)
         s.synchronize()
 
@@ -324,7 +323,7 @@ internal class SynchronizerTest {
         every { commandProcessor.blockingProcessCommand(command1) }.returns(localEventForCopiedNote)
         val command2 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent1, localOutboundEvent2.revision, localEventForRemoteInboundEvent1)
         val command3 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent2, localOutboundEvent2.revision + 1, localEventForRemoteInboundEvent2)
-        stateStorage = stateStorage
+        state = state
                 .updateLastLocalRevision(localOutboundEvent2.noteId, localOutboundEvent2.revision)
                 .updateLastRemoteRevision(remoteInboundEvent2.noteId, remoteInboundEvent2.revision)
         val s = createSynchronizer(localEvents, remoteEvents)
@@ -377,7 +376,7 @@ internal class SynchronizerTest {
                     grpcCommandMapper,
                     commandProcessor,
                     noteProjector,
-                    stateStorage
+                    state
             )
 
     private fun givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent: Event, lastRevision: Int?, localEvent: Event): Command {

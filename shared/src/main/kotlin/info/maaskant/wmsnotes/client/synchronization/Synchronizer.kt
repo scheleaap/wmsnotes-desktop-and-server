@@ -89,8 +89,12 @@ class Synchronizer @Inject constructor(
                             }
                         } catch (e: StatusRuntimeException) {
                             when (e.status.code) {
-                                Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED -> {
+                                Status.Code.UNAVAILABLE -> {
                                     logger.debug("Could not send command for event $it to server: server not available")
+                                    connectionProblem = true
+                                }
+                                Status.Code.DEADLINE_EXCEEDED -> {
+                                    logger.debug("Could not send command for event $it to server: server is taking too long to respond")
                                     connectionProblem = true
                                 }
                                 else -> logger.warn("Error sending command for event $it to server: ${e.status.code}, ${e.status.description}")

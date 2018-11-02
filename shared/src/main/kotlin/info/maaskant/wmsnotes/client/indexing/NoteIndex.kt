@@ -18,11 +18,10 @@ class NoteIndex @Inject constructor(
 
     private val logger by logger()
 
-    private lateinit var state: NoteIndexState
+    private var state: NoteIndexState = initialState ?: NoteIndexState(isInitialized = false)
     private val stateUpdates: BehaviorSubject<NoteIndexState> = BehaviorSubject.create()
 
     init {
-        updateState(initialState ?: NoteIndexState(isInitialized = false))
         var source = eventStore.getEventUpdates()
         if (!state.isInitialized) {
             source = Observable.concat(
