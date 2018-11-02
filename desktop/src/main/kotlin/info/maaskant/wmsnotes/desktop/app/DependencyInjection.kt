@@ -3,6 +3,7 @@ package info.maaskant.wmsnotes.desktop.app
 import dagger.Component
 import info.maaskant.wmsnotes.client.synchronization.LocalEventImporter
 import info.maaskant.wmsnotes.client.synchronization.RemoteEventImporter
+import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
 import info.maaskant.wmsnotes.client.synchronization.Synchronizer
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.CommandProcessor
@@ -23,7 +24,7 @@ interface ApplicationGraph {
     fun commandProcessor(): CommandProcessor
     fun localEventImporter(): LocalEventImporter
     fun remoteEventImporter(): RemoteEventImporter
-    fun synchronizer(): Synchronizer
+    fun synchronizationTask(): SynchronizationTask
 
 }
 
