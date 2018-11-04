@@ -38,6 +38,7 @@ class Application : App(MainView::class, Styles::class) {
     override fun start(stage: Stage) {
         super.start(stage)
         applicationModel.start()
+        synchronizationTask.pause()
         synchronizationTask.start()
     }
 

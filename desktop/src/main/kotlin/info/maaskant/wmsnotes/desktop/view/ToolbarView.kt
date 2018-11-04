@@ -2,13 +2,18 @@ package info.maaskant.wmsnotes.desktop.view
 
 import com.github.thomasnield.rxkotlinfx.actionEvents
 import com.github.thomasnield.rxkotlinfx.observeOnFx
+import com.github.thomasnield.rxkotlinfx.toObservable
+import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
 import info.maaskant.wmsnotes.desktop.controller.ApplicationController
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.utilities.logger
+import io.reactivex.rxjavafx.observables.JavaFxObservable
 import javafx.geometry.Orientation
+import org.controlsfx.control.ToggleSwitch
 import tornadofx.*
+import tornadofx.controlsfx.toggleswitch
 
 class ToolbarView : View() {
 
@@ -19,6 +24,8 @@ class ToolbarView : View() {
     private val applicationModel: ApplicationModel by di()
 
     private val commandProcessor: CommandProcessor by di()
+
+    private val synchronizationTask: SynchronizationTask by di()
 
     private var i: Int = 1
 
@@ -39,6 +46,18 @@ class ToolbarView : View() {
                     .map { !it.isPresent }
                     .observeOnFx()
                     .subscribe(this::setDisable) { logger.warn("Error", it) }
+        }
+        // toggleswitch {
+        this += ToggleSwitch().apply {
+            isSelected = false
+            selectedProperty().toObservable()
+                    .subscribe {
+                        if (it) synchronizationTask.unpause() else synchronizationTask.pause()
+                    }
+            synchronizationTask.isPaused()
+                    .subscribe {
+                        this.isSelected = !it
+                    }
         }
         progressindicator {
             progress = -1.0
