@@ -2,8 +2,6 @@ package info.maaskant.wmsnotes.desktop.app
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
-import dagger.Module
-import dagger.Provides
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.client.api.GrpcEventMapper
 import info.maaskant.wmsnotes.client.synchronization.*
@@ -23,92 +21,106 @@ import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.reactivex.schedulers.Schedulers
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
 @Suppress("ConstantConditionIf")
-@Module
-class SynchronizationModule {
+@Configuration
+class SynchronizationConfiguration {
 
+    @Bean
     @Singleton
-    @Provides
     @ServerHostname
     fun serverHostname(): String = "localhost"
 
+    @Bean
     @Singleton
-    @Provides
     fun grpcCommandService(managedChannel: ManagedChannel) =
             CommandServiceGrpc.newBlockingStub(managedChannel)!!
-                    .withDeadlineAfter(1000, TimeUnit.MILLISECONDS)
+//                    .withDeadlineAfter(10, TimeUnit.SECONDS)
 
+    @Bean
     @Singleton
-    @Provides
     fun grpcEventService(managedChannel: ManagedChannel) =
             EventServiceGrpc.newBlockingStub(managedChannel)!!
-                    .withDeadlineAfter(1000, TimeUnit.MILLISECONDS)
+//                    .withDeadlineAfter(10, TimeUnit.SECONDS)
 
+    @Bean
     @Singleton
-    @Provides
     fun managedChannel(@ServerHostname hostname: String): ManagedChannel =
             ManagedChannelBuilder.forAddress(hostname, 6565)
                     // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
                     // needing certificates.
-                    .usePlaintext()
+                    .usePlaintext() // TODO enable SSL/TLS
                     .build()
 
+    @Bean
     @Singleton
-    @Provides
+    fun grpcCommandMapper() = GrpcCommandMapper()
+
+    @Bean
+    @Singleton
+    fun grpcEventMapper() = GrpcEventMapper()
+
+    @Bean
+    @Singleton
+    fun eventToCommandMapper() = EventToCommandMapper()
+
+    @Bean
+    @Singleton
     @ForLocalEvents
-    fun localEventRepository(eventSerializer: Serializer<Event>) =
+    fun localEventRepository(@OtherConfiguration.AppDirectory appDirectory: File, eventSerializer: Serializer<Event>) =
             if (storeInMemory) {
                 InMemoryModifiableEventRepository()
             } else {
-                FileModifiableEventRepository(File("desktop_data/synchronization/local_events"), eventSerializer)
+                FileModifiableEventRepository(appDirectory.resolve("synchronization").resolve("local_events").resolve(".state"), eventSerializer)
             }
 
+    @Bean
     @Singleton
-    @Provides
     @ForRemoteEvents
-    fun remoteEventRepository(eventSerializer: Serializer<Event>) =
+    fun remoteEventRepository(@OtherConfiguration.AppDirectory appDirectory: File, eventSerializer: Serializer<Event>) =
             if (storeInMemory) {
                 InMemoryModifiableEventRepository()
             } else {
-                FileModifiableEventRepository(File("desktop_data/synchronization/remote_events"), eventSerializer)
+                FileModifiableEventRepository(appDirectory.resolve("synchronization").resolve("remote_events"), eventSerializer)
             }
 
+    @Bean
     @Singleton
-    @Provides
     fun eventImporterStateSerializer(kryoPool: Pool<Kryo>): Serializer<EventImporterState> =
             KryoEventImporterStateSerializer(kryoPool)
 
+    @Bean
     @Singleton
-    @Provides
     @ForLocalEvents
-    fun localEventImporterStateRepository(serializer: Serializer<EventImporterState>): StateRepository<EventImporterState> =
+    fun localEventImporterStateRepository(@OtherConfiguration.AppDirectory appDirectory: File, serializer: Serializer<EventImporterState>): StateRepository<EventImporterState> =
             FileStateRepository(
                     serializer = serializer,
-                    file = File("desktop_data/synchronization/local_events/.state"),
+                    file = appDirectory.resolve("synchronization").resolve("local_events").resolve(".state"),
                     scheduler = Schedulers.io(),
                     timeout = 1,
                     unit = TimeUnit.SECONDS
             )
 
+    @Bean
     @Singleton
-    @Provides
     @ForRemoteEvents
-    fun remoteEventImporterStateRepository(serializer: Serializer<EventImporterState>): StateRepository<EventImporterState> =
+    fun remoteEventImporterStateRepository(@OtherConfiguration.AppDirectory appDirectory: File, serializer: Serializer<EventImporterState>): StateRepository<EventImporterState> =
             FileStateRepository(
                     serializer = serializer,
-                    file = File("desktop_data/synchronization/remote_events/.state"),
+                    file = appDirectory.resolve("synchronization").resolve("remote_events").resolve(".state"),
                     scheduler = Schedulers.io(),
                     timeout = 1,
                     unit = TimeUnit.SECONDS
             )
 
+    @Bean
     @Singleton
-    @Provides
     fun localEventImporter(
             eventStore: EventStore,
             @ForLocalEvents eventRepository: ModifiableEventRepository,
@@ -122,8 +134,8 @@ class SynchronizationModule {
                 stateRepository.connect(this)
             }
 
+    @Bean
     @Singleton
-    @Provides
     fun remoteEventImporter(
             grpcEventService: EventServiceGrpc.EventServiceBlockingStub,
             grpcEventMapper: GrpcEventMapper,
@@ -139,19 +151,19 @@ class SynchronizationModule {
                 stateRepository.connect(this)
             }
 
+    @Bean
     @Singleton
-    @Provides
-    fun synchronizerStateRepository(kryoPool: Pool<Kryo>): StateRepository<SynchronizerState> =
+    fun synchronizerStateRepository(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): StateRepository<SynchronizerState> =
             FileStateRepository(
                     serializer = KryoSynchronizerStateSerializer(kryoPool),
-                    file = File("desktop_data/synchronization/synchronizer.state"),
+                    file = appDirectory.resolve("synchronization").resolve("synchronizer.state"),
                     scheduler = Schedulers.io(),
                     timeout = 1,
                     unit = TimeUnit.SECONDS
             )
 
+    @Bean
     @Singleton
-    @Provides
     fun synchronizer(
             @ForLocalEvents localEvents: ModifiableEventRepository,
             @ForRemoteEvents remoteEvents: ModifiableEventRepository,

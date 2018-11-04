@@ -13,10 +13,12 @@ import io.reactivex.observables.ConnectableObservable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
+import org.springframework.stereotype.Component
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
+@Component
 class ApplicationModel @Inject constructor(
         eventStore: EventStore,
         noteIndex: NoteIndex,
@@ -32,7 +34,7 @@ class ApplicationModel @Inject constructor(
             .publish()
 
     var selectedNoteValue: Note? = null
-        private set
+//        private set
 
     val selectedNoteId: Subject<Optional<String>> = PublishSubject.create()
 

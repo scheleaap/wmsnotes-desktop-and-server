@@ -1,7 +1,6 @@
 package info.maaskant.wmsnotes.desktop.view
 
 import com.github.thomasnield.rxkotlinfx.observeOnFx
-import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import javafx.geometry.Orientation
 import javafx.scene.layout.BorderPane
@@ -12,7 +11,7 @@ class MainView : View() {
 
     override val root = BorderPane()
 
-    private val applicationModel: ApplicationModel = Injector.instance.applicationModel()
+    private val applicationModel : ApplicationModel by di()
 
     private val treeView: TreeView by inject()
     private val detailView: DetailView by inject()

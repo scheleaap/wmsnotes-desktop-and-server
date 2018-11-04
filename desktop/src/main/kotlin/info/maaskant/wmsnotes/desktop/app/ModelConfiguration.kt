@@ -2,11 +2,11 @@ package info.maaskant.wmsnotes.desktop.app
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
-import dagger.Module
-import dagger.Provides
 import info.maaskant.wmsnotes.desktop.app.Configuration.cache
 import info.maaskant.wmsnotes.desktop.app.Configuration.delay
 import info.maaskant.wmsnotes.desktop.app.Configuration.storeInMemory
+import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.CommandToEventMapper
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.KryoEventSerializer
 import info.maaskant.wmsnotes.model.eventstore.DelayingEventStore
@@ -17,22 +17,25 @@ import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.model.projection.cache.*
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import java.io.File
 import javax.inject.Singleton
 
-@Module
-class ModelModule {
+@Configuration
+class ModelConfiguration {
 
-    @Provides
+    @Bean
+    @Singleton
     fun eventSerializer(kryoPool: Pool<Kryo>): Serializer<Event> = KryoEventSerializer(kryoPool)
 
+    @Bean
     @Singleton
-    @Provides
-    fun eventStore(eventSerializer: Serializer<Event>): EventStore {
+    fun eventStore(@OtherConfiguration.AppDirectory appDirectory: File, eventSerializer: Serializer<Event>): EventStore {
         val realStore = if (storeInMemory) {
             InMemoryEventStore()
         } else {
-            FileEventStore(File("desktop_data/events"), eventSerializer)
+            FileEventStore(appDirectory.resolve("events"), eventSerializer)
         }
         return if (delay) {
             DelayingEventStore(realStore)
@@ -41,20 +44,35 @@ class ModelModule {
         }
     }
 
+    @Bean
     @Singleton
-    @Provides
-    fun noteCache(noteSerializer: Serializer<Note>): NoteCache =
+    fun commandProcessor(eventStore: EventStore, noteProjector: NoteProjector): CommandProcessor =
+            CommandProcessor(
+                    eventStore,
+                    noteProjector,
+                    CommandToEventMapper()
+            )
+
+    @Bean
+    @Singleton
+    fun noteCache(@OtherConfiguration.AppDirectory appDirectory: File, noteSerializer: Serializer<Note>): NoteCache =
             if (cache) {
-                FileNoteCache(File("desktop_data/cache/projected_notes"), noteSerializer)
+                FileNoteCache(appDirectory.resolve("cache").resolve("projected_notes"), noteSerializer)
             } else {
                 NoopNoteCache
             }
 
+    @Bean
     @Singleton
-    @Provides
     fun noteProjector(cachingNoteProjector: CachingNoteProjector): NoteProjector = cachingNoteProjector
 
-    @Provides
+    @Bean
+    @Singleton
+    fun cachingNoteProjector(eventStore: EventStore, noteCache: NoteCache) =
+            CachingNoteProjector(eventStore, noteCache)
+
+    @Bean
+    @Singleton
     fun noteSerializer(kryoPool: Pool<Kryo>): Serializer<Note> = KryoNoteSerializer(kryoPool)
 
 }

@@ -1,22 +1,56 @@
-apply plugin: 'kotlin-kapt'
+buildscript {
+    ext {
+        versions = [
+                springBoot: '2.0.5.RELEASE',
+        ]
+    }
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlinVersion"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${versions.springBoot}"
+    }
+}
+
 apply plugin: 'application'
+
+apply plugin: 'kotlin-spring'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+ext {
+    versions = [
+            tornadofx: "1.7.15",
+            flexmark : "0.32.20"
+    ]
+}
+
+configurations {
+    all*.exclude module: 'spring-boot-starter-logging'
+}
 
 dependencies {
     compile project(':shared')
 
     // Infrastructure
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    compile 'org.slf4j:slf4j-simple:1.7.25'
-    // See also https://medium.com/@Zhuinden/that-missing-guide-how-to-use-dagger2-ef116fbea97
-    compile 'com.google.dagger:dagger:2.16'
-    kapt 'com.google.dagger:dagger-compiler:2.16'
     compile 'com.github.thomasnield:rxkotlinfx:2.2.2'
+
+    // Spring Boot
+    // Examples on how to integrate JavaFX with Spring Boot:
+    // - https://github.com/bkenn/springboot-tornadofx
+    // - https://github.com/sedovalx/spring-boot-tornadofx/tree/master/src/main/kotlin/ru/croc/spring/ui/sample
+    compile 'org.jetbrains.kotlin:kotlin-reflect'
+    compile 'org.springframework.boot:spring-boot-starter'
+    compile 'org.springframework.boot:spring-boot-starter-log4j2'
 
     // gRPC
     compile "io.grpc:grpc-netty-shaded:$grpcVersion"
 
     // JavaFX, TornadoFX, RxKotlinFX, ControlsFX
-    compile 'no.tornado:tornadofx:1.7.15'
+    compile "no.tornado:tornadofx:${versions.tornadofx}"
     compile 'no.tornado:tornadofx-controlsfx:0.1.1'
     compile 'org.controlsfx:controlsfx:8.40.14'
 //    compile group: 'org.fxmisc.richtext', name: 'richtextfx', version: '0.9.1'

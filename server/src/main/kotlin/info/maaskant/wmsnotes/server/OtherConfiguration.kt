@@ -15,10 +15,12 @@ import info.maaskant.wmsnotes.model.projection.cache.NoteCache
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.io.File
+import javax.inject.Singleton
 
 @Configuration
 class OtherConfiguration {
     @Bean
+    @Singleton
     fun kryoPool(): Pool<Kryo> {
         return object : Pool<Kryo>(true, true) {
             override fun create(): Kryo = Kryo()

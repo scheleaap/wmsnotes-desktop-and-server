@@ -1,6 +1,5 @@
 package info.maaskant.wmsnotes.desktop.controller
 
-import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.AddAttachmentCommand
 import info.maaskant.wmsnotes.model.CommandProcessor
@@ -16,9 +15,9 @@ class ApplicationController : Controller() {
 
     private val logger by logger()
 
-    private val applicationModel: ApplicationModel = Injector.instance.applicationModel()
+    private val applicationModel: ApplicationModel by di()
 
-    private val commandProcessor: CommandProcessor = Injector.instance.commandProcessor()
+    private val commandProcessor: CommandProcessor by di()
 
     val selectNote: Subject<Optional<String>> = PublishSubject.create()
     val deleteCurrentNote: Subject<Unit> = PublishSubject.create()

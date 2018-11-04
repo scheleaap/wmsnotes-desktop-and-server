@@ -1,7 +1,6 @@
 package info.maaskant.wmsnotes.desktop.view
 
 import com.github.thomasnield.rxkotlinfx.observeOnFx
-import info.maaskant.wmsnotes.desktop.app.Injector
 import info.maaskant.wmsnotes.desktop.controller.ApplicationController
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.CommandProcessor
@@ -18,9 +17,9 @@ class TreeView : View() {
 
     private val applicationController: ApplicationController by inject()
 
-    private val applicationModel: ApplicationModel = Injector.instance.applicationModel()
+    private val applicationModel: ApplicationModel by di()
 
-    private val commandProcessor: CommandProcessor = Injector.instance.commandProcessor()
+    private val commandProcessor: CommandProcessor by di()
 
     private val rootNode = TreeItem(NotebookNode(noteId = "root", title = "Root"))
 

@@ -15,11 +15,13 @@ import info.maaskant.wmsnotes.model.projection.cache.NoteCache
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.io.File
+import javax.inject.Singleton
 
 @Configuration
 class ModelConfiguration {
 
     @Bean
+    @Singleton
     fun eventStore(kryoPool: Pool<Kryo>): EventStore =
             FileEventStore(
                     File("server_data/events"),
@@ -27,7 +29,8 @@ class ModelConfiguration {
             )
 
     @Bean
-    fun model(eventStore: EventStore, noteProjector: NoteProjector): CommandProcessor =
+    @Singleton
+    fun commandProcessor(eventStore: EventStore, noteProjector: NoteProjector): CommandProcessor =
             CommandProcessor(
                     eventStore,
                     noteProjector,
@@ -35,12 +38,14 @@ class ModelConfiguration {
             )
 
     @Bean
+    @Singleton
     fun noteCache(kryoPool: Pool<Kryo>): NoteCache = FileNoteCache(
-            File("desktop_data/cache/projected_notes"),
+            File("server_data/cache/projected_notes"),
             KryoNoteSerializer(kryoPool)
     )
 
     @Bean
+    @Singleton
     fun noteProjector(eventStore: EventStore, noteCache: NoteCache): NoteProjector =
             CachingNoteProjector(
                     eventStore,

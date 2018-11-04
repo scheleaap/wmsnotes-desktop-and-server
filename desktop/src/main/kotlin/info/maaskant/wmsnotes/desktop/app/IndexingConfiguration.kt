@@ -2,8 +2,6 @@ package info.maaskant.wmsnotes.desktop.app
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
-import dagger.Module
-import dagger.Provides
 import info.maaskant.wmsnotes.client.indexing.KryoNoteIndexStateSerializer
 import info.maaskant.wmsnotes.client.indexing.NoteIndex
 import info.maaskant.wmsnotes.client.indexing.NoteIndexState
@@ -11,27 +9,28 @@ import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.persistence.FileStateRepository
 import info.maaskant.wmsnotes.utilities.persistence.StateRepository
 import io.reactivex.schedulers.Schedulers
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import java.io.File
 import java.util.concurrent.TimeUnit
-import javax.inject.Qualifier
 import javax.inject.Singleton
 
-@Module
-class IndexingModule {
+@Configuration
+class IndexingConfiguration {
 
+    @Bean
     @Singleton
-    @Provides
-    fun noteIndexStateRepository(kryoPool: Pool<Kryo>): StateRepository<NoteIndexState> =
+    fun noteIndexStateRepository(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): StateRepository<NoteIndexState> =
             FileStateRepository(
                     serializer = KryoNoteIndexStateSerializer(kryoPool),
-                    file = File("desktop_data/cache/note_index"),
+                    file = appDirectory.resolve("cache").resolve("note_index"),
                     scheduler = Schedulers.io(),
                     timeout = 1,
                     unit = TimeUnit.SECONDS
             )
 
+    @Bean
     @Singleton
-    @Provides
     fun noteIndex(eventStore: EventStore, stateRepository: StateRepository<NoteIndexState>): NoteIndex {
         return NoteIndex(
                 eventStore,
