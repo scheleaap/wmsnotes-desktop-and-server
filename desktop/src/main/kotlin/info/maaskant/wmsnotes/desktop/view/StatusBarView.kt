@@ -1,25 +1,21 @@
 package info.maaskant.wmsnotes.desktop.view
 
 import com.github.thomasnield.rxkotlinfx.observeOnFx
-import info.maaskant.wmsnotes.desktop.app.Injector
-import info.maaskant.wmsnotes.desktop.model.ApplicationModel
-import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
+import info.maaskant.wmsnotes.client.synchronization.Synchronizer
 import tornadofx.*
 import tornadofx.controlsfx.statusbar
 
 class StatusBarView : View() {
 
-    private val applicationModel: ApplicationModel = Injector.instance.applicationModel()
+    private val synchronizer: Synchronizer by di()
 
     override val root = statusbar {}
 
     init {
-        applicationModel
-                .selectedNote
+        synchronizer.getConflicts()
                 .observeOnFx()
                 .subscribe {
-                    root.text = if (it.isPresent) "Note ${it.value?.title}" else null
+                    root.text = "${it.size} conflicts"
                 }
-
     }
 }
