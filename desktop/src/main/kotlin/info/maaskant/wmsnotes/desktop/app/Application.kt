@@ -4,7 +4,6 @@ import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.desktop.view.MainView
 import info.maaskant.wmsnotes.desktop.view.Styles
-import io.reactivex.disposables.Disposable
 import javafx.stage.Stage
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -12,13 +11,17 @@ import org.springframework.context.ConfigurableApplicationContext
 import tornadofx.*
 import kotlin.reflect.KClass
 
-@SpringBootApplication(scanBasePackages = ["info.maaskant.wmsnotes.desktop","info.maaskant.wmsnotes.desktop"])
+@SpringBootApplication(scanBasePackages = ["info.maaskant.wmsnotes.desktop", "info.maaskant.wmsnotes.desktop"])
 class Application : App(MainView::class, Styles::class) {
 
     private lateinit var context: ConfigurableApplicationContext
 
-//    private val applicationModel : ApplicationModel by di()
-//    private val synchronizationTask :SynchronizationTask by di()
+    private val applicationModel: ApplicationModel by lazy {
+        context.beanFactory.getBean(ApplicationModel::class.java)
+    }
+    private val synchronizationTask: SynchronizationTask by lazy {
+        context.beanFactory.getBean(SynchronizationTask::class.java)
+    }
 
     init {
 //        addStageIcon(Image("app-icon.png"))
@@ -34,13 +37,13 @@ class Application : App(MainView::class, Styles::class) {
 
     override fun start(stage: Stage) {
         super.start(stage)
-//        applicationModel.start()
-//        synchronizationTask.start()
+        applicationModel.start()
+        synchronizationTask.start()
     }
 
     override fun stop() {
         super.stop()
-//        synchronizationTask.shutdown()
+        synchronizationTask.shutdown()
         context.close()
     }
 

@@ -10,6 +10,7 @@ import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
+import io.grpc.Deadline
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import io.reactivex.Observable
@@ -23,6 +24,7 @@ class Synchronizer @Inject constructor(
         private val localEvents: ModifiableEventRepository,
         private val remoteEvents: ModifiableEventRepository,
         private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
+        private val grpcDeadline: Deadline?,
         private val eventToCommandMapper: EventToCommandMapper,
         private val grpcCommandMapper: GrpcCommandMapper,
         private val commandProcessor: CommandProcessor,
@@ -73,7 +75,9 @@ class Synchronizer @Inject constructor(
                         try {
                             val request = grpcCommandMapper.toGrpcPostCommandRequest(command)
                             logger.debug("Sending command to server: $request")
-                            val response = remoteCommandService.postCommand(request)
+                            val response = remoteCommandService
+                                    .apply { if (grpcDeadline != null) this.withDeadline(grpcDeadline) }
+                                    .postCommand(request)
                             if (response.status == Command.PostCommandResponse.Status.SUCCESS) {
                                 localEvents.removeEvent(it)
                                 if (response.newEventId > 0) {

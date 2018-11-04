@@ -6,6 +6,7 @@ import info.maaskant.wmsnotes.server.command.grpc.Event
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
+import io.grpc.Deadline
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import io.reactivex.Observable
@@ -17,6 +18,7 @@ import javax.inject.Singleton
 @Singleton
 class RemoteEventImporter @Inject constructor(
         private val eventService: EventServiceGrpc.EventServiceBlockingStub,
+        private val grpcDeadline: Deadline?,
         private val eventRepository: ModifiableEventRepository,
         private val grpcEventMapper: GrpcEventMapper,
         initialState: EventImporterState?
@@ -31,7 +33,9 @@ class RemoteEventImporter @Inject constructor(
         var numberOfNewEvents = 0
         try {
             val request = createGetEventsRequest()
-            val response: Iterator<Event.GetEventsResponse> = eventService.getEvents(request)
+            val response: Iterator<Event.GetEventsResponse> = eventService
+                    .apply { if (grpcDeadline != null) withDeadline(grpcDeadline) }
+                    .getEvents(request)
             response.forEach {
                 val event = grpcEventMapper.toModelClass(it)
                 logger.debug("Storing new remote event: $event")

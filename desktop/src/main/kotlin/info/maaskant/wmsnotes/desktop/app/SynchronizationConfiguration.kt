@@ -18,6 +18,7 @@ import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import info.maaskant.wmsnotes.utilities.persistence.FileStateRepository
 import info.maaskant.wmsnotes.utilities.persistence.StateRepository
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
+import io.grpc.Deadline
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.reactivex.schedulers.Schedulers
@@ -39,15 +40,17 @@ class SynchronizationConfiguration {
 
     @Bean
     @Singleton
+    fun grpcDeadline() = Deadline.after(1, TimeUnit.SECONDS)
+
+    @Bean
+    @Singleton
     fun grpcCommandService(managedChannel: ManagedChannel) =
             CommandServiceGrpc.newBlockingStub(managedChannel)!!
-//                    .withDeadlineAfter(10, TimeUnit.SECONDS)
 
     @Bean
     @Singleton
     fun grpcEventService(managedChannel: ManagedChannel) =
             EventServiceGrpc.newBlockingStub(managedChannel)!!
-//                    .withDeadlineAfter(10, TimeUnit.SECONDS)
 
     @Bean
     @Singleton
@@ -77,7 +80,7 @@ class SynchronizationConfiguration {
             if (storeInMemory) {
                 InMemoryModifiableEventRepository()
             } else {
-                FileModifiableEventRepository(appDirectory.resolve("synchronization").resolve("local_events").resolve(".state"), eventSerializer)
+                FileModifiableEventRepository(appDirectory.resolve("synchronization").resolve("local_events"), eventSerializer)
             }
 
     @Bean
@@ -138,12 +141,14 @@ class SynchronizationConfiguration {
     @Singleton
     fun remoteEventImporter(
             grpcEventService: EventServiceGrpc.EventServiceBlockingStub,
+            grpcDeadline: Deadline,
             grpcEventMapper: GrpcEventMapper,
             @ForRemoteEvents eventRepository: ModifiableEventRepository,
             @ForLocalEvents stateRepository: StateRepository<EventImporterState>
     ) =
             RemoteEventImporter(
                     grpcEventService,
+                    grpcDeadline,
                     eventRepository,
                     grpcEventMapper,
                     stateRepository.load()
@@ -168,6 +173,7 @@ class SynchronizationConfiguration {
             @ForLocalEvents localEvents: ModifiableEventRepository,
             @ForRemoteEvents remoteEvents: ModifiableEventRepository,
             remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
+            grpcDeadline: Deadline,
             eventToCommandMapper: EventToCommandMapper,
             grpcCommandMapper: GrpcCommandMapper,
             commandProcessor: CommandProcessor,
@@ -177,6 +183,7 @@ class SynchronizationConfiguration {
             localEvents,
             remoteEvents,
             remoteCommandService,
+            grpcDeadline,
             eventToCommandMapper,
             grpcCommandMapper,
             commandProcessor,
@@ -185,6 +192,11 @@ class SynchronizationConfiguration {
     ).apply {
         stateRepository.connect(this)
     }
+
+    @Bean
+    @Singleton
+    fun synchronizationTask(localEventImporter: LocalEventImporter, remoteEventImporter: RemoteEventImporter, synchronizer: Synchronizer) =
+            SynchronizationTask(localEventImporter, remoteEventImporter, synchronizer)
 
     @Qualifier
     @MustBeDocumented

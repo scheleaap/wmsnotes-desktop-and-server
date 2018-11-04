@@ -372,6 +372,7 @@ internal class SynchronizerTest {
                     localEvents,
                     remoteEvents,
                     remoteCommandService,
+                    null,
                     eventToCommandMapper,
                     grpcCommandMapper,
                     commandProcessor,
