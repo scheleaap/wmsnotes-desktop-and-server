@@ -49,7 +49,6 @@ class ToolbarView : View() {
         }
         // toggleswitch {
         this += ToggleSwitch().apply {
-            isSelected = false
             selectedProperty().toObservable()
                     .subscribe {
                         if (it) synchronizationTask.unpause() else synchronizationTask.pause()

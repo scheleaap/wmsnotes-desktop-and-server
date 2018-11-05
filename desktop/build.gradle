@@ -55,6 +55,20 @@ dependencies {
     compile 'org.controlsfx:controlsfx:8.40.14'
 //    compile group: 'org.fxmisc.richtext', name: 'richtextfx', version: '0.9.1'
 
+    implementation("com.vladsch.flexmark:flexmark:${versions.flexmark}")
+    // implementation( "com.vladsch.flexmark:flexmark-ext-abbreviation:${versions.flexmark}" )
+    // implementation( "com.vladsch.flexmark:flexmark-ext-anchorlink:${versions.flexmark}" )
+    // implementation( "com.vladsch.flexmark:flexmark-ext-aside:${versions.flexmark}" )
+    implementation("com.vladsch.flexmark:flexmark-ext-autolink:${versions.flexmark}")
+    // implementation( "com.vladsch.flexmark:flexmark-ext-definition:${versions.flexmark}" )
+    // implementation( "com.vladsch.flexmark:flexmark-ext-footnotes:${versions.flexmark}" )
+    // implementation( "com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:${versions.flexmark}" )
+    // implementation( "com.vladsch.flexmark:flexmark-ext-gfm-tables:${versions.flexmark}" )
+    // implementation( "com.vladsch.flexmark:flexmark-ext-gfm-tasklist:${versions.flexmark}" )
+    // implementation( "com.vladsch.flexmark:flexmark-ext-toc:${versions.flexmark}" )
+    // implementation( "com.vladsch.flexmark:flexmark-ext-wikilink:${versions.flexmark}" )
+    // implementation( "com.vladsch.flexmark:flexmark-ext-yaml-front-matter:${versions.flexmark}" )
+
     // Configuration
 //    compile 'com.natpryce:konfig:1.6.10.0'
 }
