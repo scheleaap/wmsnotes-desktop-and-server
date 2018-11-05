@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.desktop.preview
+package info.maaskant.wmsnotes.desktop.editing.preview
 
 import com.vladsch.flexmark.ast.Node
 

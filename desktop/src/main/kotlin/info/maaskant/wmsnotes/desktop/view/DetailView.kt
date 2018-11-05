@@ -2,11 +2,11 @@ package info.maaskant.wmsnotes.desktop.view
 
 import com.github.thomasnield.rxkotlinfx.actionEvents
 import com.github.thomasnield.rxkotlinfx.observeOnFx
-import com.github.thomasnield.rxkotlinfx.toObservable
 import info.maaskant.wmsnotes.desktop.controller.ApplicationController
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.desktop.editing.EditingModel
-import info.maaskant.wmsnotes.desktop.preview.MarkdownPreviewPane
+import info.maaskant.wmsnotes.desktop.editing.editor.MarkdownEditorPane
+import info.maaskant.wmsnotes.desktop.editing.preview.MarkdownPreviewPane
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.utilities.logger
 import javafx.geometry.Orientation
@@ -35,24 +35,22 @@ class DetailView : View() {
         setDividerPosition(0, 0.5)
 
         this += borderpane {
-            center = textarea {
+            center = MarkdownEditorPane(editingModel).apply {
                 applicationModel.selectedNote
                         .observeOnFx()
                         .subscribe {
                             if (it.value == null) {
-                                isDisable = true
-                                text = null
+//                                isDisable = true
+                                editingModel.originalText.onNext("")
                             } else {
-                                text = "# " + it.value!!.title
-                                isDisable = false
+                                editingModel.originalText.onNext( "# " + it.value!!.title)
+//                                isDisable = false
                             }
                         }
-                applicationModel.isSwitchingToNewlySelectedNote
-                        .observeOnFx()
-                        .subscribe(this::setDisable)
-                textProperty().toObservable()
-                        .subscribe(editingModel.markdownText)
-            }
+//                applicationModel.isSwitchingToNewlySelectedNote
+//                        .observeOnFx()
+//                        .subscribe(this::setDisable)
+            }.node
 
             bottom = borderpane {
                 center = vbox {
@@ -77,12 +75,7 @@ class DetailView : View() {
             }
         }
 
-        val markdownPreviewPane = MarkdownPreviewPane(editingModel)
-//        markdownPreviewPane.pathProperty().bind(pathProperty())
-//        markdownPreviewPane.markdownTextProperty().bind(editingModel.markdownText.observable)
-//        markdownPreviewPane.markdownASTProperty().bind(editingModel.markdownAst.observable("markdownAst"))
-//        markdownPreviewPane.scrollYProperty().bind(markdownEditorPane.scrollYProperty())
-        this.add(markdownPreviewPane.node)
+        this += MarkdownPreviewPane(editingModel).node
     }
 
     private fun updateAttachments(attachmentNames: List<String>, vbox: VBox) {

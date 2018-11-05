@@ -25,12 +25,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package info.maaskant.wmsnotes.desktop.preview;
+package info.maaskant.wmsnotes.desktop.editing.preview;
 
 import com.vladsch.flexmark.ast.FencedCodeBlock;
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.ast.NodeVisitor;
-import info.maaskant.wmsnotes.desktop.preview.MarkdownPreviewPane.PreviewContext;
+import info.maaskant.wmsnotes.desktop.editing.preview.MarkdownPreviewPane.PreviewContext;
 import javafx.concurrent.Worker.State;
 import javafx.scene.web.WebView;
 
@@ -45,8 +45,6 @@ import java.util.HashMap;
 
 /**
  * WebView preview.
- *
- * @author Karl Tauber
  */
 class WebViewPreview
         implements MarkdownPreviewPane.Preview {

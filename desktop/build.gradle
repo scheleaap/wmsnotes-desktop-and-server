@@ -22,8 +22,11 @@ apply plugin: 'io.spring.dependency-management'
 
 ext {
     versions = [
-            tornadofx: "1.7.15",
-            flexmark : "0.32.20"
+            tornadofx    : "1.7.15",
+            controlsfx   : "8.40.14",
+            fontawesomefx: "4.7.0-5",
+            richtextfx   : "0.9.1",
+            flexmark     : "0.32.20",
     ]
 }
 
@@ -37,6 +40,7 @@ dependencies {
     // Infrastructure
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     compile 'com.github.thomasnield:rxkotlinfx:2.2.2'
+    compile("org.apache.commons:commons-lang3:3.7")
 
     // Spring Boot
     // Examples on how to integrate JavaFX with Spring Boot:
@@ -50,24 +54,20 @@ dependencies {
     compile "io.grpc:grpc-netty-shaded:$grpcVersion"
 
     // JavaFX, TornadoFX, RxKotlinFX, ControlsFX
-    compile "no.tornado:tornadofx:${versions.tornadofx}"
-    compile 'no.tornado:tornadofx-controlsfx:0.1.1'
-    compile 'org.controlsfx:controlsfx:8.40.14'
-//    compile group: 'org.fxmisc.richtext', name: 'richtextfx', version: '0.9.1'
-
+    implementation("no.tornado:tornadofx:${versions.tornadofx}")
+    implementation("no.tornado:tornadofx-controlsfx:0.1.1")
+    implementation("org.controlsfx:controlsfx:${versions.controlsfx}")
+    implementation("de.jensd:fontawesomefx-fontawesome:${versions.fontawesomefx}")
+    implementation("org.fxmisc.richtext:richtextfx:${versions.richtextfx}")
+    implementation("com.miglayout:miglayout-javafx:5.2")
     implementation("com.vladsch.flexmark:flexmark:${versions.flexmark}")
-    // implementation( "com.vladsch.flexmark:flexmark-ext-abbreviation:${versions.flexmark}" )
-    // implementation( "com.vladsch.flexmark:flexmark-ext-anchorlink:${versions.flexmark}" )
-    // implementation( "com.vladsch.flexmark:flexmark-ext-aside:${versions.flexmark}" )
+    implementation("com.vladsch.flexmark:flexmark-ext-anchorlink:${versions.flexmark}")
     implementation("com.vladsch.flexmark:flexmark-ext-autolink:${versions.flexmark}")
-    // implementation( "com.vladsch.flexmark:flexmark-ext-definition:${versions.flexmark}" )
-    // implementation( "com.vladsch.flexmark:flexmark-ext-footnotes:${versions.flexmark}" )
-    // implementation( "com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:${versions.flexmark}" )
-    // implementation( "com.vladsch.flexmark:flexmark-ext-gfm-tables:${versions.flexmark}" )
-    // implementation( "com.vladsch.flexmark:flexmark-ext-gfm-tasklist:${versions.flexmark}" )
-    // implementation( "com.vladsch.flexmark:flexmark-ext-toc:${versions.flexmark}" )
+    implementation("com.vladsch.flexmark:flexmark-ext-emoji:${versions.flexmark}")
+    implementation("com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:${versions.flexmark}")
+    implementation("com.vladsch.flexmark:flexmark-ext-gfm-tables:${versions.flexmark}")
     // implementation( "com.vladsch.flexmark:flexmark-ext-wikilink:${versions.flexmark}" )
-    // implementation( "com.vladsch.flexmark:flexmark-ext-yaml-front-matter:${versions.flexmark}" )
+    implementation("com.vladsch.flexmark:flexmark-ext-youtube-embedded:${versions.flexmark}")
 
     // Configuration
 //    compile 'com.natpryce:konfig:1.6.10.0'

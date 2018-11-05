@@ -1,7 +1,7 @@
 package info.maaskant.wmsnotes.desktop.editing
 
-import info.maaskant.wmsnotes.desktop.preview.FlexmarkPreviewRenderer
-import info.maaskant.wmsnotes.desktop.preview.Renderer
+import info.maaskant.wmsnotes.desktop.editing.preview.FlexmarkPreviewRenderer
+import info.maaskant.wmsnotes.desktop.editing.preview.Renderer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import javax.inject.Singleton

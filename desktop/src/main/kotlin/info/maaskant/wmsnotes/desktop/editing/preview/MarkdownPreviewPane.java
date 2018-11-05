@@ -25,7 +25,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package info.maaskant.wmsnotes.desktop.preview;
+package info.maaskant.wmsnotes.desktop.editing.preview;
 
 import com.vladsch.flexmark.ast.Node;
 import info.maaskant.wmsnotes.desktop.editing.EditingModel;
@@ -40,8 +40,6 @@ import java.nio.file.Path;
 
 /**
  * Markdown preview pane.
- *
- * @author Karl Tauber
  */
 public class MarkdownPreviewPane {
     private final BorderPane pane = new BorderPane();
@@ -84,7 +82,7 @@ public class MarkdownPreviewPane {
         pane.setCenter(preview.getNode());
 
 //        path.addListener((observable, oldValue, newValue) -> update());
-        editingModel.getMarkdownAst().subscribe((markdownAst) -> {
+        editingModel.getAst().subscribe((markdownAst) -> {
             this.markdownAst.setValue(markdownAst);
             update();
         });

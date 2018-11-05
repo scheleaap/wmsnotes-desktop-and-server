@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Karl Tauber <karl at jformdesigner dot com>
+ * Copyright (c) 2017 Karl Tauber <karl at jformdesigner dot com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,38 +25,43 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package info.maaskant.wmsnotes.desktop.preview
+package info.maaskant.wmsnotes.desktop.editing.editor;
 
-import com.vladsch.flexmark.ast.Node
-import com.vladsch.flexmark.html.AttributeProvider
-import com.vladsch.flexmark.html.HtmlRenderer
-import com.vladsch.flexmark.html.IndependentAttributeProviderFactory
-import com.vladsch.flexmark.html.renderer.AttributablePart
-import com.vladsch.flexmark.html.renderer.LinkResolverContext
-import com.vladsch.flexmark.util.html.Attributes
+import javafx.scene.control.IndexRange;
+import org.fxmisc.richtext.StyleClassedTextArea;
 
 /**
- * flexmark-java preview.
- *
- * @author Karl Tauber
+ * Markdown text area.
  */
-class FlexmarkPreviewRenderer : Renderer {
-    override fun render(astRoot: Node): String {
-        val builder = HtmlRenderer.builder()
-        // .extensions(MarkdownExtensions.getFlexmarkExtensions())
-        builder.attributeProviderFactory(MyAttributeProvider.Factory())
-        return builder.build().render(astRoot)
-    }
+class MarkdownTextArea
+	extends StyleClassedTextArea
+{
+	public MarkdownTextArea() {
+		super(false);
+	}
 
-    private class MyAttributeProvider : AttributeProvider {
-        class Factory : IndependentAttributeProviderFactory() {
-            override fun create(context: LinkResolverContext): AttributeProvider {
-                return MyAttributeProvider()
-            }
-        }
+	@Override
+	public void cut() {
+		selectLineIfEmpty();
+		super.cut();
+	}
 
-        override fun setAttributes(node: Node, part: AttributablePart, attributes: Attributes) {
-            attributes.addValue("data-pos", node.startOffset.toString() + ":" + node.endOffset)
-        }
-    }
+	@Override
+	public void copy() {
+		IndexRange oldSelection = selectLineIfEmpty();
+		super.copy();
+		if (oldSelection != null)
+			selectRange(oldSelection.getStart(), oldSelection.getEnd());
+	}
+
+
+	private IndexRange selectLineIfEmpty() {
+		IndexRange oldSelection = null;
+		if (getSelectedText().isEmpty()) {
+			oldSelection = getSelection();
+			selectLine();
+			nextChar(SelectionPolicy.ADJUST);
+		}
+		return oldSelection;
+	}
 }
