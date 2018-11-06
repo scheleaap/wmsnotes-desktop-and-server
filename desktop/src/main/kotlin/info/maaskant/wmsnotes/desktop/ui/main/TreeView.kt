@@ -1,6 +1,8 @@
 package info.maaskant.wmsnotes.desktop.ui.main
 
+import com.github.thomasnield.rxkotlinfx.events
 import com.github.thomasnield.rxkotlinfx.observeOnFx
+import com.github.thomasnield.rxkotlinfx.toObservable
 import info.maaskant.wmsnotes.desktop.controller.ApplicationController
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import info.maaskant.wmsnotes.model.CommandProcessor
@@ -9,6 +11,8 @@ import info.maaskant.wmsnotes.model.NoteDeletedEvent
 import info.maaskant.wmsnotes.utilities.Optional
 import info.maaskant.wmsnotes.utilities.logger
 import javafx.scene.control.TreeItem
+import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
 import tornadofx.*
 
 class TreeView : View() {
@@ -34,6 +38,10 @@ class TreeView : View() {
             logger.debug("Selected: $it")
             applicationController.selectNote.onNext(Optional(it.noteId))
         }
+        events(KeyEvent.KEY_PRESSED)
+                .filter { it.code == KeyCode.DELETE }
+                .map { Unit }
+                .subscribe(applicationController.deleteCurrentNote)
     }
 
     init {
