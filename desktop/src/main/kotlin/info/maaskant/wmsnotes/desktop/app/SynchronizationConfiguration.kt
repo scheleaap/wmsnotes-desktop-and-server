@@ -8,7 +8,7 @@ import info.maaskant.wmsnotes.client.synchronization.*
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
-import info.maaskant.wmsnotes.desktop.app.Configuration.storeInMemory
+import info.maaskant.wmsnotes.desktop.settings.Configuration.storeInMemory
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.eventstore.EventStore

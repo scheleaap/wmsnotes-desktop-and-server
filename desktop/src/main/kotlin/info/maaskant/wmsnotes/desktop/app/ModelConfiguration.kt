@@ -2,9 +2,9 @@ package info.maaskant.wmsnotes.desktop.app
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
-import info.maaskant.wmsnotes.desktop.app.Configuration.cache
-import info.maaskant.wmsnotes.desktop.app.Configuration.delay
-import info.maaskant.wmsnotes.desktop.app.Configuration.storeInMemory
+import info.maaskant.wmsnotes.desktop.settings.Configuration.cache
+import info.maaskant.wmsnotes.desktop.settings.Configuration.delay
+import info.maaskant.wmsnotes.desktop.settings.Configuration.storeInMemory
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.CommandToEventMapper
 import info.maaskant.wmsnotes.model.Event
