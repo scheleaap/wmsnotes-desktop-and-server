@@ -1,7 +1,7 @@
 package info.maaskant.wmsnotes.desktop.main
 
 import com.github.thomasnield.rxkotlinfx.observeOnFx
-import info.maaskant.wmsnotes.desktop.main.editing.DetailView
+import info.maaskant.wmsnotes.desktop.main.editing.EditingView
 import javafx.geometry.Orientation
 import javafx.scene.layout.BorderPane
 import tornadofx.*
@@ -11,10 +11,10 @@ class MainView : View() {
 
     override val root = BorderPane()
 
-    private val applicationModel : ApplicationModel by di()
+    private val applicationModel: ApplicationModel by di()
 
     private val treeView: TreeView by inject()
-    private val detailView: DetailView by inject()
+    private val editingView: EditingView by inject()
 
     init {
         title = applicationTitle
@@ -26,7 +26,7 @@ class MainView : View() {
                 orientation = Orientation.HORIZONTAL
                 setDividerPosition(0, 0.3)
                 this += treeView
-                this += detailView
+                this += editingView
             }
             bottom<StatusBarView>()
         }

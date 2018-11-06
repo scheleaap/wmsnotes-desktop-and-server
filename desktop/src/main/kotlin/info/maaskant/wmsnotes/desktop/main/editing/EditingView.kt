@@ -1,21 +1,27 @@
 package info.maaskant.wmsnotes.desktop.main.editing
 
 import com.github.thomasnield.rxkotlinfx.actionEvents
+import com.github.thomasnield.rxkotlinfx.events
 import com.github.thomasnield.rxkotlinfx.observeOnFx
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView
+import info.maaskant.wmsnotes.desktop.design.Styles
 import info.maaskant.wmsnotes.desktop.main.ApplicationController
 import info.maaskant.wmsnotes.desktop.main.ApplicationModel
 import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.main.editing.preview.MarkdownPreviewPane
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.utilities.logger
+import javafx.event.EventType
 import javafx.geometry.Orientation
+import javafx.scene.input.MouseEvent
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
 import tornadofx.*
 import java.io.File
 
-class DetailView : View() {
+class EditingView : View() {
 
     private val logger by logger()
 
@@ -27,7 +33,7 @@ class DetailView : View() {
 
     private val commandProcessor: CommandProcessor by di()
 
-    private val markdownEditorPane : MarkdownEditorPane by di()
+    private val markdownEditorPane: MarkdownEditorPane by di()
 
     private val hboxesByAttachmentName: MutableMap<String, HBox> = mutableMapOf()
 
@@ -37,12 +43,17 @@ class DetailView : View() {
 
         this += borderpane {
             center = markdownEditorPane.apply {
+                //                TODO
 //                applicationModel.isSwitchingToNewlySelectedNote
 //                        .observeOnFx()
 //                        .subscribe(this::setDisable)
             }.node
 
             bottom = borderpane {
+                style {
+                    padding = box(0.2.em, 0.2.em, 0.em, 0.2.em)
+                }
+
                 center = vbox {
                     applicationModel.selectedNote
                             .observeOnFx()
@@ -56,7 +67,7 @@ class DetailView : View() {
                             .map { chooseImage() }
                             .filter { it.isNotEmpty() }
                             .map { it.first() }
-                            .subscribe(applicationController.addAttachment)
+                            .subscribe(applicationController.addAttachmentToCurrentNote)
                 }
 
                 applicationModel.isSwitchingToNewlySelectedNote
@@ -72,21 +83,28 @@ class DetailView : View() {
         val namesToDelete = HashSet(hboxesByAttachmentName.keys)
         for (name in attachmentNames) {
             if (name !in hboxesByAttachmentName) {
-                val hbox = hbox {
-                    this += label {
+                val hbox = HBox().apply {
+                    label {
                         text = name
+                        events(MouseEvent.MOUSE_CLICKED)
+                                .subscribe {
+                                    markdownEditorPane.smartEdit.insertImage(name, name)
+                                    markdownEditorPane.requestFocus()
+                                }
                     }
-                    this += button {
-                        text = "X"
+                    button {
+                        graphic = FontAwesomeIconView(FontAwesomeIcon.TIMES_CIRCLE).apply { size = "1.2em" }
+                        addClass(Styles.borderlessButton)
+                        action { applicationController.deleteAttachmentFromCurrentNote.onNext(name) }
                     }
                 }
-                vbox += hbox
+                vbox.children += hbox
                 hboxesByAttachmentName[name] = hbox
             }
             namesToDelete.remove(name)
         }
         for (name in namesToDelete) {
-            vbox.children.remove(hboxesByAttachmentName.remove(name))
+            vbox.children -= hboxesByAttachmentName.remove(name)
         }
     }
 

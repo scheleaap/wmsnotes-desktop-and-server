@@ -30,11 +30,11 @@ class MenuAndToolbarView : View() {
 
     private var i: Int = 1
 
-    private val createNoteAction = Action(messageKey = "menu.file.create_note", icon = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = "1.2em" },
+    private val createNoteAction = Action(messageKey = "menu.file.create_note", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = "1.2em" },
             accelerator = "Shortcut+N") {
         commandProcessor.commands.onNext(CreateNoteCommand(null, "New Note ${i++}"))
     }
-    private val deleteNoteAction = Action(messageKey = "menu.file.delete_note", icon = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = "1.2em" },
+    private val deleteNoteAction = Action(messageKey = "menu.file.delete_note", graphic = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = "1.2em" },
             disable = applicationModel.selectedNoteId.map { !it.isPresent }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }

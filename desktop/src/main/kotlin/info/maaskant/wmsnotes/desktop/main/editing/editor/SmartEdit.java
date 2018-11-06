@@ -41,6 +41,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.fxmisc.richtext.MultiChangeBuilder;
 import org.fxmisc.richtext.model.TwoDimensional.Bias;
 import org.fxmisc.wellbehaved.event.Nodes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -727,6 +729,25 @@ public class SmartEdit
 //				replaceSelection(textArea, result);
 //		});
 	}
+
+    public void insertImage(@NotNull String url, @NotNull String alternateText) {
+        LinkNode linkNode = findNodeAtSelection((s, e, n) -> n instanceof LinkNode);
+        if (linkNode != null && !(linkNode instanceof Image)) {
+            // link node at caret is not supported --> insert image before or after
+            if (textArea.getCaretPosition() != linkNode.getStartOffset())
+                selectRange(textArea, linkNode.getEndOffset(), linkNode.getEndOffset());
+            linkNode = null;
+        }
+
+        String result = String.format("![%s](%s)", alternateText, url);
+        Image image = (Image) linkNode;
+        if (image != null) {
+            selectRange(textArea, image.getStartOffset(), image.getEndOffset());
+            replaceText(textArea, image.getStartOffset(), image.getEndOffset(), result);
+        } else {
+            replaceSelection(textArea, result);
+        }
+    }
 
 	//---- heading ------------------------------------------------------------
 

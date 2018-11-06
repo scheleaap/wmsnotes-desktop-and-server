@@ -41,7 +41,7 @@ import tornadofx.*
 class Action(
         messageKey: String,
         accelerator: String? = null,
-        val icon: GlyphIcon<*>? = null,
+        val graphic: GlyphIcon<*>? = null,
         val disable: Observable<Boolean>? = null,
         val action: () -> Unit
 ) {
@@ -52,7 +52,7 @@ class Action(
 fun Menu.item(action: Action): MenuItem =
         this.item(
                 name = action.text,
-                graphic = action.icon,
+                graphic = action.graphic,
                 keyCombination = action.accelerator
         ).apply {
             action(action.action)
@@ -61,7 +61,7 @@ fun Menu.item(action: Action): MenuItem =
 fun ToolBar.button(action: Action, op: Button.() -> Unit = {}): Button =
         this.button(
                 text = action.text,
-                graphic = action.icon,
+                graphic = action.graphic,
                 op = op
         ).apply {
             action(action.action)
