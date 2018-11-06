@@ -1,6 +1,8 @@
 package info.maaskant.wmsnotes.desktop.model
 
+import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.client.indexing.NoteIndex
+import info.maaskant.wmsnotes.desktop.editing.EditingModel
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore
@@ -22,7 +24,8 @@ import javax.inject.Singleton
 class ApplicationModel @Inject constructor(
         eventStore: EventStore,
         noteIndex: NoteIndex,
-        private val noteProjector: NoteProjector
+        private val noteProjector: NoteProjector,
+        private val editingModel: EditingModel
 ) {
 
     private val logger by logger()
@@ -59,6 +62,7 @@ class ApplicationModel @Inject constructor(
     init {
         selectedNote.subscribe { selectedNoteValue = it.value }
         selectedNoteId.subscribe { logger.info("Selected: ${it.value}") }
+        selectedNote.subscribe { editingModel.nodeSelected(it) }
     }
 
     fun start() {

@@ -24,7 +24,7 @@ ext {
     versions = [
             tornadofx    : "1.7.15",
             controlsfx   : "8.40.14",
-            fontawesomefx: "4.7.0-5",
+            fontawesomefx: "8.9",
             richtextfx   : "0.9.1",
             flexmark     : "0.32.20",
     ]
@@ -57,7 +57,7 @@ dependencies {
     implementation("no.tornado:tornadofx:${versions.tornadofx}")
     implementation("no.tornado:tornadofx-controlsfx:0.1.1")
     implementation("org.controlsfx:controlsfx:${versions.controlsfx}")
-    implementation("de.jensd:fontawesomefx-fontawesome:${versions.fontawesomefx}")
+    implementation("de.jensd:fontawesomefx:${versions.fontawesomefx}")
     implementation("org.fxmisc.richtext:richtextfx:${versions.richtextfx}")
     implementation("com.miglayout:miglayout-javafx:5.2")
     implementation("com.vladsch.flexmark:flexmark:${versions.flexmark}")

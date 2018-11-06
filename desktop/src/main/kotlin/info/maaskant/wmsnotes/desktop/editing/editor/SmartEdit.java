@@ -30,6 +30,7 @@ package info.maaskant.wmsnotes.desktop.editing.editor;
 import com.vladsch.flexmark.ast.*;
 import com.vladsch.flexmark.ext.gfm.strikethrough.Strikethrough;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
+import info.maaskant.wmsnotes.desktop.app.Options;
 import info.maaskant.wmsnotes.desktop.util.Utils;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
@@ -68,12 +69,14 @@ public class SmartEdit
 
 	private final MarkdownEditorPane editor;
 	private final MarkdownTextArea textArea;
-	private final SmartFormat smartFormat;
+    private final SmartFormat smartFormat;
+    private final Options options;
 
-	SmartEdit(MarkdownEditorPane editor, MarkdownTextArea textArea) {
+	SmartEdit(MarkdownEditorPane editor, MarkdownTextArea textArea, Options options) {
 		this.editor = editor;
 		this.textArea = textArea;
-		this.smartFormat = new SmartFormat(editor, textArea);
+        this.smartFormat = new SmartFormat(editor, textArea);
+        this.options = options;
 
 		Nodes.addInputMap(textArea, sequence(
 			consume(keyPressed(ENTER),							this::enterPressed),
@@ -623,11 +626,11 @@ public class SmartEdit
 	//---- delimited inlines --------------------------------------------------
 
 	public void insertBold(String hint) {
-		insertDelimited(StrongEmphasis.class, "**", hint);
+		insertDelimited(StrongEmphasis.class, options.getStrongEmphasisMarker(), hint);
 	}
 
 	public void insertItalic(String hint) {
-		insertDelimited(Emphasis.class, "_", hint);
+		insertDelimited(Emphasis.class, options.getEmphasisMarker(), hint);
 	}
 
 	public void insertStrikethrough(String hint) {
@@ -790,7 +793,7 @@ public class SmartEdit
 	//---- lists --------------------------------------------------------------
 
 	public void insertUnorderedList() {
-		surroundSelection("\n\n" + "* ", "");
+		surroundSelection("\n\n" + options.getBulletListMarker() + " ", "");
 	}
 
 	//---- text modification --------------------------------------------------

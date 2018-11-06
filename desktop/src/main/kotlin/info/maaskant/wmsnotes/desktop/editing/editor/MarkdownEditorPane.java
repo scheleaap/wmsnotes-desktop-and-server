@@ -29,9 +29,13 @@ package info.maaskant.wmsnotes.desktop.editing.editor;
 
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.parser.Parser;
+import info.maaskant.wmsnotes.desktop.app.PreferencesAndOptionsConfiguration;
 import info.maaskant.wmsnotes.desktop.editing.EditingModel;
-import info.maaskant.wmsnotes.desktop.options.Options;
+import info.maaskant.wmsnotes.desktop.app.Options;
+import io.reactivex.rxjavafx.schedulers.JavaFxScheduler;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -44,10 +48,13 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.undo.UndoManager;
 import org.fxmisc.wellbehaved.event.Nodes;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.prefs.Preferences;
 
 import static javafx.scene.input.KeyCode.*;
 import static javafx.scene.input.KeyCombination.ALT_DOWN;
@@ -58,375 +65,408 @@ import static org.fxmisc.wellbehaved.event.InputMap.sequence;
 
 /**
  * Markdown editor pane.
- *
+ * <p>
  * Uses flexmark-java (https://github.com/vsch/flexmark-java) for parsing markdown.
  */
-public class MarkdownEditorPane
-{
-	private final BottomSlidePane borderPane;
-	private final MarkdownTextArea textArea;
-	private final ParagraphOverlayGraphicFactory overlayGraphicFactory;
-	private LineNumberGutterFactory lineNumberGutterFactory;
-	private WhitespaceOverlayFactory whitespaceOverlayFactory;
-	private ContextMenu contextMenu;
-	private final SmartEdit smartEdit;
+@Component
+public class MarkdownEditorPane {
+    private final BottomSlidePane borderPane;
+    private final MarkdownTextArea textArea;
+    private final ParagraphOverlayGraphicFactory overlayGraphicFactory;
+    private LineNumberGutterFactory lineNumberGutterFactory;
+    private WhitespaceOverlayFactory whitespaceOverlayFactory;
+    private ContextMenu contextMenu;
+    private final SmartEdit smartEdit;
 
-	private final FindReplacePane findReplacePane;
-	private final FindReplacePane.HitsChangeListener findHitsChangeListener;
-	private Parser parser;
-//	private final InvalidationListener optionsListener;
-	private String lineSeparator = getLineSeparatorOrDefault();
+    private final FindReplacePane findReplacePane;
+    private final FindReplacePane.HitsChangeListener findHitsChangeListener;
+    private Parser parser;
+    private final Options options;
+    private String lineSeparator;
 
-	public MarkdownEditorPane(EditingModel editingModel) {
-		textArea = new MarkdownTextArea();
-		textArea.setWrapText(true);
-		textArea.setUseInitialStyleForInsertion(true);
-		textArea.getStyleClass().add("markdown-editor");
-		textArea.getStylesheets().add(getClass().getResource("MarkdownEditor.css").toExternalForm());
-		textArea.getStylesheets().add(getClass().getResource("prism.css").toExternalForm());
+    @Inject
+    public MarkdownEditorPane(
+            EditingModel editingModel,
+            Options options,
+            @PreferencesAndOptionsConfiguration.State Preferences statePreferences
+    ) {
+        this.options = options;
 
-		textArea.textProperty().addListener((observable, oldText, newText) -> {
-			textChanged(newText);
-		});
+        textArea = new MarkdownTextArea();
+        textArea.setWrapText(true);
+        textArea.setUseInitialStyleForInsertion(true);
+        textArea.getStyleClass().add("markdown-editor");
+        textArea.getStylesheets().add(getClass().getResource("MarkdownEditor.css").toExternalForm());
+        textArea.getStylesheets().add(getClass().getResource("prism.css").toExternalForm());
 
-		textArea.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, this::showContextMenu);
-		textArea.addEventHandler(MouseEvent.MOUSE_PRESSED, this::hideContextMenu);
+        textArea.textProperty().addListener((observable, oldText, newText) -> {
+            textChanged(newText);
+        });
 
-		smartEdit = new SmartEdit(this, textArea);
+        textArea.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, this::showContextMenu);
+        textArea.addEventHandler(MouseEvent.MOUSE_PRESSED, this::hideContextMenu);
 
-		Nodes.addInputMap(textArea, sequence(
-			consume(keyPressed(PLUS, SHORTCUT_DOWN),	this::increaseFontSize),
-			consume(keyPressed(MINUS, SHORTCUT_DOWN),	this::decreaseFontSize),
-			consume(keyPressed(DIGIT0, SHORTCUT_DOWN),	this::resetFontSize),
-			consume(keyPressed(W, ALT_DOWN),			this::showWhitespace)
-		));
+        smartEdit = new SmartEdit(this, textArea, options);
 
-		// add listener to update 'scrollY' property
-		ChangeListener<Double> scrollYListener = (observable, oldValue, newValue) -> {
-			double value = textArea.estimatedScrollYProperty().getValue().doubleValue();
-			double maxValue = textArea.totalHeightEstimateProperty().getOrElse(0.).doubleValue() - textArea.getHeight();
-			scrollY.set((maxValue > 0) ? Math.min(Math.max(value / maxValue, 0), 1) : 0);
-		};
-		textArea.estimatedScrollYProperty().addListener(scrollYListener);
-		textArea.totalHeightEstimateProperty().addListener(scrollYListener);
+        Nodes.addInputMap(textArea, sequence(
+                consume(keyPressed(PLUS, SHORTCUT_DOWN), this::increaseFontSize),
+                consume(keyPressed(MINUS, SHORTCUT_DOWN), this::decreaseFontSize),
+                consume(keyPressed(DIGIT0, SHORTCUT_DOWN), this::resetFontSize),
+                consume(keyPressed(W, ALT_DOWN), this::showWhitespace)
+        ));
 
-		// create scroll pane
-		VirtualizedScrollPane<MarkdownTextArea> scrollPane = new VirtualizedScrollPane<>(textArea);
+        // add listener to update 'scrollY' property
+        ChangeListener<Double> scrollYListener = (observable, oldValue, newValue) -> {
+            double value = textArea.estimatedScrollYProperty().getValue().doubleValue();
+            double maxValue = textArea.totalHeightEstimateProperty().getOrElse(0.).doubleValue() - textArea.getHeight();
+            scrollY.set((maxValue > 0) ? Math.min(Math.max(value / maxValue, 0), 1) : 0);
+        };
+        textArea.estimatedScrollYProperty().addListener(scrollYListener);
+        textArea.totalHeightEstimateProperty().addListener(scrollYListener);
 
-		// create border pane
-		borderPane = new BottomSlidePane(scrollPane);
+        // create scroll pane
+        VirtualizedScrollPane<MarkdownTextArea> scrollPane = new VirtualizedScrollPane<>(textArea);
 
-		overlayGraphicFactory = new ParagraphOverlayGraphicFactory(textArea);
-		textArea.setParagraphGraphicFactory(overlayGraphicFactory);
-		updateFont();
-		updateShowLineNo();
-		updateShowWhitespace();
+        // create border pane
+        borderPane = new BottomSlidePane(scrollPane);
 
-		// initialize properties
-		markdownText.set("");
-		markdownAST.set(parseMarkdown(""));
-		editingModel.getOriginalText().subscribe(this::setMarkdown);
+        overlayGraphicFactory = new ParagraphOverlayGraphicFactory(textArea);
+        textArea.setParagraphGraphicFactory(overlayGraphicFactory);
+        updateFont();
+        updateShowLineNo();
+        updateShowWhitespace();
+
+        // initialize properties
+        lineSeparator = getLineSeparatorOrDefault();
+        markdownText.set("");
+        markdownAST.set(parseMarkdown(""));
+        editingModel.getOriginalText().observeOn(JavaFxScheduler.platform()).subscribe(this::setMarkdown);
         markdownText.addListener((observableValue, oldValue, newValue) -> editingModel.getEditedText().onNext(newValue));
         markdownAST.addListener((observableValue, oldValue, newValue) -> editingModel.getAst().onNext(newValue));
 
-		// find/replace
-		findReplacePane = new FindReplacePane(textArea);
-		findHitsChangeListener = this::findHitsChanged;
-		findReplacePane.addListener(findHitsChangeListener);
-		findReplacePane.visibleProperty().addListener((ov, oldVisible, newVisible) -> {
-			if (!newVisible)
-				borderPane.setBottom(null);
-		});
+        // find/replace
+        findReplacePane = new FindReplacePane(textArea, statePreferences);
+        findHitsChangeListener = this::findHitsChanged;
+        findReplacePane.addListener(findHitsChangeListener);
+        findReplacePane.visibleProperty().addListener((ov, oldVisible, newVisible) -> {
+            if (!newVisible)
+                borderPane.setBottom(null);
+        });
 
-		// TODO
-//		// listen to option changes
-//		optionsListener = e -> {
-//			if (textArea.getScene() == null)
-//				return; // editor closed but not yet GCed
-//
-//			if (e == Options.fontFamilyProperty() || e == Options.fontSizeProperty())
-//				updateFont();
-//			else if (e == Options.showLineNoProperty())
-//				updateShowLineNo();
-//			else if (e == Options.showWhitespaceProperty())
-//				updateShowWhitespace();
-//			else if (e == Options.markdownRendererProperty() || e == Options.markdownExtensionsProperty()) {
-//				// re-process markdown if markdown extensions option changes
-//				parser = null;
-//				textChanged(textArea.getText());
-//			}
-//		};
-//		WeakInvalidationListener weakOptionsListener = new WeakInvalidationListener(optionsListener);
-//		Options.fontFamilyProperty().addListener(weakOptionsListener);
-//		Options.fontSizeProperty().addListener(weakOptionsListener);
-//		Options.markdownRendererProperty().addListener(weakOptionsListener);
-//		Options.markdownExtensionsProperty().addListener(weakOptionsListener);
-//		Options.showLineNoProperty().addListener(weakOptionsListener);
-//		Options.showWhitespaceProperty().addListener(weakOptionsListener);
+        // listen to option changes
+        InvalidationListener optionsListener = e -> {
+            if (textArea.getScene() == null)
+                return; // editor closed but not yet GCed
 
-		// workaround a problem with wrong selection after undo:
-		//   after undo the selection is 0-0, anchor is 0, but caret position is correct
-		//   --> set selection to caret position
-		textArea.selectionProperty().addListener((observable,oldSelection,newSelection) -> {
-			// use runLater because the wrong selection temporary occurs while edition
-			Platform.runLater(() -> {
-				IndexRange selection = textArea.getSelection();
-				int caretPosition = textArea.getCaretPosition();
-				if (selection.getStart() == 0 && selection.getEnd() == 0 && textArea.getAnchor() == 0 && caretPosition > 0)
-					textArea.selectRange(caretPosition, caretPosition);
-			});
-		});
-	}
+            if (e == options.fontFamilyProperty() || e == options.fontSizeProperty())
+                updateFont();
+            else if (e == options.showLineNoProperty())
+                updateShowLineNo();
+            else if (e == options.showWhitespaceProperty())
+                updateShowWhitespace();
+        };
+        WeakInvalidationListener weakOptionsListener = new WeakInvalidationListener(optionsListener);
+        options.fontFamilyProperty().addListener(weakOptionsListener);
+        options.fontSizeProperty().addListener(weakOptionsListener);
+        options.showLineNoProperty().addListener(weakOptionsListener);
+        options.showWhitespaceProperty().addListener(weakOptionsListener);
 
-	private void updateFont() {
-		textArea.setStyle("-fx-font-family: '" + Options.getFontFamily()
-				+ "'; -fx-font-size: " + Options.getFontSize() );
-	}
+        // workaround a problem with wrong selection after undo:
+        //   after undo the selection is 0-0, anchor is 0, but caret position is correct
+        //   --> set selection to caret position
+        textArea.selectionProperty().addListener((observable, oldSelection, newSelection) -> {
+            // use runLater because the wrong selection temporary occurs while edition
+            Platform.runLater(() -> {
+                IndexRange selection = textArea.getSelection();
+                int caretPosition = textArea.getCaretPosition();
+                if (selection.getStart() == 0 && selection.getEnd() == 0 && textArea.getAnchor() == 0 && caretPosition > 0)
+                    textArea.selectRange(caretPosition, caretPosition);
+            });
+        });
+    }
 
-	public javafx.scene.Node getNode() {
-		return borderPane;
-	}
+    private void updateFont() {
+        textArea.setStyle("-fx-font-family: '" + options.getFontFamily()
+                + "'; -fx-font-size: " + options.getFontSize());
+    }
 
-	public UndoManager<?> getUndoManager() {
-		return textArea.getUndoManager();
-	}
+    public javafx.scene.Node getNode() {
+        return borderPane;
+    }
 
-	public SmartEdit getSmartEdit() {
-		return smartEdit;
-	}
+    public UndoManager<?> getUndoManager() {
+        return textArea.getUndoManager();
+    }
 
-	public void requestFocus() {
-		Platform.runLater(() -> textArea.requestFocus());
-	}
+    public SmartEdit getSmartEdit() {
+        return smartEdit;
+    }
 
-	private String getLineSeparatorOrDefault() {
-		String lineSeparator = Options.getLineSeparator();
-		return (lineSeparator != null) ? lineSeparator : System.getProperty( "line.separator", "\n" );
-	}
+    public void requestFocus() {
+        Platform.runLater(() -> textArea.requestFocus());
+    }
 
-	private String determineLineSeparator(String str) {
-		int strLength = str.length();
-		for (int i = 0; i < strLength; i++) {
-			char ch = str.charAt(i);
-			if (ch == '\n')
-				return (i > 0 && str.charAt(i - 1) == '\r') ? "\r\n" : "\n";
-		}
-		return getLineSeparatorOrDefault();
-	}
+    private String getLineSeparatorOrDefault() {
+        String lineSeparator = options.getLineSeparator();
+        return (lineSeparator != null) ? lineSeparator : System.getProperty("line.separator", "\n");
+    }
 
-	// 'markdown' property
-	public String getMarkdown() {
-		String markdown = textArea.getText();
-		if (!lineSeparator.equals("\n"))
-			markdown = markdown.replace("\n", lineSeparator);
-		return markdown;
-	}
-	public void setMarkdown(String markdown) {
-		// remember old selection range and scrollY
-		IndexRange oldSelection = textArea.getSelection();
-		double oldScrollY = textArea.getEstimatedScrollY();
+    private String determineLineSeparator(String str) {
+        int strLength = str.length();
+        for (int i = 0; i < strLength; i++) {
+            char ch = str.charAt(i);
+            if (ch == '\n')
+                return (i > 0 && str.charAt(i - 1) == '\r') ? "\r\n" : "\n";
+        }
+        return getLineSeparatorOrDefault();
+    }
 
-		// replace text
-		lineSeparator = determineLineSeparator(markdown);
-		textArea.replaceText(markdown);
-		textChanged(markdown);
+    // 'markdown' property
+    public String getMarkdown() {
+        String markdown = textArea.getText();
+        if (!lineSeparator.equals("\n"))
+            markdown = markdown.replace("\n", lineSeparator);
+        return markdown;
+    }
 
-		// restore old selection range and scrollY
+    public void setMarkdown(String markdown) {
+        // remember old selection range and scrollY
+        IndexRange oldSelection = textArea.getSelection();
+        double oldScrollY = textArea.getEstimatedScrollY();
+
+        // replace text
+        lineSeparator = determineLineSeparator(markdown);
+        textArea.replaceText(markdown);
+        textChanged(markdown);
+
+        // restore old selection range and scrollY
         int newLength = textArea.getLength();
         textArea.selectRange(Math.min(oldSelection.getStart(), newLength), Math.min(oldSelection.getEnd(), newLength));
-		Platform.runLater(() -> {
-			textArea.estimatedScrollYProperty().setValue(oldScrollY);
-		});
-	}
-	public ObservableValue<String> markdownProperty() { return textArea.textProperty(); }
+        Platform.runLater(() -> {
+            textArea.estimatedScrollYProperty().setValue(oldScrollY);
+        });
+    }
 
-	// 'markdownText' property
-	private final ReadOnlyStringWrapper markdownText = new ReadOnlyStringWrapper();
-	public String getMarkdownText() { return markdownText.get(); }
-	public ReadOnlyStringProperty markdownTextProperty() { return markdownText.getReadOnlyProperty(); }
+    public ObservableValue<String> markdownProperty() {
+        return textArea.textProperty();
+    }
 
-	// 'markdownAST' property
-	private final ReadOnlyObjectWrapper<Node> markdownAST = new ReadOnlyObjectWrapper<>();
-	public Node getMarkdownAST() { return markdownAST.get(); }
-	public ReadOnlyObjectProperty<Node> markdownASTProperty() { return markdownAST.getReadOnlyProperty(); }
+    // 'markdownText' property
+    private final ReadOnlyStringWrapper markdownText = new ReadOnlyStringWrapper();
 
-	// 'selection' property
-	public ObservableValue<IndexRange> selectionProperty() { return textArea.selectionProperty(); }
+    public String getMarkdownText() {
+        return markdownText.get();
+    }
 
-	// 'scrollY' property
-	private final ReadOnlyDoubleWrapper scrollY = new ReadOnlyDoubleWrapper();
-	public double getScrollY() { return scrollY.get(); }
-	public ReadOnlyDoubleProperty scrollYProperty() { return scrollY.getReadOnlyProperty(); }
+    public ReadOnlyStringProperty markdownTextProperty() {
+        return markdownText.getReadOnlyProperty();
+    }
 
-	// 'path' property
-	private final ObjectProperty<Path> path = new SimpleObjectProperty<>();
-	public Path getPath() { return path.get(); }
-	public void setPath(Path path) { this.path.set(path); }
-	public ObjectProperty<Path> pathProperty() { return path; }
+    // 'markdownAST' property
+    private final ReadOnlyObjectWrapper<Node> markdownAST = new ReadOnlyObjectWrapper<>();
 
-	Path getParentPath() {
-		Path path = getPath();
-		return (path != null) ? path.getParent() : null;
-	}
+    public Node getMarkdownAST() {
+        return markdownAST.get();
+    }
 
-	private void textChanged(String newText) {
-		if (borderPane.getBottom() != null) {
-			findReplacePane.removeListener(findHitsChangeListener);
-			findReplacePane.textChanged();
-			findReplacePane.addListener(findHitsChangeListener);
-		}
+    public ReadOnlyObjectProperty<Node> markdownASTProperty() {
+        return markdownAST.getReadOnlyProperty();
+    }
 
-		Node astRoot = parseMarkdown(newText);
-		applyHighlighting(astRoot);
+    // 'selection' property
+    public ObservableValue<IndexRange> selectionProperty() {
+        return textArea.selectionProperty();
+    }
 
-		markdownText.set(newText);
-		markdownAST.set(astRoot);
-	}
+    // 'scrollY' property
+    private final ReadOnlyDoubleWrapper scrollY = new ReadOnlyDoubleWrapper();
 
-	private void findHitsChanged() {
-		applyHighlighting(markdownAST.get());
-	}
+    public double getScrollY() {
+        return scrollY.get();
+    }
 
-	private Node parseMarkdown(String text) {
-		if (parser == null) {
-			parser = Parser.builder()
-				// .extensions(MarkdownExtensions.getFlexmarkExtensions(Options.getMarkdownRenderer()))
-				.build();
-		}
-		return parser.parse(text);
-	}
+    public ReadOnlyDoubleProperty scrollYProperty() {
+        return scrollY.getReadOnlyProperty();
+    }
 
-	private void applyHighlighting(Node astRoot) {
-		List<MarkdownSyntaxHighlighter.ExtraStyledRanges> extraStyledRanges = findReplacePane.hasHits()
-			? Arrays.asList(
-				new MarkdownSyntaxHighlighter.ExtraStyledRanges("hit", findReplacePane.getHits()),
-				new MarkdownSyntaxHighlighter.ExtraStyledRanges("hit-active", Arrays.asList(findReplacePane.getActiveHit())))
-			: null;
+    // 'path' property
+    private final ObjectProperty<Path> path = new SimpleObjectProperty<>();
 
-		MarkdownSyntaxHighlighter.highlight(textArea, astRoot, extraStyledRanges);
-	}
+    public Path getPath() {
+        return path.get();
+    }
 
-	private void increaseFontSize(KeyEvent e) {
-		Options.setFontSize(Options.getFontSize() + 1);
-	}
+    public void setPath(Path path) {
+        this.path.set(path);
+    }
 
-	private void decreaseFontSize(KeyEvent e) {
-		Options.setFontSize(Options.getFontSize() - 1);
-	}
+    public ObjectProperty<Path> pathProperty() {
+        return path;
+    }
 
-	private void resetFontSize(KeyEvent e) {
-		Options.setFontSize(Options.DEF_FONT_SIZE);
-	}
+    Path getParentPath() {
+        Path path = getPath();
+        return (path != null) ? path.getParent() : null;
+    }
 
-	private void showWhitespace(KeyEvent e) {
-		Options.setShowWhitespace(!Options.isShowWhitespace());
-	}
+    private void textChanged(String newText) {
+        if (borderPane.getBottom() != null) {
+            findReplacePane.removeListener(findHitsChangeListener);
+            findReplacePane.textChanged();
+            findReplacePane.addListener(findHitsChangeListener);
+        }
 
-	private void updateShowLineNo() {
-		boolean showLineNo = Options.isShowLineNo();
-		if (showLineNo && lineNumberGutterFactory == null) {
-			lineNumberGutterFactory = new LineNumberGutterFactory(textArea);
-			overlayGraphicFactory.addGutterFactory(lineNumberGutterFactory);
-		} else if (!showLineNo && lineNumberGutterFactory != null) {
-			overlayGraphicFactory.removeGutterFactory(lineNumberGutterFactory);
-			lineNumberGutterFactory = null;
-		}
-	}
+        Node astRoot = parseMarkdown(newText);
+        applyHighlighting(astRoot);
 
-	private void updateShowWhitespace() {
-		boolean showWhitespace = Options.isShowWhitespace();
-		if (showWhitespace && whitespaceOverlayFactory == null) {
-			whitespaceOverlayFactory = new WhitespaceOverlayFactory();
-			overlayGraphicFactory.addOverlayFactory(whitespaceOverlayFactory);
-		} else if (!showWhitespace && whitespaceOverlayFactory != null) {
-			overlayGraphicFactory.removeOverlayFactory(whitespaceOverlayFactory);
-			whitespaceOverlayFactory = null;
-		}
-	}
+        markdownText.set(newText);
+        markdownAST.set(astRoot);
+    }
 
-	public void undo() {
-		textArea.getUndoManager().undo();
-	}
+    private void findHitsChanged() {
+        applyHighlighting(markdownAST.get());
+    }
 
-	public void redo() {
-		textArea.getUndoManager().redo();
-	}
+    private Node parseMarkdown(String text) {
+        if (parser == null) {
+            parser = Parser.builder()
+                    // .extensions(MarkdownExtensions.getFlexmarkExtensions(options.getMarkdownRenderer()))
+                    .build();
+        }
+        return parser.parse(text);
+    }
 
-	public void cut() {
-		textArea.cut();
-	}
+    private void applyHighlighting(Node astRoot) {
+        List<MarkdownSyntaxHighlighter.ExtraStyledRanges> extraStyledRanges = findReplacePane.hasHits()
+                ? Arrays.asList(
+                new MarkdownSyntaxHighlighter.ExtraStyledRanges("hit", findReplacePane.getHits()),
+                new MarkdownSyntaxHighlighter.ExtraStyledRanges("hit-active", Arrays.asList(findReplacePane.getActiveHit())))
+                : null;
 
-	public void copy() {
-		textArea.copy();
-	}
+        MarkdownSyntaxHighlighter.highlight(textArea, astRoot, extraStyledRanges);
+    }
 
-	public void paste() {
-		textArea.paste();
-	}
+    private void increaseFontSize(KeyEvent e) {
+        options.setFontSize(options.getFontSize() + 1);
+    }
 
-	public void selectAll() {
-		textArea.selectAll();
-	}
+    private void decreaseFontSize(KeyEvent e) {
+        options.setFontSize(options.getFontSize() - 1);
+    }
 
-	//---- context menu -------------------------------------------------------
+    private void resetFontSize(KeyEvent e) {
+        options.setFontSize(options.DEF_FONT_SIZE);
+    }
 
-	private void showContextMenu(ContextMenuEvent e) {
-		if (e.isConsumed())
-			return;
+    private void showWhitespace(KeyEvent e) {
+        options.setShowWhitespace(!options.isShowWhitespace());
+    }
 
-		// create context menu
-		if (contextMenu == null) {
-			contextMenu = new ContextMenu();
-			initContextMenu();
-		}
+    private void updateShowLineNo() {
+        boolean showLineNo = options.isShowLineNo();
+        if (showLineNo && lineNumberGutterFactory == null) {
+            lineNumberGutterFactory = new LineNumberGutterFactory(textArea);
+            overlayGraphicFactory.addGutterFactory(lineNumberGutterFactory);
+        } else if (!showLineNo && lineNumberGutterFactory != null) {
+            overlayGraphicFactory.removeGutterFactory(lineNumberGutterFactory);
+            lineNumberGutterFactory = null;
+        }
+    }
 
-		// update context menu
-		CharacterHit hit = textArea.hit(e.getX(), e.getY());
-		updateContextMenu(hit.getCharacterIndex().orElse(-1), hit.getInsertionIndex());
+    private void updateShowWhitespace() {
+        boolean showWhitespace = options.isShowWhitespace();
+        if (showWhitespace && whitespaceOverlayFactory == null) {
+            whitespaceOverlayFactory = new WhitespaceOverlayFactory();
+            overlayGraphicFactory.addOverlayFactory(whitespaceOverlayFactory);
+        } else if (!showWhitespace && whitespaceOverlayFactory != null) {
+            overlayGraphicFactory.removeOverlayFactory(whitespaceOverlayFactory);
+            whitespaceOverlayFactory = null;
+        }
+    }
 
-		if (contextMenu.getItems().isEmpty())
-			return;
+    public void undo() {
+        textArea.getUndoManager().undo();
+    }
 
-		// show context menu
-		contextMenu.show(textArea, e.getScreenX(), e.getScreenY());
-		e.consume();
-	}
+    public void redo() {
+        textArea.getUndoManager().redo();
+    }
 
-	private void hideContextMenu(MouseEvent e) {
-		if (contextMenu != null)
-			contextMenu.hide();
-	}
+    public void cut() {
+        textArea.cut();
+    }
 
-	private void initContextMenu() {
-		SmartEditActions.initContextMenu(this, contextMenu);
-	}
+    public void copy() {
+        textArea.copy();
+    }
 
-	private void updateContextMenu(int characterIndex, int insertionIndex) {
-		SmartEditActions.updateContextMenu(this, contextMenu, characterIndex);
-	}
+    public void paste() {
+        textArea.paste();
+    }
 
-	//---- find/replace -------------------------------------------------------
+    public void selectAll() {
+        textArea.selectAll();
+    }
 
-	public void find(boolean replace) {
-		if (borderPane.getBottom() == null)
-			borderPane.setBottom(findReplacePane.getNode());
+    //---- context menu -------------------------------------------------------
 
-		findReplacePane.show(replace, true);
-	}
+    private void showContextMenu(ContextMenuEvent e) {
+        if (e.isConsumed())
+            return;
 
-	public void findNextPrevious(boolean next) {
-		if (borderPane.getBottom() == null) {
-			// show pane
-			find(false);
-			return;
-		}
+        // create context menu
+        if (contextMenu == null) {
+            contextMenu = new ContextMenu();
+            initContextMenu();
+        }
 
-		if (next)
-			findReplacePane.findNext();
-		else
-			findReplacePane.findPrevious();
-	}
+        // update context menu
+        CharacterHit hit = textArea.hit(e.getX(), e.getY());
+        updateContextMenu(hit.getCharacterIndex().orElse(-1), hit.getInsertionIndex());
 
-	//---- class MyStyleClassedTextArea ---------------------------------------
+        if (contextMenu.getItems().isEmpty())
+            return;
+
+        // show context menu
+        contextMenu.show(textArea, e.getScreenX(), e.getScreenY());
+        e.consume();
+    }
+
+    private void hideContextMenu(MouseEvent e) {
+        if (contextMenu != null)
+            contextMenu.hide();
+    }
+
+    private void initContextMenu() {
+        SmartEditActions.initContextMenu(this, contextMenu);
+    }
+
+    private void updateContextMenu(int characterIndex, int insertionIndex) {
+        SmartEditActions.updateContextMenu(this, contextMenu, characterIndex);
+    }
+
+    //---- find/replace -------------------------------------------------------
+
+    public void find(boolean replace) {
+        if (borderPane.getBottom() == null)
+            borderPane.setBottom(findReplacePane.getNode());
+
+        findReplacePane.show(replace, true);
+    }
+
+    public void findNextPrevious(boolean next) {
+        if (borderPane.getBottom() == null) {
+            // show pane
+            find(false);
+            return;
+        }
+
+        if (next)
+            findReplacePane.findNext();
+        else
+            findReplacePane.findPrevious();
+    }
+
+    //---- class MyStyleClassedTextArea ---------------------------------------
 
 }

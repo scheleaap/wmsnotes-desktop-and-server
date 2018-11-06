@@ -1,10 +1,9 @@
-package info.maaskant.wmsnotes.desktop.view
+package info.maaskant.wmsnotes.desktop.editing
 
 import com.github.thomasnield.rxkotlinfx.actionEvents
 import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.desktop.controller.ApplicationController
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
-import info.maaskant.wmsnotes.desktop.editing.EditingModel
 import info.maaskant.wmsnotes.desktop.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.editing.preview.MarkdownPreviewPane
 import info.maaskant.wmsnotes.model.CommandProcessor
@@ -28,6 +27,8 @@ class DetailView : View() {
 
     private val commandProcessor: CommandProcessor by di()
 
+    private val markdownEditorPane : MarkdownEditorPane by di()
+
     private val hboxesByAttachmentName: MutableMap<String, HBox> = mutableMapOf()
 
     override val root = splitpane {
@@ -35,18 +36,7 @@ class DetailView : View() {
         setDividerPosition(0, 0.5)
 
         this += borderpane {
-            center = MarkdownEditorPane(editingModel).apply {
-                applicationModel.selectedNote
-                        .observeOnFx()
-                        .subscribe {
-                            if (it.value == null) {
-//                                isDisable = true
-                                editingModel.originalText.onNext("")
-                            } else {
-                                editingModel.originalText.onNext( "# " + it.value!!.title)
-//                                isDisable = false
-                            }
-                        }
+            center = markdownEditorPane.apply {
 //                applicationModel.isSwitchingToNewlySelectedNote
 //                        .observeOnFx()
 //                        .subscribe(this::setDisable)

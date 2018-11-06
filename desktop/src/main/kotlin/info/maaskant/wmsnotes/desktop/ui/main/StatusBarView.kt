@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.desktop.view
+package info.maaskant.wmsnotes.desktop.ui.main
 
 import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.client.synchronization.Synchronizer

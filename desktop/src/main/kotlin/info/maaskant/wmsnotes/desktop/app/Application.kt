@@ -2,8 +2,8 @@ package info.maaskant.wmsnotes.desktop.app
 
 import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
-import info.maaskant.wmsnotes.desktop.view.MainView
-import info.maaskant.wmsnotes.desktop.view.Styles
+import info.maaskant.wmsnotes.desktop.ui.main.MainView
+import info.maaskant.wmsnotes.desktop.ui.Styles
 import javafx.scene.image.Image
 import javafx.stage.Stage
 import org.springframework.boot.SpringApplication

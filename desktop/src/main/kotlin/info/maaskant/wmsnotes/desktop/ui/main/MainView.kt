@@ -1,6 +1,7 @@
-package info.maaskant.wmsnotes.desktop.view
+package info.maaskant.wmsnotes.desktop.ui.main
 
 import com.github.thomasnield.rxkotlinfx.observeOnFx
+import info.maaskant.wmsnotes.desktop.editing.DetailView
 import info.maaskant.wmsnotes.desktop.model.ApplicationModel
 import javafx.geometry.Orientation
 import javafx.scene.layout.BorderPane
@@ -21,7 +22,7 @@ class MainView : View() {
 
         with(root) {
             setPrefSize(940.0, 610.0)
-            top<ToolbarView>()
+            top<MenuAndToolbarView>()
             center = splitpane {
                 orientation = Orientation.HORIZONTAL
                 setDividerPosition(0, 0.3)

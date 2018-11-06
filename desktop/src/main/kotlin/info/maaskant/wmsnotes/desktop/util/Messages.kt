@@ -25,27 +25,20 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package info.maaskant.wmsnotes.desktop.util;
+package info.maaskant.wmsnotes.desktop.util
 
-import java.text.MessageFormat;
-import java.util.ResourceBundle;
+import java.text.MessageFormat
+import java.util.*
 
-public class Messages {
-    private static final String BUNDLE_NAME = "org.markdownwriterfx.messages";
-    private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
+object Messages {
+    private const val BUNDLE_NAME = "info.maaskant.wmsnotes.desktop.messages"
+    private val RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME)
 
-    private Messages() {
+    operator fun get(key: String): String {
+        return RESOURCE_BUNDLE.getString(key)
     }
 
-    public static String get(String key) {
-//		try {
-        return RESOURCE_BUNDLE.getString(key);
-//		} catch (MissingResourceException e) {
-//			return '!' + key + '!';
-//		}
-    }
-
-    public static String get(String key, Object... args) {
-        return MessageFormat.format(get(key), args);
+    operator fun get(key: String, vararg args: Any): String {
+        return MessageFormat.format(get(key), *args)
     }
 }

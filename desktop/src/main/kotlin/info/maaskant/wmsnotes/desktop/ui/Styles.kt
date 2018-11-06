@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.desktop.view
+package info.maaskant.wmsnotes.desktop.ui
 
 import javafx.scene.paint.Color
 import javafx.scene.text.FontWeight
@@ -14,7 +14,7 @@ class Styles : Stylesheet() {
 
     init {
         label and heading {
-            padding = box(0.px,0.px,0.px,5.px)
+            padding = box(0.px, 0.px, 0.px, 5.px)
             fontSize = 12.px
             fontWeight = FontWeight.BOLD
             textFill = Color.RED
