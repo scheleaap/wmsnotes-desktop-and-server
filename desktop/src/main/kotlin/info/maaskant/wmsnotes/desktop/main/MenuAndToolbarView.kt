@@ -4,10 +4,11 @@ import com.github.thomasnield.rxkotlinfx.toObservable
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView
 import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
+import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.util.Action
+import info.maaskant.wmsnotes.desktop.util.Messages
 import info.maaskant.wmsnotes.desktop.util.button
 import info.maaskant.wmsnotes.desktop.util.item
-import info.maaskant.wmsnotes.desktop.util.Messages
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.utilities.logger
@@ -17,6 +18,8 @@ import org.controlsfx.control.ToggleSwitch
 import tornadofx.*
 
 class MenuAndToolbarView : View() {
+
+    private val largerIconSize = "1.2em"
 
     private val logger by logger()
 
@@ -28,13 +31,15 @@ class MenuAndToolbarView : View() {
 
     private val synchronizationTask: SynchronizationTask by di()
 
+    private val markdownEditorPane: MarkdownEditorPane by di()
+
     private var i: Int = 1
 
-    private val createNoteAction = Action(messageKey = "menu.file.create_note", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = "1.2em" },
+    private val createNoteAction = Action(messageKey = "menu.file.create_note", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = largerIconSize },
             accelerator = "Shortcut+N") {
         commandProcessor.commands.onNext(CreateNoteCommand(null, "New Note ${i++}"))
     }
-    private val deleteNoteAction = Action(messageKey = "menu.file.delete_note", graphic = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = "1.2em" },
+    private val deleteNoteAction = Action(messageKey = "menu.file.delete_note", graphic = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = largerIconSize },
             disable = applicationModel.selectedNoteId.map { !it.isPresent }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }

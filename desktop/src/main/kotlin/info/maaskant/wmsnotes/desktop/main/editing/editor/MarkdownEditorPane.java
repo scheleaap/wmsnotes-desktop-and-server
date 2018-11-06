@@ -32,6 +32,7 @@ import com.vladsch.flexmark.parser.Parser;
 import info.maaskant.wmsnotes.desktop.settings.PreferencesAndOptionsConfiguration;
 import info.maaskant.wmsnotes.desktop.main.editing.EditingModel;
 import info.maaskant.wmsnotes.desktop.settings.Options;
+import info.maaskant.wmsnotes.desktop.util.Messages;
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
