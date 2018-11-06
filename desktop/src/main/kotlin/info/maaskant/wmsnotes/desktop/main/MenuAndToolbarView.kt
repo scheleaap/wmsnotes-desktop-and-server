@@ -4,6 +4,7 @@ import com.github.thomasnield.rxkotlinfx.toObservable
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView
 import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
+import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.util.Action
 import info.maaskant.wmsnotes.desktop.util.button
 import info.maaskant.wmsnotes.desktop.util.item
@@ -18,6 +19,8 @@ import tornadofx.*
 
 class MenuAndToolbarView : View() {
 
+    private val largerIconSize = "1.2em"
+
     private val logger by logger()
 
     private val applicationController: ApplicationController by inject()
@@ -28,18 +31,31 @@ class MenuAndToolbarView : View() {
 
     private val synchronizationTask: SynchronizationTask by di()
 
+    private val markdownEditorPane: MarkdownEditorPane by di()
+
     private var i: Int = 1
 
-    private val createNoteAction = Action(messageKey = "menu.file.create_note", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = "1.2em" },
+    private val createNoteAction = Action(messageKey = "menu.file.create_note", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = largerIconSize },
             accelerator = "Shortcut+N") {
         commandProcessor.commands.onNext(CreateNoteCommand(null, "New Note ${i++}"))
     }
-    private val deleteNoteAction = Action(messageKey = "menu.file.delete_note", graphic = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = "1.2em" },
+    private val deleteNoteAction = Action(messageKey = "menu.file.delete_note", graphic = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = largerIconSize },
             disable = applicationModel.selectedNoteId.map { !it.isPresent }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }
 
     private val exitAction = Action("menu.file.exit") { Platform.exit() }
+
+    private val insertBoldAction = Action(messageKey = "menu.edit.bold", graphic = FontAwesomeIconView(FontAwesomeIcon.BOLD),
+            accelerator = "Shortcut+B",
+            disable = applicationModel.selectedNoteId.map { !it.isPresent }) {
+        markdownEditorPane.smartEdit.insertBold(Messages["default_text.bold"])
+    }
+    private val insertItalicAction = Action(messageKey = "menu.edit.italic", graphic = FontAwesomeIconView(FontAwesomeIcon.ITALIC),
+            accelerator = "Shortcut+I",
+            disable = applicationModel.selectedNoteId.map { !it.isPresent }) {
+        markdownEditorPane.smartEdit.insertItalic(Messages["default_text.italic"])
+    }
 
     override val root =
             vbox {
@@ -49,6 +65,9 @@ class MenuAndToolbarView : View() {
                         item(deleteNoteAction)
                         separator()
                         item(exitAction)
+                    }
+                    menu(Messages["menu.edit"]) {
+                        item(insertBoldAction)
                     }
                 }
                 toolbar {
