@@ -12,7 +12,6 @@ import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.main.editing.preview.MarkdownPreviewPane
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.utilities.logger
-import javafx.event.EventType
 import javafx.geometry.Orientation
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.HBox
@@ -29,7 +28,7 @@ class EditingView : View() {
 
     private val applicationModel: ApplicationModel by di()
 
-    private val editingModel: EditingModel by di()
+    private val editingViewModel: EditingViewModel by di()
 
     private val commandProcessor: CommandProcessor by di()
 
@@ -76,7 +75,7 @@ class EditingView : View() {
             }
         }
 
-        this += MarkdownPreviewPane(editingModel).node
+        this += MarkdownPreviewPane(editingViewModel).node
     }
 
     private fun updateAttachments(attachmentNames: List<String>, vbox: VBox) {

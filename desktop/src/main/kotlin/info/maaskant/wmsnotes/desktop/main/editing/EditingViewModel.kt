@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 import javax.inject.Inject
 
 @Component
-class EditingModel @Inject constructor(
+class EditingViewModel @Inject constructor(
         private val renderer: Renderer
 ) {
     final val originalText: Subject<String> = PublishSubject.create()

@@ -30,7 +30,7 @@ package info.maaskant.wmsnotes.desktop.main.editing.editor;
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.parser.Parser;
 import info.maaskant.wmsnotes.desktop.settings.PreferencesAndOptionsConfiguration;
-import info.maaskant.wmsnotes.desktop.main.editing.EditingModel;
+import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel;
 import info.maaskant.wmsnotes.desktop.settings.Options;
 import info.maaskant.wmsnotes.desktop.util.Messages;
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler;
@@ -87,7 +87,7 @@ public class MarkdownEditorPane {
 
     @Inject
     public MarkdownEditorPane(
-            EditingModel editingModel,
+            EditingViewModel editingViewModel,
             Options options,
             @PreferencesAndOptionsConfiguration.State Preferences statePreferences
     ) {
@@ -141,9 +141,9 @@ public class MarkdownEditorPane {
         lineSeparator = getLineSeparatorOrDefault();
         markdownText.set("");
         markdownAST.set(parseMarkdown(""));
-        editingModel.getOriginalText().observeOn(JavaFxScheduler.platform()).subscribe(this::setMarkdown);
-        markdownText.addListener((observableValue, oldValue, newValue) -> editingModel.getEditedText().onNext(newValue));
-        markdownAST.addListener((observableValue, oldValue, newValue) -> editingModel.getAst().onNext(newValue));
+        editingViewModel.getOriginalText().observeOn(JavaFxScheduler.platform()).subscribe(this::setMarkdown);
+        markdownText.addListener((observableValue, oldValue, newValue) -> editingViewModel.getEditedText().onNext(newValue));
+        markdownAST.addListener((observableValue, oldValue, newValue) -> editingViewModel.getAst().onNext(newValue));
 
         // find/replace
         findReplacePane = new FindReplacePane(textArea, statePreferences);

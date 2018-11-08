@@ -28,7 +28,7 @@
 package info.maaskant.wmsnotes.desktop.main.editing.preview;
 
 import com.vladsch.flexmark.ast.Node;
-import info.maaskant.wmsnotes.desktop.main.editing.EditingModel;
+import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -77,16 +77,16 @@ public class MarkdownPreviewPane {
         Path getPath();
     }
 
-    public MarkdownPreviewPane(EditingModel editingModel) {
+    public MarkdownPreviewPane(EditingViewModel editingViewModel) {
         pane.getStyleClass().add("preview-pane");
         pane.setCenter(preview.getNode());
 
 //        path.addListener((observable, oldValue, newValue) -> update());
-        editingModel.getAst().subscribe((markdownAst) -> {
+        editingViewModel.getAst().subscribe((markdownAst) -> {
             this.markdownAst.setValue(markdownAst);
             update();
         });
-        editingModel.getHtml().subscribe((html) -> {
+        editingViewModel.getHtml().subscribe((html) -> {
             this.html.setValue(html);
             update();
         });
