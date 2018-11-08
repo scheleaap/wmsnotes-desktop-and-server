@@ -47,12 +47,6 @@ class PreferencesAndOptionsConfiguration {
     @Singleton
     @State
     @Bean
-    fun statePreferences(): Preferences =
-            getPrefsRoot().node("state")
-
-    @Singleton
-    @State
-    @Bean
     fun options(@Options preferences: Preferences) =
             Options(preferences)
 

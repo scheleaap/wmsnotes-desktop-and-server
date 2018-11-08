@@ -65,8 +65,8 @@ class FindReplacePane {
         void hitsChanged();
     }
 
-    private final PrefsBooleanProperty matchCase;
-    private final PrefsBooleanProperty regex;
+    private final SimpleBooleanProperty matchCase;
+    private final SimpleBooleanProperty regex;
 
     private final List<HitsChangeListener> listeners = new ArrayList<>();
     private final MarkdownTextArea textArea;
@@ -76,10 +76,10 @@ class FindReplacePane {
 
     private Region overviewRuler;
 
-    FindReplacePane(MarkdownTextArea textArea, Preferences statePreferences) {
+    FindReplacePane(MarkdownTextArea textArea) {
         this.textArea = textArea;
-        matchCase = new PrefsBooleanProperty(statePreferences, "findMatchCase", false);
-        regex = new PrefsBooleanProperty(statePreferences, "findRegex", false);
+        matchCase = new SimpleBooleanProperty(this, "findMatchCase", false);
+        regex = new SimpleBooleanProperty(this, "findRegex", false);
     }
 
     // 'visible' property

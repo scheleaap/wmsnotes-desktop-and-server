@@ -43,6 +43,26 @@ class MenuAndToolbarView : View() {
             enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }
+    private val findAction = StatelessAction(messageKey = "menu.edit.find", graphic = FontAwesomeIconView(FontAwesomeIcon.SEARCH),
+            accelerator = "Shortcut+F",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.find(false)
+    }
+    private val replaceAction = StatelessAction(messageKey = "menu.edit.replace",
+            accelerator = "Shortcut+H",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.find(true)
+    }
+    private val findNextAction = StatelessAction(messageKey = "menu.edit.findNext",
+            accelerator = "F3",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.findNextPrevious(true)
+    }
+    private val findPreviousAction = StatelessAction(messageKey = "menu.edit.findPrevious",
+            accelerator = "Shift+F3",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.findNextPrevious(false)
+    }
     private val insertBoldAction = StatelessAction(messageKey = "menu.insert.bold", graphic = FontAwesomeIconView(FontAwesomeIcon.BOLD),
             accelerator = "Shortcut+B",
             enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
@@ -74,6 +94,12 @@ class MenuAndToolbarView : View() {
                         item(deleteNoteAction)
                         separator()
                         item(exitAction)
+                    }
+                    menu(Messages["menu.edit"]) {
+                        item(findAction)
+                        item(replaceAction)
+                        item(findNextAction)
+                        item(findPreviousAction)
                     }
                     menu(Messages["menu.insert"]) {
                         item(insertBoldAction)

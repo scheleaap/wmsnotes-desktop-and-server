@@ -71,6 +71,8 @@ dependencies {
 
     // Configuration
 //    compile 'com.natpryce:konfig:1.6.10.0'
+//    compile group: 'org.apache.commons', name: 'commons-configuration2', version: '2.4'
+
 }
 
 compileKotlin {

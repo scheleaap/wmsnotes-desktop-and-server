@@ -143,7 +143,7 @@ public class MarkdownEditorPane {
         markdownAST.addListener((observableValue, oldValue, newValue) -> editingViewModel.getAst().onNext(newValue));
 
         // find/replace
-        findReplacePane = new FindReplacePane(textArea, statePreferences);
+        findReplacePane = new FindReplacePane(textArea);
         findHitsChangeListener = this::findHitsChanged;
         findReplacePane.addListener(findHitsChangeListener);
         findReplacePane.visibleProperty().addListener((ov, oldVisible, newVisible) -> {
@@ -194,6 +194,10 @@ public class MarkdownEditorPane {
 
     public SmartEdit getSmartEdit() {
         return smartEdit;
+    }
+
+    public boolean hasFocus() {
+        return textArea.getScene().getFocusOwner() == textArea;
     }
 
     public void requestFocus() {
