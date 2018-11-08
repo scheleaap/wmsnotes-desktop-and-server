@@ -12,6 +12,7 @@ class Note private constructor(
         val exists: Boolean,
         val noteId: String,
         val title: String,
+        val content: String,
         val attachments: Map<String, ByteArray>,
         val attachmentHashes: Map<String, String>
 ) {
@@ -23,6 +24,7 @@ class Note private constructor(
             exists = false,
             noteId = "",
             title = "",
+            content = "",
             attachments = emptyMap(),
             attachmentHashes = emptyMap()
     )
@@ -36,6 +38,7 @@ class Note private constructor(
             exists: Boolean = this.exists,
             noteId: String = this.noteId,
             title: String = this.title,
+            content: String = this.content,
             attachments: Map<String, ByteArray> = this.attachments,
             attachmentHashes: Map<String, String> = this.attachmentHashes
     ): Note {
@@ -44,6 +47,7 @@ class Note private constructor(
                 exists = exists,
                 noteId = noteId,
                 title = title,
+                content = content,
                 attachments = attachments,
                 attachmentHashes = attachmentHashes
         )
@@ -63,6 +67,7 @@ class Note private constructor(
             is NoteDeletedEvent -> applyDeleted(event)
             is AttachmentAddedEvent -> applyAttachmentAdded(event)
             is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
+            is ContentChangedEvent -> applyContentChanged(event)
         }
     }
 
@@ -94,6 +99,14 @@ class Note private constructor(
         } else {
             noChanges()
         }
+    }
+
+    private fun applyContentChanged(event: ContentChangedEvent): Pair<Note, Event?> {
+        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
+        return if (content == event.content) noChanges() else copy(
+                revision = event.revision,
+                content = event.content
+        ) to event
     }
 
     private fun applyCreated(event: NoteCreatedEvent): Pair<Note, Event> {
@@ -135,6 +148,7 @@ class Note private constructor(
                 exists: Boolean,
                 noteId: String,
                 title: String,
+                content: String,
                 attachments: Map<String, ByteArray>,
                 attachmentHashes: Map<String, String>
         ): Note {
@@ -143,6 +157,7 @@ class Note private constructor(
                     exists = exists,
                     noteId = noteId,
                     title = title,
+                    content = content,
                     attachments = attachments,
                     attachmentHashes = attachmentHashes
             )

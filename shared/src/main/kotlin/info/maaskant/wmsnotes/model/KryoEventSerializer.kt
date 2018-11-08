@@ -13,7 +13,8 @@ class KryoEventSerializer(kryoPool: Pool<Kryo>) : KryoSerializer<Event>(
         Registration(NoteCreatedEvent::class.java, NoteCreatedEventSerializer(), 11),
         Registration(NoteDeletedEvent::class.java, NoteDeletedEventSerializer(), 12),
         Registration(AttachmentAddedEvent::class.java, AttachmentAddedEventSerializer(), 13),
-        Registration(AttachmentDeletedEvent::class.java, AttachmentDeletedEventSerializer(), 14)
+        Registration(AttachmentDeletedEvent::class.java, AttachmentDeletedEventSerializer(), 14),
+        Registration(ContentChangedEvent::class.java, ContentChangedEventSerializer(), 15)
 ) {
     private class NoteCreatedEventSerializer : Serializer<NoteCreatedEvent>() {
         override fun write(kryo: Kryo, output: Output, it: NoteCreatedEvent) {
@@ -82,6 +83,23 @@ class KryoEventSerializer(kryoPool: Pool<Kryo>) : KryoSerializer<Event>(
             val revision = input.readInt(true)
             val name = input.readString()
             return AttachmentDeletedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name)
+        }
+    }
+
+    private class ContentChangedEventSerializer : Serializer<ContentChangedEvent>() {
+        override fun write(kryo: Kryo, output: Output, it: ContentChangedEvent) {
+            output.writeInt(it.eventId, true)
+            output.writeString(it.noteId)
+            output.writeInt(it.revision, true)
+            output.writeString(it.content)
+        }
+
+        override fun read(kryo: Kryo, input: Input, clazz: Class<out ContentChangedEvent>): ContentChangedEvent {
+            val eventId = input.readInt(true)
+            val noteId = input.readString()
+            val revision = input.readInt(true)
+            val content = input.readString()
+            return ContentChangedEvent(eventId = eventId, noteId = noteId, revision = revision, content = content)
         }
     }
 }

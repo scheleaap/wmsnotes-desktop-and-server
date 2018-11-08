@@ -1,10 +1,7 @@
 package info.maaskant.wmsnotes.client.api
 
 import com.google.protobuf.ByteString
-import info.maaskant.wmsnotes.model.AddAttachmentCommand
-import info.maaskant.wmsnotes.model.CreateNoteCommand
-import info.maaskant.wmsnotes.model.DeleteAttachmentCommand
-import info.maaskant.wmsnotes.model.DeleteNoteCommand
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import javax.inject.Inject
 
@@ -37,6 +34,13 @@ class GrpcCommandMapper @Inject constructor() {
                 lastRevision = command.lastRevision
                 deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
                     name = command.name
+                }.build()
+            }
+            is ChangeContentCommand -> builder.apply {
+                noteId = command.noteId
+                lastRevision = command.lastRevision
+                changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().apply {
+                    content = command.content
                 }.build()
             }
         }

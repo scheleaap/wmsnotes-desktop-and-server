@@ -37,3 +37,5 @@ data class AddAttachmentCommand(val noteId: String, val lastRevision: Int, val n
 }
 
 data class DeleteAttachmentCommand(val noteId: String, val lastRevision: Int, val name: String) : Command()
+
+data class ChangeContentCommand(val noteId: String, val lastRevision: Int, val content: String) : Command()

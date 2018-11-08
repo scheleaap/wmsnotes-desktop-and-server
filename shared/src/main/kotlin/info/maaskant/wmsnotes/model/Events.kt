@@ -78,3 +78,20 @@ class AttachmentDeletedEvent(eventId: Int, noteId: String, revision: Int, val na
 
     override fun hashCode() = Objects.hash(name, super.hashCode())
 }
+
+class ContentChangedEvent(eventId: Int, noteId: String, revision: Int, val content: String) : Event(eventId, noteId, revision) {
+    private val contentLength = content.length
+
+    override fun withEventId(eventId: Int): ContentChangedEvent {
+        return ContentChangedEvent(eventId = eventId, noteId = noteId, revision = revision, content = content)
+    }
+
+    override fun toString() = kotlinToString(properties = arrayOf(ContentChangedEvent::eventId, ContentChangedEvent::noteId, ContentChangedEvent::revision, ContentChangedEvent::contentLength))
+
+    override fun equals(other: Any?) = kotlinEquals(
+            other = other,
+            properties = arrayOf(ContentChangedEvent::content),
+            superEquals = { super.equals(other) })
+
+    override fun hashCode() = Objects.hash(content, super.hashCode())
+}

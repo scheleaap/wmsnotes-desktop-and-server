@@ -12,6 +12,7 @@ class EventToCommandMapper @Inject constructor() {
             is NoteDeletedEvent -> DeleteNoteCommand(source.noteId, lastRevision!!)
             is AttachmentAddedEvent -> AddAttachmentCommand(source.noteId, lastRevision!!, source.name, source.content)
             is AttachmentDeletedEvent -> DeleteAttachmentCommand(source.noteId, lastRevision!!, source.name)
+            is ContentChangedEvent -> ChangeContentCommand(source.noteId, lastRevision!!, source.content)
         }
     }
 }

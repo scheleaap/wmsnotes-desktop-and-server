@@ -20,7 +20,8 @@ internal class NoteTest {
         return listOf(
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3),
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file", content = "data".toByteArray()),
-                AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file")
+                AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file"),
+                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "data")
                 // Add more classes here
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
@@ -39,7 +40,8 @@ internal class NoteTest {
         return listOf(
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2),
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "file", content = "data".toByteArray()),
-                AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "file")
+                AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "file"),
+                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, content = "data")
                 // Add more classes here
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
@@ -58,7 +60,8 @@ internal class NoteTest {
         return listOf(
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 1),
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 1, name = "file", content = "data".toByteArray()),
-                AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 1, name = "file")
+                AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 1, name = "file"),
+                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 1, content = "data")
                 // Add more classes here
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
@@ -75,7 +78,8 @@ internal class NoteTest {
     @TestFactory
     fun `events that are not allowed if the note does not exist`(): List<DynamicTest> {
         return listOf(
-                AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file", content = "data".toByteArray())
+                AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file", content = "data".toByteArray()),
+                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "data")
                 // Add more classes here
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
@@ -304,6 +308,41 @@ internal class NoteTest {
         assertThat(eventOut).isNull()
         assertThat(noteAfter).isEqualTo(noteBefore)
     }
+
+    @Test
+    fun `content changed`() {
+        // Given
+        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
+        val eventIn = ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, content = "data")
+
+        // When
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
+
+        // Then
+        assertThat(eventOut).isEqualTo(eventIn)
+        assertThat(noteBefore.revision).isEqualTo(1)
+        assertThat(noteBefore.content).isEqualTo("")
+        assertThat(noteAfter.revision).isEqualTo(2)
+        assertThat(noteAfter.content).isEqualTo("data")
+    }
+
+    @Test
+    fun `content changed, idempotence`() {
+        // Given
+        val noteBefore = noteWithEvents(
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"),
+                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, content = "data")
+        )
+        val eventIn = ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "data")
+
+        // When
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
+
+        // Then
+        assertThat(eventOut).isNull()
+        assertThat(noteAfter).isEqualTo(noteBefore)
+    }
+
 }
 
 private fun noteWithEvents(vararg events: Event): Note {

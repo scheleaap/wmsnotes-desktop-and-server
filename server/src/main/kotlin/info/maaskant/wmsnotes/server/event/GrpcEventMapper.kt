@@ -3,6 +3,7 @@ package info.maaskant.wmsnotes.server.event
 import com.google.protobuf.ByteString
 import info.maaskant.wmsnotes.model.AttachmentAddedEvent
 import info.maaskant.wmsnotes.model.AttachmentDeletedEvent
+import info.maaskant.wmsnotes.model.ContentChangedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import org.springframework.stereotype.Service
@@ -37,6 +38,11 @@ class GrpcEventMapper @Inject constructor() {
             is AttachmentDeletedEvent -> builder.apply {
                 attachmentDeleted = Event.GetEventsResponse.AttachmentDeletedEvent.newBuilder().apply {
                     name = event.name
+                }.build()
+            }
+            is ContentChangedEvent -> builder.apply {
+                contentChanged = Event.GetEventsResponse.ContentChangedEvent.newBuilder().apply {
+                    content = event.content
                 }.build()
             }
         }

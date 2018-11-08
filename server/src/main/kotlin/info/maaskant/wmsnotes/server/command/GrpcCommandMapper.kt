@@ -1,9 +1,6 @@
 package info.maaskant.wmsnotes.server.command
 
-import info.maaskant.wmsnotes.model.AddAttachmentCommand
-import info.maaskant.wmsnotes.model.CreateNoteCommand
-import info.maaskant.wmsnotes.model.DeleteAttachmentCommand
-import info.maaskant.wmsnotes.model.DeleteNoteCommand
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import org.springframework.stereotype.Service
 import javax.inject.Singleton
@@ -35,6 +32,11 @@ class GrpcCommandMapper {
                     name = request.deleteAttachment.name
             )
 
+            Command.PostCommandRequest.CommandCase.CHANGE_CONTENT -> ChangeContentCommand(
+                    noteId = request.noteId,
+                    lastRevision = request.lastRevision,
+                    content = request.changeContent.content
+            )
         }
     }
 }

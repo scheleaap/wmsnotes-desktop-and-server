@@ -28,8 +28,9 @@ internal class EventsTest {
         return listOf(
                 NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1"),
                 NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
-                AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "DATA".toByteArray()),
-                AttachmentDeletedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1")
+                AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
+                AttachmentDeletedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1"),
+                ContentChangedEvent(eventId = 0, noteId = "note-1", revision = 1, content = "data")
                 // Add more classes here
         ).map {
             DynamicTest.dynamicTest(it::class.simpleName) {
@@ -48,25 +49,30 @@ internal class EventsTest {
                 Item(
                         o = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1"),
                         sameButCopy = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1"),
-                        differents = listOf(NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 2"))
+                        differents = listOf(NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "different"))
                 ),
                 Item(
                         o = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
                         sameButCopy = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
-                        differents = listOf(NoteDeletedEvent(eventId = 1, noteId = "note-2", revision = 1))
+                        differents = listOf(NoteDeletedEvent(eventId = 1, noteId = "different", revision = 1))
                 ),
                 Item(
-                        o = AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "DATA".toByteArray()),
-                        sameButCopy = AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "DATA".toByteArray()),
+                        o = AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
+                        sameButCopy = AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
                         differents = listOf(
-                                AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-2", content = "DATA".toByteArray()),
-                                AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "DIFFERENT".toByteArray())
+                                AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "different", content = "data".toByteArray()),
+                                AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "different".toByteArray())
                         )
                 ),
                 Item(
                         o = AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1"),
                         sameButCopy = AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1"),
-                        differents = listOf(AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-2"))
+                        differents = listOf(AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "different"))
+                ),
+                Item(
+                        o = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "data"),
+                        sameButCopy = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "data"),
+                        differents = listOf(ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "different"))
                 )
                 // Add more classes here
         ).map {

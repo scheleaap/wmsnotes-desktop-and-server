@@ -1,10 +1,7 @@
 package info.maaskant.wmsnotes.client.api
 
 import com.google.protobuf.ByteString
-import info.maaskant.wmsnotes.model.AddAttachmentCommand
-import info.maaskant.wmsnotes.model.CreateNoteCommand
-import info.maaskant.wmsnotes.model.DeleteAttachmentCommand
-import info.maaskant.wmsnotes.model.DeleteNoteCommand
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
@@ -46,6 +43,13 @@ internal class GrpcCommandMapperTest {
                     lastRevision = 1
                     deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
                         name = "att"
+                    }.build()
+                }.build(),
+                ChangeContentCommand(noteId = "note", lastRevision = 1, content = "data") to Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
+                    changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().apply {
+                        content = "data"
                     }.build()
                 }.build()
                 // Add more classes here

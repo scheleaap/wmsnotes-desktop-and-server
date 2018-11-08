@@ -24,6 +24,7 @@ message GetEventsResponse {
         NoteDeletedEvent note_deleted = 11;
         AttachmentAddedEvent attachment_added = 12;
         AttachmentDeletedEvent attachment_deleted = 13;
+        ContentChangedEvent content_changed = 14;
     }
 
     message NoteCreatedEvent {
@@ -40,5 +41,9 @@ message GetEventsResponse {
 
     message AttachmentDeletedEvent {
         string name = 1;
+    }
+
+    message ContentChangedEvent {
+        string content = 1;
     }
 }

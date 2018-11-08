@@ -1,9 +1,6 @@
 package info.maaskant.wmsnotes.client.api
 
-import info.maaskant.wmsnotes.model.AttachmentAddedEvent
-import info.maaskant.wmsnotes.model.AttachmentDeletedEvent
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import javax.inject.Inject
 
@@ -14,6 +11,7 @@ class GrpcEventMapper @Inject constructor() {
             if (noteId.isEmpty()) throw IllegalArgumentException("Event $eventId")
 
             return when (eventCase!!) {
+                Event.GetEventsResponse.EventCase.EVENT_NOT_SET -> throw IllegalArgumentException("Event $eventId")
                 Event.GetEventsResponse.EventCase.NOTE_CREATED -> NoteCreatedEvent(
                         eventId = eventId,
                         noteId = noteId,
@@ -38,7 +36,12 @@ class GrpcEventMapper @Inject constructor() {
                         noteId = noteId,
                         name = attachmentAdded.name
                 )
-                Event.GetEventsResponse.EventCase.EVENT_NOT_SET -> throw IllegalArgumentException("Event $eventId")
+                Event.GetEventsResponse.EventCase.CONTENT_CHANGED -> ContentChangedEvent(
+                        eventId = eventId,
+                        revision = revision,
+                        noteId = noteId,
+                        content = contentChanged.content
+                )
             }
         }
     }
