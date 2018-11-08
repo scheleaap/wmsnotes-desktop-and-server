@@ -27,7 +27,6 @@
 
 package info.maaskant.wmsnotes.desktop.settings;
 
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.text.Font;
@@ -51,8 +50,6 @@ public class Options {
         fontFamily.init(options, "fontFamily", null, this::safeFontFamily);
         fontSize.init(options, "fontSize", DEF_FONT_SIZE);
         lineSeparator.init(options, "lineSeparator", null);
-        showLineNo.init(options, "showLineNo", false);
-        showWhitespace.init(options, "showWhitespace", false);
 
         emphasisMarker.init(options, "emphasisMarker", "_");
         strongEmphasisMarker.init(options, "strongEmphasisMarker", "**");
@@ -118,36 +115,6 @@ public class Options {
 
     public StringProperty lineSeparatorProperty() {
         return lineSeparator;
-    }
-
-    // 'showLineNo' property
-    private final PrefsBooleanProperty showLineNo = new PrefsBooleanProperty();
-
-    public boolean isShowLineNo() {
-        return showLineNo.get();
-    }
-
-    public void setShowLineNo(boolean showLineNo) {
-        this.showLineNo.set(showLineNo);
-    }
-
-    public BooleanProperty showLineNoProperty() {
-        return showLineNo;
-    }
-
-    // 'showWhitespace' property
-    private final PrefsBooleanProperty showWhitespace = new PrefsBooleanProperty();
-
-    public boolean isShowWhitespace() {
-        return showWhitespace.get();
-    }
-
-    public void setShowWhitespace(boolean showWhitespace) {
-        this.showWhitespace.set(showWhitespace);
-    }
-
-    public BooleanProperty showWhitespaceProperty() {
-        return showWhitespace;
     }
 
     // 'emphasisMarker' property

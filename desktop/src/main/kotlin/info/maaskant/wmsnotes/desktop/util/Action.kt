@@ -38,24 +38,64 @@ import javafx.scene.input.KeyCombination
 import org.slf4j.LoggerFactory
 import tornadofx.*
 
-class Action(
+internal val errorLogger: (Throwable) -> Unit = { LoggerFactory.getLogger(Action::class.java).warn("Error", it) }
+
+abstract class Action(
         messageKey: String,
-        accelerator: String? = null,
-        val graphic: GlyphIcon<*>? = null,
-        val disable: Observable<Boolean>? = null,
+        accelerator: String?,
+        val graphic: GlyphIcon<*>?,
+        val enabled: Observable<Boolean>?,
         val action: () -> Unit
 ) {
     val text: String by lazy { Messages[messageKey] }
     val accelerator: KeyCombination? = if (accelerator != null) KeyCombination.valueOf(accelerator) else null
 }
 
-fun Menu.item(action: Action): MenuItem =
+class StatelessAction(
+        messageKey: String,
+        accelerator: String? = null,
+        graphic: GlyphIcon<*>? = null,
+        enabled: Observable<Boolean>? = null,
+        action: () -> Unit
+) : Action(messageKey = messageKey, accelerator = accelerator, graphic = graphic, enabled = enabled, action = action)
+
+class StatefulAction(
+        messageKey: String,
+        accelerator: String? = null,
+        graphic: GlyphIcon<*>? = null,
+        enabled: Observable<Boolean>? = null,
+        val active: Observable<Boolean>,
+        action: () -> Unit
+) : Action(messageKey = messageKey, accelerator = accelerator, graphic = graphic, enabled = enabled, action = action)
+
+
+fun Menu.item(action: StatelessAction): MenuItem =
         this.item(
                 name = action.text,
                 graphic = action.graphic,
                 keyCombination = action.accelerator
         ).apply {
             action(action.action)
+            action.enabled
+                    ?.observeOnFx()
+                    ?.map { !it }
+                    ?.subscribe(this::setDisable, errorLogger)
+        }
+
+fun Menu.item(action: StatefulAction): MenuItem =
+        this.checkmenuitem(
+                name = action.text,
+                graphic = action.graphic,
+                keyCombination = action.accelerator
+        ).apply {
+            action(action.action)
+            action.enabled
+                    ?.observeOnFx()
+                    ?.map { !it }
+                    ?.subscribe(this::setDisable, errorLogger)
+            action.active
+                    .observeOnFx()
+                    .subscribe(this::setSelected, errorLogger)
         }
 
 fun ToolBar.button(action: Action, op: Button.() -> Unit = {}): Button =
@@ -65,8 +105,9 @@ fun ToolBar.button(action: Action, op: Button.() -> Unit = {}): Button =
                 op = op
         ).apply {
             action(action.action)
-            action.disable
+            action.enabled
                     ?.observeOnFx()
-                    ?.subscribe(this::setDisable) { LoggerFactory.getLogger(Action::class.java).warn("Error", it) }
+                    ?.map { !it }
+                    ?.subscribe(this::setDisable, errorLogger)
         }
 

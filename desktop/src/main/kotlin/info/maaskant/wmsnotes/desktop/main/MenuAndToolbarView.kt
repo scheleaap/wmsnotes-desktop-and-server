@@ -5,10 +5,8 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView
 import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
 import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
-import info.maaskant.wmsnotes.desktop.util.Action
-import info.maaskant.wmsnotes.desktop.util.Messages
-import info.maaskant.wmsnotes.desktop.util.button
-import info.maaskant.wmsnotes.desktop.util.item
+import info.maaskant.wmsnotes.desktop.settings.ApplicationViewState
+import info.maaskant.wmsnotes.desktop.util.*
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.utilities.logger
@@ -27,6 +25,8 @@ class MenuAndToolbarView : View() {
 
     private val applicationModel: ApplicationModel by di()
 
+    private val applicationViewState: ApplicationViewState by di()
+
     private val commandProcessor: CommandProcessor by di()
 
     private val synchronizationTask: SynchronizationTask by di()
@@ -35,16 +35,36 @@ class MenuAndToolbarView : View() {
 
     private var i: Int = 1
 
-    private val createNoteAction = Action(messageKey = "menu.file.create_note", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = largerIconSize },
+    private val createNoteAction = StatelessAction(messageKey = "menu.file.createNote", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = largerIconSize },
             accelerator = "Shortcut+N") {
         commandProcessor.commands.onNext(CreateNoteCommand(null, "New Note ${i++}"))
     }
-    private val deleteNoteAction = Action(messageKey = "menu.file.delete_note", graphic = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = largerIconSize },
-            disable = applicationModel.selectedNoteId.map { !it.isPresent }) {
+    private val deleteNoteAction = StatelessAction(messageKey = "menu.file.deleteNote", graphic = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = largerIconSize },
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }
+    private val insertBoldAction = StatelessAction(messageKey = "menu.insert.bold", graphic = FontAwesomeIconView(FontAwesomeIcon.BOLD),
+            accelerator = "Shortcut+B",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.smartEdit.insertBold(Messages["defaultText.bold"])
+    }
+    private val insertItalicAction = StatelessAction(messageKey = "menu.insert.italic", graphic = FontAwesomeIconView(FontAwesomeIcon.ITALIC),
+            accelerator = "Shortcut+I",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.smartEdit.insertItalic(Messages["defaultText.italic"])
+    }
+    private val toggleLineNumbersAction = StatefulAction(messageKey = "menu.view.showLineNumbers",
+            accelerator = "Alt+L",
+            active = applicationViewState.showLineNumbers) {
+        applicationViewState.toggleShowLineNumbers()
+    }
+    private val toggleWhitespaceAction = StatefulAction(messageKey = "menu.view.showWhitespace", graphic = FontAwesomeIconView(FontAwesomeIcon.PARAGRAPH),
+            accelerator = "Alt+W",
+            active = applicationViewState.showWhitespace) {
+        applicationViewState.toggleShowWhitespace()
+    }
 
-    private val exitAction = Action("menu.file.exit") { Platform.exit() }
+    private val exitAction = StatelessAction("menu.file.exit") { Platform.exit() }
 
     override val root =
             vbox {
@@ -54,6 +74,14 @@ class MenuAndToolbarView : View() {
                         item(deleteNoteAction)
                         separator()
                         item(exitAction)
+                    }
+                    menu(Messages["menu.insert"]) {
+                        item(insertBoldAction)
+                        item(insertItalicAction)
+                    }
+                    menu(Messages["menu.view"]) {
+                        item(toggleLineNumbersAction)
+                        item(toggleWhitespaceAction)
                     }
                 }
                 toolbar {

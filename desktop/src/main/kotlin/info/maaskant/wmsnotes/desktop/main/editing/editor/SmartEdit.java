@@ -31,7 +31,6 @@ import com.vladsch.flexmark.ast.*;
 import com.vladsch.flexmark.ext.gfm.strikethrough.Strikethrough;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
 import info.maaskant.wmsnotes.desktop.settings.Options;
-import info.maaskant.wmsnotes.desktop.util.Messages;
 import info.maaskant.wmsnotes.desktop.util.Utils;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
@@ -90,8 +89,6 @@ public class SmartEdit
                 consume(keyPressed(DOWN, ALT_DOWN), this::moveLinesDown),
                 consume(keyPressed(UP, SHORTCUT_DOWN, ALT_DOWN), this::duplicateLinesUp),
                 consume(keyPressed(DOWN, SHORTCUT_DOWN, ALT_DOWN), this::duplicateLinesDown),
-                consume(keyPressed(B, SHORTCUT_DOWN), it -> this.insertBold(Messages.INSTANCE.get("default_text.bold"))),
-                consume(keyPressed(I, SHORTCUT_DOWN), it -> this.insertItalic(Messages.INSTANCE.get("default_text.italic"))),
 
                 consume(keyPressed(F, SHORTCUT_DOWN, SHIFT_DOWN), smartFormat::format),
                 consume(keyPressed(F, SHORTCUT_DOWN, SHIFT_DOWN, ALT_DOWN), smartFormat::format)

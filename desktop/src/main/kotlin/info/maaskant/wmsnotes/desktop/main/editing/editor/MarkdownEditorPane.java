@@ -29,10 +29,9 @@ package info.maaskant.wmsnotes.desktop.main.editing.editor;
 
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.parser.Parser;
-import info.maaskant.wmsnotes.desktop.settings.PreferencesAndOptionsConfiguration;
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel;
+import info.maaskant.wmsnotes.desktop.settings.ApplicationViewState;
 import info.maaskant.wmsnotes.desktop.settings.Options;
-import info.maaskant.wmsnotes.desktop.util.Messages;
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -55,7 +54,6 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.prefs.Preferences;
 
 import static javafx.scene.input.KeyCode.*;
 import static javafx.scene.input.KeyCombination.ALT_DOWN;
@@ -89,7 +87,7 @@ public class MarkdownEditorPane {
     public MarkdownEditorPane(
             EditingViewModel editingViewModel,
             Options options,
-            @PreferencesAndOptionsConfiguration.State Preferences statePreferences
+            ApplicationViewState applicationViewState
     ) {
         this.options = options;
 
@@ -113,7 +111,8 @@ public class MarkdownEditorPane {
                 consume(keyPressed(PLUS, SHORTCUT_DOWN), this::increaseFontSize),
                 consume(keyPressed(MINUS, SHORTCUT_DOWN), this::decreaseFontSize),
                 consume(keyPressed(DIGIT0, SHORTCUT_DOWN), this::resetFontSize),
-                consume(keyPressed(W, ALT_DOWN), this::showWhitespace)
+                consume(keyPressed(W, ALT_DOWN), it -> applicationViewState.toggleShowWhitespace()),
+                consume(keyPressed(L, ALT_DOWN), it -> applicationViewState.toggleShowLineNumbers())
         ));
 
         // add listener to update 'scrollY' property
@@ -134,8 +133,6 @@ public class MarkdownEditorPane {
         overlayGraphicFactory = new ParagraphOverlayGraphicFactory(textArea);
         textArea.setParagraphGraphicFactory(overlayGraphicFactory);
         updateFont();
-        updateShowLineNo();
-        updateShowWhitespace();
 
         // initialize properties
         lineSeparator = getLineSeparatorOrDefault();
@@ -161,16 +158,12 @@ public class MarkdownEditorPane {
 
             if (e == options.fontFamilyProperty() || e == options.fontSizeProperty())
                 updateFont();
-            else if (e == options.showLineNoProperty())
-                updateShowLineNo();
-            else if (e == options.showWhitespaceProperty())
-                updateShowWhitespace();
         };
         WeakInvalidationListener weakOptionsListener = new WeakInvalidationListener(optionsListener);
         options.fontFamilyProperty().addListener(weakOptionsListener);
         options.fontSizeProperty().addListener(weakOptionsListener);
-        options.showLineNoProperty().addListener(weakOptionsListener);
-        options.showWhitespaceProperty().addListener(weakOptionsListener);
+        applicationViewState.getShowLineNumbers().subscribe(this::showLineNumbers);
+        applicationViewState.getShowWhitespace().subscribe(this::showWhitespace);
 
         // workaround a problem with wrong selection after undo:
         //   after undo the selection is 0-0, anchor is 0, but caret position is correct
@@ -359,23 +352,17 @@ public class MarkdownEditorPane {
         options.setFontSize(options.DEF_FONT_SIZE);
     }
 
-    private void showWhitespace(KeyEvent e) {
-        options.setShowWhitespace(!options.isShowWhitespace());
-    }
-
-    private void updateShowLineNo() {
-        boolean showLineNo = options.isShowLineNo();
-        if (showLineNo && lineNumberGutterFactory == null) {
+    private void showLineNumbers(boolean showLineNumbers) {
+        if (showLineNumbers && lineNumberGutterFactory == null) {
             lineNumberGutterFactory = new LineNumberGutterFactory(textArea);
             overlayGraphicFactory.addGutterFactory(lineNumberGutterFactory);
-        } else if (!showLineNo && lineNumberGutterFactory != null) {
+        } else if (!showLineNumbers && lineNumberGutterFactory != null) {
             overlayGraphicFactory.removeGutterFactory(lineNumberGutterFactory);
             lineNumberGutterFactory = null;
         }
     }
 
-    private void updateShowWhitespace() {
-        boolean showWhitespace = options.isShowWhitespace();
+    private void showWhitespace(boolean showWhitespace) {
         if (showWhitespace && whitespaceOverlayFactory == null) {
             whitespaceOverlayFactory = new WhitespaceOverlayFactory();
             overlayGraphicFactory.addOverlayFactory(whitespaceOverlayFactory);
