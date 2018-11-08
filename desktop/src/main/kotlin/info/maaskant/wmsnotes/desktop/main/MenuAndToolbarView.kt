@@ -43,6 +43,26 @@ class MenuAndToolbarView : View() {
             enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }
+    private val cutAction = StatelessAction(messageKey = "menu.edit.cut", graphic = FontAwesomeIconView(FontAwesomeIcon.CUT),
+            accelerator = "Shortcut+X",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.cut()
+    }
+    private val copyAction = StatelessAction(messageKey = "menu.edit.copy", graphic = FontAwesomeIconView(FontAwesomeIcon.COPY),
+            accelerator = "Shortcut+C",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.copy()
+    }
+    private val pasteAction = StatelessAction(messageKey = "menu.edit.paste", graphic = FontAwesomeIconView(FontAwesomeIcon.PASTE),
+            accelerator = "Shortcut+V",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.paste()
+    }
+    private val selectAllAction = StatelessAction(messageKey = "menu.edit.selectAll",
+            accelerator = "Shortcut+A",
+            enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
+        markdownEditorPane.selectAll()
+    }
     private val findAction = StatelessAction(messageKey = "menu.edit.find", graphic = FontAwesomeIconView(FontAwesomeIcon.SEARCH),
             accelerator = "Shortcut+F",
             enabled = applicationModel.selectedNoteId.map { it.isPresent }) {
@@ -96,6 +116,11 @@ class MenuAndToolbarView : View() {
                         item(exitAction)
                     }
                     menu(Messages["menu.edit"]) {
+                        item(cutAction)
+                        item(copyAction)
+                        item(pasteAction)
+                        item(selectAllAction)
+                        separator()
                         item(findAction)
                         item(replaceAction)
                         item(findNextAction)
