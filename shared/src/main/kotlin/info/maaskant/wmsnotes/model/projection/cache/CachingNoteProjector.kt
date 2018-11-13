@@ -23,15 +23,17 @@ class CachingNoteProjector @Inject constructor(
     }
 
     override fun projectAndUpdate(noteId: String): Observable<Note> {
-        val cached: Note? = noteCache.getLatest(noteId, lastRevision = null)
-        val current: Note = eventStore
-                .getEventsOfNote(noteId, afterRevision = cached?.revision)
-                .reduceWith({ cached ?: Note() }, { note: Note, event: Event -> note.apply(event).component1() })
-                .blockingGet()
-        return eventStore
-                .getEventsOfNoteWithUpdates(noteId, afterRevision = current.revision)
-                .scan(current) { note: Note, event: Event -> note.apply(event).component1() }
-                .doOnNext { noteCache.put(it) }
+        return Observable.defer {
+            val cached: Note? = noteCache.getLatest(noteId, lastRevision = null)
+            val current: Note = eventStore
+                    .getEventsOfNote(noteId, afterRevision = cached?.revision)
+                    .reduceWith({ cached ?: Note() }, { note: Note, event: Event -> note.apply(event).component1() })
+                    .blockingGet()
+            eventStore
+                    .getEventsOfNoteWithUpdates(noteId, afterRevision = current.revision)
+                    .scan(current) { note: Note, event: Event -> note.apply(event).component1() }
+                    .doOnNext { noteCache.put(it) }
+        }
     }
 
 }

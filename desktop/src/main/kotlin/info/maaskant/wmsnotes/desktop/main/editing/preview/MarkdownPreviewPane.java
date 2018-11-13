@@ -29,6 +29,7 @@ package info.maaskant.wmsnotes.desktop.main.editing.preview;
 
 import com.vladsch.flexmark.ast.Node;
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel;
+import io.reactivex.rxjavafx.schedulers.JavaFxScheduler;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -64,6 +65,8 @@ public class MarkdownPreviewPane {
     interface Preview {
         javafx.scene.Node getNode();
 
+        void setDisable(boolean value);
+
         void update(PreviewContext context);
 
         void scrollY(PreviewContext context, double value);
@@ -81,15 +84,22 @@ public class MarkdownPreviewPane {
         pane.getStyleClass().add("preview-pane");
         pane.setCenter(preview.getNode());
 
+        editingViewModel.isEnabled()
+                .observeOn(JavaFxScheduler.platform())
+                .subscribe(it -> preview.setDisable(!it));
 //        path.addListener((observable, oldValue, newValue) -> update());
-        editingViewModel.getAst().subscribe((markdownAst) -> {
-            this.markdownAst.setValue(markdownAst);
-            update();
-        });
-        editingViewModel.getHtml().subscribe((html) -> {
-            this.html.setValue(html);
-            update();
-        });
+        editingViewModel.getAst()
+                .observeOn(JavaFxScheduler.platform())
+                .subscribe((markdownAst) -> {
+                    this.markdownAst.setValue(markdownAst);
+                    update();
+                });
+        editingViewModel.getHtml()
+                .observeOn(JavaFxScheduler.platform())
+                .subscribe((html) -> {
+                    this.html.setValue(html);
+                    update();
+                });
 //        scrollY.addListener((observable, oldValue, newValue) -> scrollY());
     }
 

@@ -73,6 +73,14 @@ dependencies {
 //    compile 'com.natpryce:konfig:1.6.10.0'
 //    compile group: 'org.apache.commons', name: 'commons-configuration2', version: '2.4'
 
+    // Testing
+    testCompile('org.springframework.boot:spring-boot-starter-test') {
+        exclude module: 'junit'
+    }
+    testImplementation('org.junit.jupiter:junit-jupiter-api')
+    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine')
+    // See also https://blog.philipphauer.de/best-practices-unit-testing-kotlin/
+    testImplementation 'io.mockk:mockk:1.8.8'
 }
 
 compileKotlin {

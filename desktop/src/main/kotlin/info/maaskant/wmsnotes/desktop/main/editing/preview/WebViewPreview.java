@@ -89,6 +89,13 @@ class WebViewPreview
     }
 
     @Override
+    public void setDisable(boolean value) {
+        if (webView == null)
+            return;
+        webView.setDisable(value);
+    }
+
+    @Override
     public javafx.scene.Node getNode() {
         if (webView == null)
             createNodes();

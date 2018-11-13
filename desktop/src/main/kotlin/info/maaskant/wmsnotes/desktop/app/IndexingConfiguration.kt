@@ -17,7 +17,6 @@ import javax.inject.Singleton
 
 @Configuration
 class IndexingConfiguration {
-
     @Bean
     @Singleton
     fun noteIndexStateRepository(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): StateRepository<NoteIndexState> =
@@ -40,5 +39,4 @@ class IndexingConfiguration {
             stateRepository.connect(this)
         }
     }
-
 }

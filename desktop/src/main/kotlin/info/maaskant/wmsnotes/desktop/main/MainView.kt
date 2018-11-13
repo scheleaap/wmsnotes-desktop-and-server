@@ -2,6 +2,8 @@ package info.maaskant.wmsnotes.desktop.main
 
 import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.desktop.main.editing.EditingView
+import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
+import io.reactivex.rxkotlin.Observables
 import javafx.geometry.Orientation
 import javafx.scene.layout.BorderPane
 import tornadofx.*
@@ -12,6 +14,7 @@ class MainView : View() {
     override val root = BorderPane()
 
     private val applicationModel: ApplicationModel by di()
+    private val editingViewModel: EditingViewModel by di()
 
     private val treeView: TreeView by inject()
     private val editingView: EditingView by inject()
@@ -31,15 +34,19 @@ class MainView : View() {
             bottom<StatusBarView>()
         }
 
-        applicationModel
-                .selectedNote
+        Observables.combineLatest(
+                applicationModel.currentSelection,
+                editingViewModel.isDirty()
+        )
                 .observeOnFx()
-                .subscribe {
-                    if (it.value != null) {
-                        title = "$applicationTitle - ${it.value!!.title}"
-                    } else {
-                        title = applicationTitle
+                .subscribe { (selection, isDirty) ->
+                    val nodeTitle = when (selection) {
+                        ApplicationModel.Selection.Nothing -> ""
+                        is ApplicationModel.Selection.NoteSelection -> " ${selection.title}"
+                        is ApplicationModel.Selection.FolderSelection -> " ${selection.title}"
                     }
+                    val dirtyText = if (isDirty) "*" else ""
+                    title = "$applicationTitle$nodeTitle$dirtyText"
                 }
     }
 }

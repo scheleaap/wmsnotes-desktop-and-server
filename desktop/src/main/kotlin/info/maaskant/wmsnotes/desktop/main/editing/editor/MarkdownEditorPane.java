@@ -48,6 +48,7 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.undo.UndoManager;
 import org.fxmisc.wellbehaved.event.Nodes;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -104,6 +105,7 @@ public class MarkdownEditorPane {
 
         textArea.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, this::showContextMenu);
         textArea.addEventHandler(MouseEvent.MOUSE_PRESSED, this::hideContextMenu);
+        editingViewModel.isEnabled().subscribe((@NotNull Boolean enabled) -> textArea.setDisable(!enabled));
 
         smartEdit = new SmartEdit(this, textArea, options);
 
@@ -138,8 +140,11 @@ public class MarkdownEditorPane {
         lineSeparator = getLineSeparatorOrDefault();
         markdownText.set("");
         markdownAST.set(parseMarkdown(""));
-        editingViewModel.getOriginalText().observeOn(JavaFxScheduler.platform()).subscribe(this::setMarkdown);
-        markdownText.addListener((observableValue, oldValue, newValue) -> editingViewModel.getEditedText().onNext(newValue));
+        editingViewModel.getTextUpdatesForEditor()
+                .observeOn(JavaFxScheduler.platform())
+                .doOnNext(it -> System.out.println(it))
+                .subscribe(this::setMarkdown);
+        markdownText.addListener((observableValue, oldValue, newValue) -> editingViewModel.setText(newValue));
         markdownAST.addListener((observableValue, oldValue, newValue) -> editingViewModel.getAst().onNext(newValue));
 
         // find/replace
@@ -235,7 +240,6 @@ public class MarkdownEditorPane {
         // replace text
         lineSeparator = determineLineSeparator(markdown);
         textArea.replaceText(markdown);
-        textChanged(markdown);
 
         // restore old selection range and scrollY
         int newLength = textArea.getLength();

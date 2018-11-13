@@ -1,10 +1,6 @@
 package info.maaskant.wmsnotes.desktop.main
 
-import info.maaskant.wmsnotes.model.AddAttachmentCommand
-import info.maaskant.wmsnotes.model.CommandProcessor
-import info.maaskant.wmsnotes.model.DeleteAttachmentCommand
-import info.maaskant.wmsnotes.model.DeleteNoteCommand
-import info.maaskant.wmsnotes.utilities.Optional
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -19,34 +15,41 @@ class ApplicationController : Controller() {
 
     private val commandProcessor: CommandProcessor by di()
 
-    val selectNote: Subject<Optional<String>> = PublishSubject.create()
+    // TODO: Replace with SerializedSubject
+    val selectNote: Subject<ApplicationModel.Selection> = PublishSubject.create()
+    val createNote: Subject<Unit> = PublishSubject.create()
     val deleteCurrentNote: Subject<Unit> = PublishSubject.create()
     val addAttachmentToCurrentNote: Subject<File> = PublishSubject.create()
     val deleteAttachmentFromCurrentNote: Subject<String> = PublishSubject.create()
 
+    private var i: Int = 1
+
     init {
-        selectNote.subscribe(applicationModel.selectedNoteId)
+        selectNote.subscribe(applicationModel.selectionRequest)
+        createNote
+                .map { CreateNoteCommand(null, "New Note ${i++}") }
+                .subscribe(commandProcessor.commands)
         deleteCurrentNote
-                .filter { applicationModel.selectedNoteValue != null }
-                .map { DeleteNoteCommand(applicationModel.selectedNoteValue!!.noteId, applicationModel.selectedNoteValue!!.revision) }
+                .filter { applicationModel.currentNoteValue != null }
+                .map { DeleteNoteCommand(applicationModel.currentNoteValue!!.noteId, applicationModel.currentNoteValue!!.revision) }
                 .subscribe(commandProcessor.commands)
         addAttachmentToCurrentNote
-                .filter { applicationModel.selectedNoteValue != null }
+                .filter { applicationModel.currentNoteValue != null }
                 .map {
                     AddAttachmentCommand(
-                            noteId = applicationModel.selectedNoteValue!!.noteId,
-                            lastRevision = applicationModel.selectedNoteValue!!.revision,
+                            noteId = applicationModel.currentNoteValue!!.noteId,
+                            lastRevision = applicationModel.currentNoteValue!!.revision,
                             name = it.name,
                             content = it.readBytes()
                     )
                 }
                 .subscribe(commandProcessor.commands)
         deleteAttachmentFromCurrentNote
-                .filter { applicationModel.selectedNoteValue != null }
+                .filter { applicationModel.currentNoteValue != null }
                 .map {
                     DeleteAttachmentCommand(
-                            noteId = applicationModel.selectedNoteValue!!.noteId,
-                            lastRevision = applicationModel.selectedNoteValue!!.revision,
+                            noteId = applicationModel.currentNoteValue!!.noteId,
+                            lastRevision = applicationModel.currentNoteValue!!.revision,
                             name = it
                     )
                 }

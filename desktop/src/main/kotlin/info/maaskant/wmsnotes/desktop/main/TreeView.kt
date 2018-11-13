@@ -33,7 +33,7 @@ class TreeView : View() {
         cellFormat { text = it.title }
         onUserSelect {
             logger.debug("Selected: $it")
-            applicationController.selectNote.onNext(Optional(it.noteId))
+            applicationController.selectNote.onNext(ApplicationModel.Selection.NoteSelection(noteId = it.noteId, title = it.title))
         }
         events(KeyEvent.KEY_PRESSED)
                 .filter { it.code == KeyCode.DELETE }

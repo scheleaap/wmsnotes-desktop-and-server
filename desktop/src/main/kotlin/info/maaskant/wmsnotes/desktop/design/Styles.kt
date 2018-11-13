@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.desktop.design
 
+import javafx.scene.layout.BorderStrokeStyle
 import javafx.scene.paint.Color
 import tornadofx.*
 
@@ -16,6 +17,12 @@ class Styles : Stylesheet() {
 
             and(hover) {
             }
+        }
+
+        splitPane {
+            borderWidth = multi(box(0.px))
+            borderColor = multi(box(Color.RED))
+            padding = box(0.px)
         }
     }
 }

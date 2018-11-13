@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration
 import java.io.File
 import javax.inject.Singleton
 
+@Suppress("ConstantConditionIf")
 @Configuration
 class ModelConfiguration {
 
@@ -56,7 +57,7 @@ class ModelConfiguration {
     @Bean
     @Singleton
     fun noteCache(@OtherConfiguration.AppDirectory appDirectory: File, noteSerializer: Serializer<Note>): NoteCache =
-            if (cache) {
+            if (cache && !storeInMemory) {
                 FileNoteCache(appDirectory.resolve("cache").resolve("projected_notes"), noteSerializer)
             } else {
                 NoopNoteCache

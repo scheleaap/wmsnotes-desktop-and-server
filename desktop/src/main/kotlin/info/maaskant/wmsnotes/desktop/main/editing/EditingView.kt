@@ -14,6 +14,8 @@ import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.utilities.logger
 import javafx.geometry.Orientation
 import javafx.scene.input.MouseEvent
+import javafx.scene.layout.BorderStroke
+import javafx.scene.layout.BorderStrokeStyle
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
@@ -40,13 +42,12 @@ class EditingView : View() {
         orientation = Orientation.HORIZONTAL
         setDividerPosition(0, 0.5)
 
-        this += borderpane {
-            center = markdownEditorPane.apply {
-                //                TODO
-//                applicationModel.isSwitchingToNewlySelectedNote
-//                        .observeOnFx()
-//                        .subscribe(this::setDisable)
-            }.node
+        borderpane {
+            style {
+                padding = box(0.px)
+            }
+
+            center = markdownEditorPane.node
 
             bottom = borderpane {
                 style {
@@ -54,7 +55,7 @@ class EditingView : View() {
                 }
 
                 center = vbox {
-                    applicationModel.selectedNote
+                    editingViewModel.getNote()
                             .observeOnFx()
                             .map { it.value?.attachments?.keys?.sorted() ?: emptyList() }
                             .subscribe { updateAttachments(it, this) }
@@ -68,9 +69,9 @@ class EditingView : View() {
                             .map { it.first() }
                             .subscribe(applicationController.addAttachmentToCurrentNote)
                 }
-
-                applicationModel.isSwitchingToNewlySelectedNote
+                editingViewModel.isEnabled()
                         .observeOnFx()
+                        .map { !it }
                         .subscribe(this::setDisable) { logger.warn("Error", it) }
             }
         }
