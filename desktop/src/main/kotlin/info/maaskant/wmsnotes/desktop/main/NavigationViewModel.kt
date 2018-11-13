@@ -39,17 +39,15 @@ class NavigationViewModel @Inject constructor(
     final val selectionRequest: Subject<Selection> = PublishSubject.create()
     final val currentSelection: BehaviorSubject<Selection> = BehaviorSubject.createDefault(Selection.Nothing)
     final var currentNoteValue: Note? = null
-    final val currentNote: BehaviorSubject<Optional<Note>> = BehaviorSubject.createDefault(Optional<Note>())
-    final val isSwitchingToNewSelection: Subject<Boolean> = PublishSubject.create()
-
+    private final val currentNote: BehaviorSubject<Optional<Note>> = BehaviorSubject.createDefault(Optional<Note>())
     final val selectionSwitchingProcess: Subject<SelectionSwitchingProcessNotification> = PublishSubject.create()
+    final val isLoading: Subject<Boolean> = PublishSubject.create()
+    private val isNavigationAllowed: Subject<Boolean> = PublishSubject.create()
 
     init {
-        Observables.combineLatest(selectionRequest, Observable.just(false)) { selectionRequest, isDirty ->
-            selectionRequest to isDirty
-        }
+        Observables.combineLatest(selectionRequest, isNavigationAllowed)
                 .observeOn(Schedulers.io())
-                .filter { (selectionRequest, isDirty) -> !isDirty && selectionRequest != currentSelection.value }
+                .filter { (selectionRequest, isNavigationAllowed) -> isNavigationAllowed && selectionRequest != currentSelection.value }
                 .map { (selectionRequest, _) -> selectionRequest }
                 .distinctUntilChanged()
                 .switchMap(::loadRequestedSelection)
@@ -57,7 +55,7 @@ class NavigationViewModel @Inject constructor(
         selectionSwitchingProcess
                 .subscribe {
                     when (it) {
-                        is NavigationViewModel.SelectionSwitchingProcessNotification.Loading -> isSwitchingToNewSelection.onNext(it.loading)
+                        is NavigationViewModel.SelectionSwitchingProcessNotification.Loading -> isLoading.onNext(it.loading)
                         NavigationViewModel.SelectionSwitchingProcessNotification.Nothing -> {
                             currentSelection.onNext(Selection.Nothing)
                             currentNote.onNext(Optional())
@@ -70,9 +68,10 @@ class NavigationViewModel @Inject constructor(
                         }
                     }
                 }
-        selectionRequest.subscribe { logger.info("Selection request: $it") }
-        currentSelection.subscribe { logger.info("Selection changed to: $it") }
-        currentNote.subscribe { logger.info("Note changed to: $it") }
+        isNavigationAllowed.subscribe { logger.debug("Navigation allowed? $it") }
+        selectionRequest.subscribe { logger.debug("Selection request: $it") }
+        currentSelection.subscribe { logger.debug("Selection changed to: $it") }
+        currentNote.subscribe { logger.debug("Note changed to: $it") }
     }
 
     private fun loadRequestedSelection(selectionRequest: Selection): Observable<SelectionSwitchingProcessNotification> =
@@ -102,6 +101,10 @@ class NavigationViewModel @Inject constructor(
     fun start() {
         allEventsWithUpdates.connect()
         selectionRequest.onNext(Selection.Nothing)
+    }
+
+    fun setNavigationAllowed(observable: Observable<Boolean>) {
+        observable.subscribe(this.isNavigationAllowed)
     }
 
     sealed class Selection {

@@ -29,10 +29,16 @@ package info.maaskant.wmsnotes.desktop.main.editing.editor;
 
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.parser.Parser;
+import info.maaskant.wmsnotes.desktop.main.ApplicationController;
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel;
 import info.maaskant.wmsnotes.desktop.settings.ApplicationViewState;
 import info.maaskant.wmsnotes.desktop.settings.Options;
+import io.reactivex.Observable;
+import io.reactivex.functions.BiFunction;
+import io.reactivex.rxjavafx.observables.JavaFxObservable;
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler;
+import io.reactivex.rxkotlin.Observables;
+import io.reactivex.schedulers.Schedulers;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
@@ -44,17 +50,22 @@ import javafx.scene.control.IndexRange;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import kotlin.Pair;
+import kotlin.Unit;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.undo.UndoManager;
 import org.fxmisc.wellbehaved.event.Nodes;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static javafx.scene.input.KeyCode.*;
 import static javafx.scene.input.KeyCombination.ALT_DOWN;
@@ -70,6 +81,8 @@ import static org.fxmisc.wellbehaved.event.InputMap.sequence;
  */
 @Component
 public class MarkdownEditorPane {
+    private static final Logger LOG = LoggerFactory.getLogger(MarkdownEditorPane.class);
+
     private final BottomSlidePane borderPane;
     private final MarkdownTextArea textArea;
     private final ParagraphOverlayGraphicFactory overlayGraphicFactory;
@@ -87,6 +100,7 @@ public class MarkdownEditorPane {
     @Inject
     public MarkdownEditorPane(
             EditingViewModel editingViewModel,
+            ApplicationController applicationController,
             Options options,
             ApplicationViewState applicationViewState
     ) {
@@ -106,6 +120,16 @@ public class MarkdownEditorPane {
         textArea.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, this::showContextMenu);
         textArea.addEventHandler(MouseEvent.MOUSE_PRESSED, this::hideContextMenu);
         editingViewModel.isEnabled().subscribe((@NotNull Boolean enabled) -> textArea.setDisable(!enabled));
+        Observable.combineLatest(
+                JavaFxObservable.valuesOf(textArea.focusedProperty()).subscribeOn(Schedulers.computation()),
+                editingViewModel.isDirty().subscribeOn(Schedulers.computation()),
+                Pair::new
+        )
+                .filter(it -> !it.getFirst() && it.getSecond())
+                .throttleLatest(1, TimeUnit.SECONDS)
+                .doOnNext(it -> LOG.debug("Invoking content save (focused={}, dirty={})", it.getFirst(), it.getSecond()))
+                .map(it -> Unit.INSTANCE)
+                .subscribe(applicationController.getSaveContent());
 
         smartEdit = new SmartEdit(this, textArea, options);
 
@@ -142,7 +166,6 @@ public class MarkdownEditorPane {
         markdownAST.set(parseMarkdown(""));
         editingViewModel.getTextUpdatesForEditor()
                 .observeOn(JavaFxScheduler.platform())
-                .doOnNext(it -> System.out.println(it))
                 .subscribe(this::setMarkdown);
         markdownText.addListener((observableValue, oldValue, newValue) -> editingViewModel.setText(newValue));
         markdownAST.addListener((observableValue, oldValue, newValue) -> editingViewModel.getAst().onNext(newValue));
@@ -206,7 +229,7 @@ public class MarkdownEditorPane {
     }
 
     public void requestFocus() {
-        Platform.runLater(() -> textArea.requestFocus());
+        Platform.runLater(textArea::requestFocus);
     }
 
     private String getLineSeparatorOrDefault() {

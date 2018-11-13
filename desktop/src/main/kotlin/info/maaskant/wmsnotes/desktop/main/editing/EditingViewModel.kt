@@ -45,6 +45,8 @@ class EditingViewModel @Inject constructor(
         setDirty(false)
         setEnabled(false)
         setNote(Optional())
+        navigationViewModel.setNavigationAllowed(isDirty().map { !it })
+
         Observables.combineLatest(
                 navigationViewModel.selectionSwitchingProcess
                         .subscribeOn(scheduler)
@@ -72,7 +74,7 @@ class EditingViewModel @Inject constructor(
                 .subscribe(::setNote) { logger.warn("Error", it) }
     }
 
-    fun isDirty(): Observable<Boolean> = isDirty.distinctUntilChanged()
+    final fun isDirty(): Observable<Boolean> = isDirty.distinctUntilChanged()
 
     @Synchronized
     private fun setDirty(dirty: Boolean) {
@@ -80,7 +82,7 @@ class EditingViewModel @Inject constructor(
         this.isDirty.onNext(dirty)
     }
 
-    fun isEnabled(): Observable<Boolean> = isEnabled.distinctUntilChanged()
+    final fun isEnabled(): Observable<Boolean> = isEnabled.distinctUntilChanged()
 
     @Synchronized
     private fun setEnabled(enabled: Boolean) {
@@ -88,9 +90,9 @@ class EditingViewModel @Inject constructor(
         this.isEnabled.onNext(enabled)
     }
 
-    fun getNote(): Observable<Optional<Note>> = note
+    final fun getNote(): Observable<Optional<Note>> = note
 
-    fun getTextUpdatesForEditor(): Observable<String> = textUpdatesForEditor
+    final fun getTextUpdatesForEditor(): Observable<String> = textUpdatesForEditor
 
     @Synchronized
     private fun setNote(note: Optional<Note>) {

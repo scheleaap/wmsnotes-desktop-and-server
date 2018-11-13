@@ -27,7 +27,7 @@ class StatusBarView : View() {
                 progress = -1.0
                 isVisible = false
                 setPrefSize(16.0, 16.0)
-                navigationViewModel.isSwitchingToNewSelection
+                navigationViewModel.isLoading
                         .subscribe(this::setVisible)
             }
         }

@@ -7,9 +7,8 @@ import info.maaskant.wmsnotes.desktop.main.editing.preview.Renderer
 import info.maaskant.wmsnotes.model.ContentChangedEvent
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.utilities.Optional
-import io.mockk.clearMocks
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
+import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -53,6 +52,7 @@ internal class EditingViewModelTest {
                 renderer
         )
         selectionSwitchingProcess = PublishSubject.create()
+        every { navigationViewModel.setNavigationAllowed(any()) }.just(Runs)
         every { navigationViewModel.selectionSwitchingProcess }.returns(selectionSwitchingProcess)
     }
 
@@ -336,6 +336,28 @@ internal class EditingViewModelTest {
         // Then
         assertThat(model.getText()).isEqualTo(note1Notification1.note.content)
         assertThat(dirtyObserver.values()).isEqualTo(listOf(false))
+    }
+
+    @Test
+    fun `set navigationAllowed on navigation view model`() {
+        // Given
+
+        // When
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
+
+        // Then
+        val navigationAllowedSlot = slot<Observable<Boolean>>()
+        verify { navigationViewModel.setNavigationAllowed(capture(navigationAllowedSlot)) }
+
+        // Given
+        givenALoadedNote(note1Notification1)
+        val navigationAllowedObserver = navigationAllowedSlot.captured.test()
+
+        // When
+        model.setText("different")
+
+        // Then
+        assertThat(navigationAllowedObserver.values()).isEqualTo(listOf(true, false))
     }
 
     private fun givenEditingIsDisabled() {

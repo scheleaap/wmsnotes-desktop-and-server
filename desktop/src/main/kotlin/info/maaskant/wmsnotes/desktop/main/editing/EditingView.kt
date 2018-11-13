@@ -12,6 +12,7 @@ import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.main.editing.preview.MarkdownPreviewPane
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.utilities.logger
+import io.reactivex.schedulers.Schedulers
 import javafx.geometry.Orientation
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.HBox
@@ -24,7 +25,7 @@ class EditingView : View() {
 
     private val logger by logger()
 
-    private val applicationController: ApplicationController by inject()
+    private val applicationController: ApplicationController by di()
 
     private val navigationViewModel: NavigationViewModel by di()
 
@@ -62,6 +63,7 @@ class EditingView : View() {
                 right = button {
                     text = "Add attachment"
                     actionEvents()
+                            .subscribeOn(Schedulers.computation())
                             .map { chooseImage() }
                             .filter { it.isNotEmpty() }
                             .map { it.first() }
@@ -112,18 +114,6 @@ class EditingView : View() {
                 filters = arrayOf(FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.gif")),
                 owner = this.currentWindow
         )
-    }
-
-    init {
-//        navigationViewModel.allEventsWithUpdates
-//                .observeOnFx()
-//                .subscribe({
-//                    when (it) {
-//                        is NoteCreatedEvent -> noteCreated(it)
-//                        is NoteDeletedEvent -> noteDeleted(it)
-//                    }
-//                }, { logger.warn("Error", it) })
-
     }
 
 }

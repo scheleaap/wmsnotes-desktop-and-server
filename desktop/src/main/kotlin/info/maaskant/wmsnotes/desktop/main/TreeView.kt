@@ -15,7 +15,7 @@ class TreeView : View() {
 
     private val logger by logger()
 
-    private val applicationController: ApplicationController by inject()
+    private val applicationController: ApplicationController by di()
 
     private val navigationViewModel: NavigationViewModel by di()
 
