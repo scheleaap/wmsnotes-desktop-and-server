@@ -17,7 +17,11 @@ class StatusBarView : View() {
                 synchronizer.getConflicts()
                         .observeOnFx()
                         .subscribe {
-                            text = "${it.size} conflicts"
+                            if (it.isEmpty()) {
+                                text = ""
+                            } else {
+                                text = "${it.size} conflicts"
+                            }
                         }
             }
             region {
