@@ -3,15 +3,16 @@ buildscript {
 }
 
 plugins {
-    id 'java-library'
-    id 'com.google.protobuf' version '0.8.6'
-    id 'maven-publish'
-//    id 'signing'
+    id "java-library"
+    id "org.jetbrains.kotlin.jvm" version "1.2.61"
+    id "com.google.protobuf" version "0.8.6"
+    id "maven-publish"
+//    id "signing"
 }
 
 dependencies {
     // Infrastructure
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7"
     api 'org.slf4j:slf4j-api:1.7.25'
     testRuntime 'org.slf4j:slf4j-simple:1.7.25'
     api 'au.com.console:kassava:1.0.0'
@@ -54,6 +55,11 @@ protobuf {
 
 compileKotlin {
     kotlinOptions.jvmTarget = '1.6'
+    kotlinOptions.freeCompilerArgs = ['-Xjsr305=strict']
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '1.8'
     kotlinOptions.freeCompilerArgs = ['-Xjsr305=strict']
 }
 
