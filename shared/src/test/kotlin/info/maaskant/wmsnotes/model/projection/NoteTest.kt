@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.model.projection
 
 import info.maaskant.wmsnotes.model.*
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Fail.fail
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -341,6 +342,40 @@ internal class NoteTest {
         // Then
         assertThat(eventOut).isNull()
         assertThat(noteAfter).isEqualTo(noteBefore)
+    }
+
+    @TestFactory
+    fun `equals and hashCode for all fields`(): List<DynamicTest> {
+        val revision = 0
+        val exists = false
+        val noteId = ""
+        val title = ""
+        val content = ""
+        val attachments = emptyMap<String, ByteArray>()
+        val attachmentHashes = emptyMap<String, String>()
+        return listOf(
+                "revision" to Note.deserialize(revision = 1, exists = exists, noteId = noteId, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                "exists" to Note.deserialize(revision = revision, exists = true, noteId = noteId, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                "noteId" to Note.deserialize(revision = revision, exists = exists, noteId = "different", title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                "title" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, title = "different", content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                "content" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, title = title, content = "different", attachments = attachments, attachmentHashes = attachmentHashes),
+                "attachmentHashes" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, title = title, content = content, attachments = attachments, attachmentHashes = mapOf("different" to "different"))
+                // "" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                // Add more fields here
+        ).map {
+            DynamicTest.dynamicTest(it.first) {
+                // Given
+                val original = Note()
+                val modified = it.second
+
+                // Then
+                assertThat(original).isEqualTo(original)
+                assertThat(original.hashCode()).isEqualTo(original.hashCode())
+                assertThat(modified).isEqualTo(modified)
+                assertThat(modified.hashCode()).isEqualTo(modified.hashCode())
+                assertThat(original).isNotEqualTo(modified)
+            }
+        }
     }
 
 }
