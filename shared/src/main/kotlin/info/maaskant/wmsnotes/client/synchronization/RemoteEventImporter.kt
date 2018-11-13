@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.client.synchronization
 
 import info.maaskant.wmsnotes.client.api.GrpcEventMapper
+import info.maaskant.wmsnotes.client.api.UnknownEventTypeException
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
@@ -11,7 +12,6 @@ import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -49,6 +49,8 @@ class RemoteEventImporter @Inject constructor(
                 Status.Code.DEADLINE_EXCEEDED -> logger.debug("Could not retrieve events: server is taking too long to respond")
                 else -> logger.warn("Error while retrieving events: ${e.status.code}, ${e.status.description}")
             }
+        } catch (e: UnknownEventTypeException) {
+            logger.warn("The server retrieved one or more unknown event types ($e). No further events will be imported.")
         } finally {
             if (numberOfNewEvents > 0) logger.info("Added $numberOfNewEvents new remote events")
         }

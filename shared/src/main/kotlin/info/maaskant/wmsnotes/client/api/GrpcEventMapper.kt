@@ -11,7 +11,7 @@ class GrpcEventMapper @Inject constructor() {
             if (noteId.isEmpty()) throw IllegalArgumentException("Event $eventId")
 
             return when (eventCase!!) {
-                Event.GetEventsResponse.EventCase.EVENT_NOT_SET -> throw IllegalArgumentException("Event $eventId")
+                Event.GetEventsResponse.EventCase.EVENT_NOT_SET -> throw UnknownEventTypeException(eventId, noteId, eventCase.number)
                 Event.GetEventsResponse.EventCase.NOTE_CREATED -> NoteCreatedEvent(
                         eventId = eventId,
                         noteId = noteId,
@@ -46,3 +46,5 @@ class GrpcEventMapper @Inject constructor() {
         }
     }
 }
+
+data class UnknownEventTypeException(val eventId: Int, val noteId: String, val number: Int) : Exception()
