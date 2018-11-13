@@ -22,6 +22,7 @@ import io.grpc.Deadline
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.reactivex.schedulers.Schedulers
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.io.File
@@ -36,7 +37,7 @@ class SynchronizationConfiguration {
     @Bean
     @Singleton
     @ServerHostname
-    fun serverHostname(): String = "localhost"
+    fun serverHostname(@Value("\${server.hostname:localhost}") hostname: String): String = hostname
 
     @Bean
     @Singleton

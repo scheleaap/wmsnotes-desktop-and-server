@@ -22,9 +22,9 @@ class ModelConfiguration {
 
     @Bean
     @Singleton
-    fun eventStore(kryoPool: Pool<Kryo>): EventStore =
+    fun eventStore(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): EventStore =
             FileEventStore(
-                    File("server_data/events"),
+                    appDirectory.resolve("events"),
                     KryoEventSerializer(kryoPool)
             )
 
@@ -39,8 +39,8 @@ class ModelConfiguration {
 
     @Bean
     @Singleton
-    fun noteCache(kryoPool: Pool<Kryo>): NoteCache = FileNoteCache(
-            File("server_data/cache/projected_notes"),
+    fun noteCache(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): NoteCache = FileNoteCache(
+            appDirectory.resolve("cache").resolve("projected_notes"),
             KryoNoteSerializer(kryoPool)
     )
 
