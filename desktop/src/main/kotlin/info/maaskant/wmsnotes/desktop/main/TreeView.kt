@@ -5,7 +5,6 @@ import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
-import info.maaskant.wmsnotes.utilities.Optional
 import info.maaskant.wmsnotes.utilities.logger
 import javafx.scene.control.TreeItem
 import javafx.scene.input.KeyCode
@@ -18,7 +17,7 @@ class TreeView : View() {
 
     private val applicationController: ApplicationController by inject()
 
-    private val applicationModel: ApplicationModel by di()
+    private val navigationViewModel: NavigationViewModel by di()
 
     private val commandProcessor: CommandProcessor by di()
 
@@ -33,7 +32,7 @@ class TreeView : View() {
         cellFormat { text = it.title }
         onUserSelect {
             logger.debug("Selected: $it")
-            applicationController.selectNote.onNext(ApplicationModel.Selection.NoteSelection(noteId = it.noteId, title = it.title))
+            applicationController.selectNote.onNext(NavigationViewModel.Selection.NoteSelection(noteId = it.noteId, title = it.title))
         }
         events(KeyEvent.KEY_PRESSED)
                 .filter { it.code == KeyCode.DELETE }
@@ -42,7 +41,7 @@ class TreeView : View() {
     }
 
     init {
-        applicationModel.allEventsWithUpdates
+        navigationViewModel.allEventsWithUpdates
                 .observeOnFx()
                 .subscribe({
                     when (it) {

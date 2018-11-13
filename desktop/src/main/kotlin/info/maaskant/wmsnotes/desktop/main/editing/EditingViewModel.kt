@@ -1,7 +1,7 @@
 package info.maaskant.wmsnotes.desktop.main.editing
 
 import com.vladsch.flexmark.ast.Node
-import info.maaskant.wmsnotes.desktop.main.ApplicationModel
+import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
 import info.maaskant.wmsnotes.desktop.main.editing.preview.Renderer
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.utilities.Optional
@@ -18,7 +18,7 @@ import javax.inject.Inject
 
 @Component
 class EditingViewModel @Inject constructor(
-        applicationModel: ApplicationModel,
+        navigationViewModel: NavigationViewModel,
         private val renderer: Renderer,
         scheduler: Scheduler = Schedulers.computation()
 ) {
@@ -46,27 +46,27 @@ class EditingViewModel @Inject constructor(
         setEnabled(false)
         setNote(Optional())
         Observables.combineLatest(
-                applicationModel.selectionSwitchingProcess
+                navigationViewModel.selectionSwitchingProcess
                         .subscribeOn(scheduler)
-                        .filter { it !is ApplicationModel.SelectionSwitchingProcessNotification.Loading }
-                        .map { it is ApplicationModel.SelectionSwitchingProcessNotification.Nothing }
+                        .filter { it !is NavigationViewModel.SelectionSwitchingProcessNotification.Loading }
+                        .map { it is NavigationViewModel.SelectionSwitchingProcessNotification.Nothing }
                 ,
-                applicationModel.selectionSwitchingProcess
+                navigationViewModel.selectionSwitchingProcess
                         .subscribeOn(scheduler)
-                        .filter { it is ApplicationModel.SelectionSwitchingProcessNotification.Loading }
-                        .map { (it as ApplicationModel.SelectionSwitchingProcessNotification.Loading).loading }
+                        .filter { it is NavigationViewModel.SelectionSwitchingProcessNotification.Loading }
+                        .map { (it as NavigationViewModel.SelectionSwitchingProcessNotification.Loading).loading }
         )
                 .map { !(it.first || it.second) }
                 .subscribe(::setEnabled) { logger.warn("Error", it) }
 
-        applicationModel.selectionSwitchingProcess
+        navigationViewModel.selectionSwitchingProcess
                 .subscribeOn(scheduler)
-                .filter { it !is ApplicationModel.SelectionSwitchingProcessNotification.Loading }
+                .filter { it !is NavigationViewModel.SelectionSwitchingProcessNotification.Loading }
                 .map {
                     when (it) {
-                        is ApplicationModel.SelectionSwitchingProcessNotification.Loading -> throw IllegalArgumentException()
-                        ApplicationModel.SelectionSwitchingProcessNotification.Nothing -> Optional<Note>()
-                        is ApplicationModel.SelectionSwitchingProcessNotification.Note -> Optional(it.note)
+                        is NavigationViewModel.SelectionSwitchingProcessNotification.Loading -> throw IllegalArgumentException()
+                        NavigationViewModel.SelectionSwitchingProcessNotification.Nothing -> Optional<Note>()
+                        is NavigationViewModel.SelectionSwitchingProcessNotification.Note -> Optional(it.note)
                     }
                 }
                 .subscribe(::setNote) { logger.warn("Error", it) }

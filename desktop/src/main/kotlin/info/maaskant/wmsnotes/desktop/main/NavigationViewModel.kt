@@ -19,10 +19,9 @@ import org.springframework.stereotype.Component
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// TODO: Rename to NavigationViewModel
 @Singleton
 @Component
-class ApplicationModel @Inject constructor(
+class NavigationViewModel @Inject constructor(
         eventStore: EventStore,
         noteIndex: NoteIndex,
         private val noteProjector: NoteProjector
@@ -58,13 +57,13 @@ class ApplicationModel @Inject constructor(
         selectionSwitchingProcess
                 .subscribe {
                     when (it) {
-                        is ApplicationModel.SelectionSwitchingProcessNotification.Loading -> isSwitchingToNewSelection.onNext(it.loading)
-                        ApplicationModel.SelectionSwitchingProcessNotification.Nothing -> {
+                        is NavigationViewModel.SelectionSwitchingProcessNotification.Loading -> isSwitchingToNewSelection.onNext(it.loading)
+                        NavigationViewModel.SelectionSwitchingProcessNotification.Nothing -> {
                             currentSelection.onNext(Selection.Nothing)
                             currentNote.onNext(Optional())
                             currentNoteValue = null
                         }
-                        is ApplicationModel.SelectionSwitchingProcessNotification.Note -> {
+                        is NavigationViewModel.SelectionSwitchingProcessNotification.Note -> {
                             currentSelection.onNext(it.selection)
                             currentNote.onNext(Optional(it.note))
                             currentNoteValue = it.note

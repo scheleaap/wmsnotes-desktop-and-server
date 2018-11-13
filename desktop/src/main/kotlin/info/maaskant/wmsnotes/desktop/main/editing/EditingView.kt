@@ -7,15 +7,13 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView
 import info.maaskant.wmsnotes.desktop.design.Styles
 import info.maaskant.wmsnotes.desktop.main.ApplicationController
-import info.maaskant.wmsnotes.desktop.main.ApplicationModel
+import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
 import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.main.editing.preview.MarkdownPreviewPane
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.utilities.logger
 import javafx.geometry.Orientation
 import javafx.scene.input.MouseEvent
-import javafx.scene.layout.BorderStroke
-import javafx.scene.layout.BorderStrokeStyle
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
@@ -28,7 +26,7 @@ class EditingView : View() {
 
     private val applicationController: ApplicationController by inject()
 
-    private val applicationModel: ApplicationModel by di()
+    private val navigationViewModel: NavigationViewModel by di()
 
     private val editingViewModel: EditingViewModel by di()
 
@@ -117,7 +115,7 @@ class EditingView : View() {
     }
 
     init {
-//        applicationModel.allEventsWithUpdates
+//        navigationViewModel.allEventsWithUpdates
 //                .observeOnFx()
 //                .subscribe({
 //                    when (it) {

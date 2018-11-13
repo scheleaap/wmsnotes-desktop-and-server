@@ -8,7 +8,7 @@ import tornadofx.controlsfx.statusbar
 
 class StatusBarView : View() {
 
-    private val applicationModel: ApplicationModel by di()
+    private val navigationViewModel: NavigationViewModel by di()
     private val synchronizer: Synchronizer by di()
 
     override val root = statusbar {
@@ -27,7 +27,7 @@ class StatusBarView : View() {
                 progress = -1.0
                 isVisible = false
                 setPrefSize(16.0, 16.0)
-                applicationModel.isSwitchingToNewSelection
+                navigationViewModel.isSwitchingToNewSelection
                         .subscribe(this::setVisible)
             }
         }

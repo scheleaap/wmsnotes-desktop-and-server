@@ -1,8 +1,8 @@
 package info.maaskant.wmsnotes.desktop.main.editing
 
-import info.maaskant.wmsnotes.desktop.main.ApplicationModel
-import info.maaskant.wmsnotes.desktop.main.ApplicationModel.SelectionSwitchingProcessNotification
-import info.maaskant.wmsnotes.desktop.main.ApplicationModel.SelectionSwitchingProcessNotification.*
+import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
+import info.maaskant.wmsnotes.desktop.main.NavigationViewModel.SelectionSwitchingProcessNotification
+import info.maaskant.wmsnotes.desktop.main.NavigationViewModel.SelectionSwitchingProcessNotification.*
 import info.maaskant.wmsnotes.desktop.main.editing.preview.Renderer
 import info.maaskant.wmsnotes.model.ContentChangedEvent
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
@@ -24,24 +24,24 @@ internal class EditingViewModelTest {
     private val title = "Title"
     private val text = "Text"
     private val note1Notification1 = Note(
-            ApplicationModel.Selection.NoteSelection(note1Id, title),
+            NavigationViewModel.Selection.NoteSelection(note1Id, title),
             info.maaskant.wmsnotes.model.projection.Note()
                     .apply(NoteCreatedEvent(eventId = 1, noteId = note1Id, revision = 1, title = title)).component1()
                     .apply(ContentChangedEvent(eventId = 2, noteId = note1Id, revision = 2, content = text)).component1()
     )
     private val note1Notification2 = Note(
-            ApplicationModel.Selection.NoteSelection(note1Id, title),
+            NavigationViewModel.Selection.NoteSelection(note1Id, title),
             note1Notification1.note
                     .apply(ContentChangedEvent(eventId = 3, noteId = note1Id, revision = 3, content = "Different text")).component1()
     )
     private val note2Notification = Note(
-            ApplicationModel.Selection.NoteSelection(note1Id, title),
+            NavigationViewModel.Selection.NoteSelection(note1Id, title),
             info.maaskant.wmsnotes.model.projection.Note()
                     .apply(NoteCreatedEvent(eventId = 4, noteId = note2Id, revision = 1, title = title)).component1()
                     .apply(ContentChangedEvent(eventId = 5, noteId = note2Id, revision = 2, content = text)).component1()
     )
 
-    private val applicationModel: ApplicationModel = mockk()
+    private val navigationViewModel: NavigationViewModel = mockk()
     private val renderer: Renderer = mockk()
     private val scheduler = Schedulers.trampoline()
     private lateinit var selectionSwitchingProcess: Subject<SelectionSwitchingProcessNotification>
@@ -49,17 +49,17 @@ internal class EditingViewModelTest {
     @BeforeEach
     fun init() {
         clearMocks(
-                applicationModel,
+                navigationViewModel,
                 renderer
         )
         selectionSwitchingProcess = PublishSubject.create()
-        every { applicationModel.selectionSwitchingProcess }.returns(selectionSwitchingProcess)
+        every { navigationViewModel.selectionSwitchingProcess }.returns(selectionSwitchingProcess)
     }
 
     @Test
     fun `switch from nothing to note`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         val enabledObserver = model.isEnabled().test()
         val dirtyObserver = model.isDirty().test()
         val noteObserver = model.getNote().test()
@@ -81,7 +81,7 @@ internal class EditingViewModelTest {
     @Test
     fun `switch from note to nothing`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         val enabledObserver = model.isEnabled().test()
         val dirtyObserver = model.isDirty().test()
@@ -103,7 +103,7 @@ internal class EditingViewModelTest {
     @Test
     fun `switch from note to nothing when dirty`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         model.setText("changed")
         val dirtyObserver = model.isDirty().test()
@@ -123,7 +123,7 @@ internal class EditingViewModelTest {
     @Test
     fun `switch from note to different note`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         val enabledObserver = model.isEnabled().test()
         val dirtyObserver = model.isDirty().test()
@@ -146,7 +146,7 @@ internal class EditingViewModelTest {
     @Test
     fun `switch from note to different note when dirty`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         model.setText("changed")
         val dirtyObserver = model.isDirty().test()
@@ -168,7 +168,7 @@ internal class EditingViewModelTest {
     @Test
     fun `note update`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         val enabledObserver = model.isEnabled().test()
         val dirtyObserver = model.isDirty().test()
@@ -190,7 +190,7 @@ internal class EditingViewModelTest {
     @Test
     fun `note update when dirty`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         model.setText("changed")
         val dirtyObserver = model.isDirty().test()
@@ -211,7 +211,7 @@ internal class EditingViewModelTest {
     @Test
     fun `note update when dirty, resolving the dirty state`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         model.setText(note1Notification2.note.content)
         val dirtyObserver = model.isDirty().test()
@@ -232,7 +232,7 @@ internal class EditingViewModelTest {
     @Test
     fun `isEnabled, no selection`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         val enabledObserver = model.isEnabled().test()
 
         // When
@@ -247,7 +247,7 @@ internal class EditingViewModelTest {
     @Test
     fun `default values`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         val dirtyObserver = model.isDirty().test()
         val enabledObserver = model.isEnabled().test()
         val noteObserver = model.getNote().test()
@@ -264,7 +264,7 @@ internal class EditingViewModelTest {
     @Test
     fun `text and isDirty, normal`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         val dirtyObserver = model.isDirty().test()
 
@@ -279,7 +279,7 @@ internal class EditingViewModelTest {
     @Test
     fun `text and isDirty, the same text twice`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         model.setText("changed")
         val dirtyObserver = model.isDirty().test()
@@ -295,7 +295,7 @@ internal class EditingViewModelTest {
     @Test
     fun `text and isDirty, resolving the dirty state`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         model.setText("changed")
         val dirtyObserver = model.isDirty().test()
@@ -311,7 +311,7 @@ internal class EditingViewModelTest {
     @Test
     fun `text and isDirty, editing disabled`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         givenEditingIsDisabled()
         val dirtyObserver = model.isDirty().test()
@@ -325,7 +325,7 @@ internal class EditingViewModelTest {
     @Test
     fun `text and isDirty, editing disabled, text equal to note content`() {
         // Given
-        val model = EditingViewModel(applicationModel, renderer, scheduler = scheduler)
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
         givenALoadedNote(note1Notification1)
         givenEditingIsDisabled()
         val dirtyObserver = model.isDirty().test()

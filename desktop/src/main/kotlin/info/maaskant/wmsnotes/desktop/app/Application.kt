@@ -2,7 +2,7 @@ package info.maaskant.wmsnotes.desktop.app
 
 import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
 import info.maaskant.wmsnotes.desktop.design.Styles
-import info.maaskant.wmsnotes.desktop.main.ApplicationModel
+import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
 import info.maaskant.wmsnotes.desktop.main.MainView
 import javafx.scene.image.Image
 import javafx.stage.Stage
@@ -17,8 +17,8 @@ class Application : App(MainView::class, Styles::class) {
 
     private lateinit var context: ConfigurableApplicationContext
 
-    private val applicationModel: ApplicationModel by lazy {
-        context.beanFactory.getBean(ApplicationModel::class.java)
+    private val navigationViewModel: NavigationViewModel by lazy {
+        context.beanFactory.getBean(NavigationViewModel::class.java)
     }
     private val synchronizationTask: SynchronizationTask by lazy {
         context.beanFactory.getBean(SynchronizationTask::class.java)
@@ -36,7 +36,7 @@ class Application : App(MainView::class, Styles::class) {
 
     override fun start(stage: Stage) {
         super.start(stage)
-        applicationModel.start()
+        navigationViewModel.start()
         synchronizationTask.pause()
         synchronizationTask.start()
     }

@@ -11,12 +11,12 @@ class ApplicationController : Controller() {
 
     private val logger by logger()
 
-    private val applicationModel: ApplicationModel by di()
+    private val navigationViewModel: NavigationViewModel by di()
 
     private val commandProcessor: CommandProcessor by di()
 
     // TODO: Replace with SerializedSubject
-    val selectNote: Subject<ApplicationModel.Selection> = PublishSubject.create()
+    val selectNote: Subject<NavigationViewModel.Selection> = PublishSubject.create()
     val createNote: Subject<Unit> = PublishSubject.create()
     val deleteCurrentNote: Subject<Unit> = PublishSubject.create()
     val addAttachmentToCurrentNote: Subject<File> = PublishSubject.create()
@@ -25,31 +25,31 @@ class ApplicationController : Controller() {
     private var i: Int = 1
 
     init {
-        selectNote.subscribe(applicationModel.selectionRequest)
+        selectNote.subscribe(navigationViewModel.selectionRequest)
         createNote
                 .map { CreateNoteCommand(null, "New Note ${i++}") }
                 .subscribe(commandProcessor.commands)
         deleteCurrentNote
-                .filter { applicationModel.currentNoteValue != null }
-                .map { DeleteNoteCommand(applicationModel.currentNoteValue!!.noteId, applicationModel.currentNoteValue!!.revision) }
+                .filter { navigationViewModel.currentNoteValue != null }
+                .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.noteId, navigationViewModel.currentNoteValue!!.revision) }
                 .subscribe(commandProcessor.commands)
         addAttachmentToCurrentNote
-                .filter { applicationModel.currentNoteValue != null }
+                .filter { navigationViewModel.currentNoteValue != null }
                 .map {
                     AddAttachmentCommand(
-                            noteId = applicationModel.currentNoteValue!!.noteId,
-                            lastRevision = applicationModel.currentNoteValue!!.revision,
+                            noteId = navigationViewModel.currentNoteValue!!.noteId,
+                            lastRevision = navigationViewModel.currentNoteValue!!.revision,
                             name = it.name,
                             content = it.readBytes()
                     )
                 }
                 .subscribe(commandProcessor.commands)
         deleteAttachmentFromCurrentNote
-                .filter { applicationModel.currentNoteValue != null }
+                .filter { navigationViewModel.currentNoteValue != null }
                 .map {
                     DeleteAttachmentCommand(
-                            noteId = applicationModel.currentNoteValue!!.noteId,
-                            lastRevision = applicationModel.currentNoteValue!!.revision,
+                            noteId = navigationViewModel.currentNoteValue!!.noteId,
+                            lastRevision = navigationViewModel.currentNoteValue!!.revision,
                             name = it
                     )
                 }

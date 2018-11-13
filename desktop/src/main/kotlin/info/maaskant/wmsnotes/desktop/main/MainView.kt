@@ -13,7 +13,7 @@ class MainView : View() {
 
     override val root = BorderPane()
 
-    private val applicationModel: ApplicationModel by di()
+    private val navigationViewModel: NavigationViewModel by di()
     private val editingViewModel: EditingViewModel by di()
 
     private val treeView: TreeView by inject()
@@ -35,15 +35,15 @@ class MainView : View() {
         }
 
         Observables.combineLatest(
-                applicationModel.currentSelection,
+                navigationViewModel.currentSelection,
                 editingViewModel.isDirty()
         )
                 .observeOnFx()
                 .subscribe { (selection, isDirty) ->
                     val nodeTitle = when (selection) {
-                        ApplicationModel.Selection.Nothing -> ""
-                        is ApplicationModel.Selection.NoteSelection -> " ${selection.title}"
-                        is ApplicationModel.Selection.FolderSelection -> " ${selection.title}"
+                        NavigationViewModel.Selection.Nothing -> ""
+                        is NavigationViewModel.Selection.NoteSelection -> " ${selection.title}"
+                        is NavigationViewModel.Selection.FolderSelection -> " ${selection.title}"
                     }
                     val dirtyText = if (isDirty) "*" else ""
                     title = "$applicationTitle$nodeTitle$dirtyText"

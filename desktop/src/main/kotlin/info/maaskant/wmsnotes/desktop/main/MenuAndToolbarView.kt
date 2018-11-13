@@ -21,7 +21,7 @@ class MenuAndToolbarView : View() {
 
     private val applicationController: ApplicationController by inject()
 
-    private val applicationModel: ApplicationModel by di()
+    private val navigationViewModel: NavigationViewModel by di()
 
     private val applicationViewState: ApplicationViewState by di()
 
@@ -34,57 +34,57 @@ class MenuAndToolbarView : View() {
         applicationController.createNote.onNext(Unit)
     }
     private val deleteNoteAction = StatelessAction(messageKey = "menu.file.deleteNote", graphic = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = largerIconSize },
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }
     private val cutAction = StatelessAction(messageKey = "menu.edit.cut", graphic = FontAwesomeIconView(FontAwesomeIcon.CUT),
             accelerator = "Shortcut+X",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.cut()
     }
     private val copyAction = StatelessAction(messageKey = "menu.edit.copy", graphic = FontAwesomeIconView(FontAwesomeIcon.COPY),
             accelerator = "Shortcut+C",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.copy()
     }
     private val pasteAction = StatelessAction(messageKey = "menu.edit.paste", graphic = FontAwesomeIconView(FontAwesomeIcon.PASTE),
             accelerator = "Shortcut+V",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.paste()
     }
     private val selectAllAction = StatelessAction(messageKey = "menu.edit.selectAll",
             accelerator = "Shortcut+A",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.selectAll()
     }
     private val findAction = StatelessAction(messageKey = "menu.edit.find", graphic = FontAwesomeIconView(FontAwesomeIcon.SEARCH),
             accelerator = "Shortcut+F",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.find(false)
     }
     private val replaceAction = StatelessAction(messageKey = "menu.edit.replace",
             accelerator = "Shortcut+H",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.find(true)
     }
     private val findNextAction = StatelessAction(messageKey = "menu.edit.findNext",
             accelerator = "F3",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.findNextPrevious(true)
     }
     private val findPreviousAction = StatelessAction(messageKey = "menu.edit.findPrevious",
             accelerator = "Shift+F3",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.findNextPrevious(false)
     }
     private val insertBoldAction = StatelessAction(messageKey = "menu.insert.bold", graphic = FontAwesomeIconView(FontAwesomeIcon.BOLD),
             accelerator = "Shortcut+B",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.smartEdit.insertBold(Messages["defaultText.bold"])
     }
     private val insertItalicAction = StatelessAction(messageKey = "menu.insert.italic", graphic = FontAwesomeIconView(FontAwesomeIcon.ITALIC),
             accelerator = "Shortcut+I",
-            enabled = applicationModel.currentSelection.map { it != ApplicationModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         markdownEditorPane.smartEdit.insertItalic(Messages["defaultText.italic"])
     }
     private val toggleLineNumbersAction = StatefulAction(messageKey = "menu.view.showLineNumbers",
