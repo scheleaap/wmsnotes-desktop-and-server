@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 internal class EditingViewModelTest {
-    private val note1Id = "note"
+    private val note1Id = "note-1"
     private val note2Id = "note-2"
     private val title = "Title"
     private val text = "Text"

@@ -19,6 +19,8 @@ class Note private constructor(
 
     private val nameReplacementPattern: Regex = Regex("""[\\\t /&]""")
 
+    private val contentLength: Int = content.length
+
     constructor() : this(
             revision = 0,
             exists = false,
@@ -31,7 +33,7 @@ class Note private constructor(
 
     override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::title, Note::content, Note::attachmentHashes))
     override fun hashCode() = Objects.hash(revision, exists, noteId, title, content, attachmentHashes)
-    override fun toString() = kotlinToString(properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::title, Note::content, Note::attachmentHashes))
+    override fun toString() = kotlinToString(properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::title, Note::contentLength, Note::attachmentHashes))
 
     private fun copy(
             revision: Int = this.revision,

@@ -13,7 +13,11 @@ import javax.inject.Singleton
 import kotlin.system.measureNanoTime
 
 @Singleton
-class FileEventStore @Inject constructor(private val rootDirectory: File, private val eventSerializer: Serializer<Event>) : EventStore {
+class FileEventStore @Inject constructor(
+        private val rootDirectory: File,
+        private val eventSerializer: Serializer<Event>
+) : EventStore {
+
     private val logger by logger()
 
     private var lastEventId: Int = 0
@@ -26,7 +30,7 @@ class FileEventStore @Inject constructor(private val rootDirectory: File, privat
             val time = measureNanoTime {
                 rootDirectory
                         .walkTopDown()
-                        .filter { it.isFile && !it.name.startsWith('.')}
+                        .filter { it.isFile && !it.name.startsWith('.') }
                         .map { eventSerializer.deserialize(it.readBytes()) }
                         .forEach {
                             if (it.eventId > lastEventId) {

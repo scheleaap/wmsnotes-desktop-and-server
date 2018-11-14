@@ -7,10 +7,9 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView
 import info.maaskant.wmsnotes.desktop.design.Styles
 import info.maaskant.wmsnotes.desktop.main.ApplicationController
-import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
 import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.main.editing.preview.MarkdownPreviewPane
-import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.desktop.main.editing.preview.PreviewAttachmentStorage
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.schedulers.Schedulers
 import javafx.geometry.Orientation
@@ -27,13 +26,11 @@ class EditingView : View() {
 
     private val applicationController: ApplicationController by di()
 
-    private val navigationViewModel: NavigationViewModel by di()
-
     private val editingViewModel: EditingViewModel by di()
 
-    private val commandProcessor: CommandProcessor by di()
-
     private val markdownEditorPane: MarkdownEditorPane by di()
+
+    private val previewAttachmentStorage: PreviewAttachmentStorage by di()
 
     private val hboxesByAttachmentName: MutableMap<String, HBox> = mutableMapOf()
 
@@ -76,7 +73,7 @@ class EditingView : View() {
             }
         }
 
-        this += MarkdownPreviewPane(editingViewModel).node
+        this += MarkdownPreviewPane(editingViewModel, previewAttachmentStorage).node
     }
 
     private fun updateAttachments(attachmentNames: List<String>, vbox: VBox) {

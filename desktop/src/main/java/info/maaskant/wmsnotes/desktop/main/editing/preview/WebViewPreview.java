@@ -113,9 +113,9 @@ class WebViewPreview
             lastScrollY = (scrollYobj instanceof Number) ? ((Number) scrollYobj).intValue() : 0;
         }
 
-        Path path = context.getPath();
-        String base = (path != null)
-                ? ("<base href=\"" + path.getParent().toUri().toString() + "\">\n")
+        Path basePath = context.getBasePath();
+        String base = (basePath != null)
+                ? ("<base href=\"" + basePath.toUri().toString() + "\">\n")
                 : "";
         String scrollScript = (lastScrollX > 0 || lastScrollY > 0)
                 ? ("  onload='window.scrollTo(" + lastScrollX + ", " + lastScrollY + ");'")

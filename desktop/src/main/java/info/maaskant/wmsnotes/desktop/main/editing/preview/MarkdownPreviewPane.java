@@ -29,19 +29,21 @@ package info.maaskant.wmsnotes.desktop.main.editing.preview;
 
 import com.vladsch.flexmark.ast.Node;
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel;
+import io.reactivex.Observable;
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler;
+import io.reactivex.rxkotlin.Observables;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.layout.BorderPane;
+import kotlin.Pair;
 
 import java.nio.file.Path;
 
-/**
- * Markdown preview pane.
- */
+import static java.util.Collections.emptyMap;
+
 public class MarkdownPreviewPane {
     private final BorderPane pane = new BorderPane();
     private final Preview preview = new WebViewPreview();
@@ -57,8 +59,8 @@ public class MarkdownPreviewPane {
         }
 
         @Override
-        public Path getPath() {
-            return path.get();
+        public Path getBasePath() {
+            return basePath.get();
         }
     };
 
@@ -77,24 +79,42 @@ public class MarkdownPreviewPane {
 
         String getHtml();
 
-        Path getPath();
+        Path getBasePath();
     }
 
-    public MarkdownPreviewPane(EditingViewModel editingViewModel) {
+    public MarkdownPreviewPane(EditingViewModel editingViewModel, PreviewAttachmentStorage previewAttachmentStorage) {
         pane.getStyleClass().add("preview-pane");
         pane.setCenter(preview.getNode());
 
         editingViewModel.isEnabled()
                 .observeOn(JavaFxScheduler.platform())
                 .subscribe(it -> preview.setDisable(!it));
-//        path.addListener((observable, oldValue, newValue) -> update());
+        basePath.setValue(previewAttachmentStorage.getPath().toPath());
         editingViewModel.getAst()
                 .observeOn(JavaFxScheduler.platform())
                 .subscribe((markdownAst) -> {
                     this.markdownAst.setValue(markdownAst);
                     update();
                 });
-        editingViewModel.getHtml()
+        Observable<Boolean> attachmentsStored =
+                Observables.INSTANCE.combineLatest(
+                        editingViewModel.getNote()
+                                .map(it -> {
+                                    if (it.isPresent()) {
+                                        return it.getValue().getAttachmentHashes();
+                                    } else {
+                                        return emptyMap();
+                                    }
+                                }),
+                        previewAttachmentStorage.getAttachmentsStoredNotifications().observeOn(JavaFxScheduler.platform())
+                )
+                        .map(it -> it.getFirst().equals(it.getSecond()));
+        Observables.INSTANCE.combineLatest(
+                attachmentsStored,
+                editingViewModel.getHtml()
+        )
+                .filter(it -> it.getFirst().equals(true))
+                .map(Pair::getSecond)
                 .observeOn(JavaFxScheduler.platform())
                 .subscribe((html) -> {
                     this.html.setValue(html);
@@ -135,7 +155,7 @@ public class MarkdownPreviewPane {
         });
     }
 
-    private final ObjectProperty<Path> path = new SimpleObjectProperty<>();
+    private final ObjectProperty<Path> basePath = new SimpleObjectProperty<>();
     private final ObjectProperty<Node> markdownAst = new SimpleObjectProperty<>();
     private final ObjectProperty<String> html = new SimpleObjectProperty<>();
     private final DoubleProperty scrollY = new SimpleDoubleProperty();
