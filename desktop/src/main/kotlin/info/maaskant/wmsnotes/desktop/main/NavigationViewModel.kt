@@ -47,7 +47,7 @@ class NavigationViewModel @Inject constructor(
     init {
         Observables.combineLatest(selectionRequest, isNavigationAllowed)
                 .observeOn(Schedulers.io())
-                .filter { (selectionRequest, isNavigationAllowed) -> isNavigationAllowed && selectionRequest != currentSelection.value }
+                .filter { (_, isNavigationAllowed) -> isNavigationAllowed  }
                 .map { (selectionRequest, _) -> selectionRequest }
                 .distinctUntilChanged()
                 .switchMap(::loadRequestedSelection)

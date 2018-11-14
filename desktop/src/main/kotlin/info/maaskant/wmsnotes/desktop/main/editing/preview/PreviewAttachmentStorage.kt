@@ -1,6 +1,5 @@
 package info.maaskant.wmsnotes.desktop.main.editing.preview
 
-import info.maaskant.wmsnotes.client.indexing.NoteIndexState
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.utilities.logger
@@ -9,7 +8,6 @@ import io.reactivex.Scheduler
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import org.springframework.stereotype.Component
 import java.io.File
@@ -49,7 +47,7 @@ class PreviewAttachmentStorage @Inject constructor(
                             val hash = new.attachmentHashes[name]!!
                             if (state.storedAttachments[name] != hash) {
                                 rootDirectory.resolve(name).writeBytes(content)
-                                updateState(state.attachmentStored(name, hash))
+                                updateState(state.addAttachment(name, hash))
                             }
                         }
                     }
