@@ -39,6 +39,8 @@ class EditingViewModel @Inject constructor(
 
     init {
         ast
+                .subscribeOn(Schedulers.computation())
+                .doOnNext { logger.debug("Rendering HTML") }
                 .map { renderer.render(it) }
                 .subscribe(html)
 
