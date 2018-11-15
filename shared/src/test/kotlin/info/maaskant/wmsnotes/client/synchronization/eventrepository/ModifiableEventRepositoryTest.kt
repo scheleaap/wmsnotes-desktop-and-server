@@ -55,7 +55,7 @@ internal abstract class ModifiableEventRepositoryTest {
         // Then
         observer.assertComplete()
         observer.assertNoErrors()
-        assertThat(observer.values()).isEqualTo(listOf(events[0].first, events[1].first, events[2].first))
+        assertThat(observer.values().toList()).isEqualTo(listOf(events[0].first, events[1].first, events[2].first))
     }
 
     @Test

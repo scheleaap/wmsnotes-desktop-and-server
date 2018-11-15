@@ -47,7 +47,7 @@ internal abstract class EventStoreTest {
         // Then
         observer.assertComplete()
         observer.assertNoErrors()
-        assertThat(observer.values()).isEqualTo(eventsOut)
+        assertThat(observer.values().toList()).isEqualTo(eventsOut)
     }
 
     @Test
@@ -129,7 +129,7 @@ internal abstract class EventStoreTest {
         // Then
         observer.assertComplete()
         observer.assertNoErrors()
-        assertThat(observer.values()).isEqualTo(eventsOut)
+        assertThat(observer.values().toList()).isEqualTo(eventsOut)
     }
 
     @Test
@@ -158,7 +158,7 @@ internal abstract class EventStoreTest {
         // Then
         observer.assertComplete()
         observer.assertNoErrors()
-        assertThat(observer.values()).isEqualTo(eventsOut)
+        assertThat(observer.values().toList()).isEqualTo(eventsOut)
     }
 
 
@@ -189,7 +189,7 @@ internal abstract class EventStoreTest {
         observer.assertNotComplete()
         observer.assertNotTerminated()
         observer.assertNoErrors()
-        assertThat(observer.values()).isEqualTo(eventsOut)
+        assertThat(observer.values().toList()).isEqualTo(eventsOut)
     }
 
     @Test
@@ -220,7 +220,7 @@ internal abstract class EventStoreTest {
         observer.assertNotComplete()
         observer.assertNotTerminated()
         observer.assertNoErrors()
-        assertThat(observer.values()).isEqualTo(eventsOut)
+        assertThat(observer.values().toList()).isEqualTo(eventsOut)
     }
 
     @Test
