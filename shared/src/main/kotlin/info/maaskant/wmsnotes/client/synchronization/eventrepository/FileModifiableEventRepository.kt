@@ -23,6 +23,7 @@ class FileModifiableEventRepository @Inject constructor(private val directory: F
                 directory
                         .walkTopDown()
                         .filter { it.isFile && !it.name.startsWith('.') }
+                        .sorted()
                         .forEach { emitter.onNext(eventSerializer.deserialize(it.readBytes())) }
                 emitter.onComplete()
             } catch (t: Throwable) {
