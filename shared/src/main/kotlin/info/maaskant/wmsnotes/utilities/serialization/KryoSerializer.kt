@@ -30,6 +30,7 @@ abstract class KryoSerializer<T : Any> @Inject constructor(
         val kryo = obtainInitializedKryoInstance()
         try {
             return Input(bytes).use { ki ->
+                @Suppress("UNCHECKED_CAST")
                 kryo.readClassAndObject(ki) as T
             }
         } finally {
