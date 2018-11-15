@@ -1,8 +1,6 @@
 package info.maaskant.wmsnotes.client.synchronization.eventrepository
 
-import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import io.reactivex.observers.TestObserver
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -47,10 +45,9 @@ internal abstract class ModifiableEventRepositoryTest {
         events.forEach {
             r.addEvent(it.first)
         }
-        val observer = TestObserver<Event>()
 
         // When
-        r.getEvents().subscribe(observer)
+        val observer = r.getEvents().test()
 
         // Then
         observer.assertComplete()
