@@ -77,6 +77,7 @@ jar {
 }
 
 jib {
+    container.ports = [ "6565" ]
     from.image = "gcr.io/distroless/java@sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1"
     to.image = "wmsnotes/server:latest"
 }
