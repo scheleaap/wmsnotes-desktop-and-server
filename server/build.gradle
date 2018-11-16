@@ -58,14 +58,14 @@ test {
 }
 
 startScripts {
-    mainClassName 'info.maaskant.wmsnotes.server.Application'
+    mainClassName 'info.maaskant.wmsnotes.server.ApplicationKt'
 }
 
 jar {
     manifest {
         attributes(
                 'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-                'Main-Class': 'info.maaskant.wmsnotes.server.Application'
+                'Main-Class': 'info.maaskant.wmsnotes.server.ApplicationKt'
         )
     }
     from(configurations.compile.collect { entry -> zipTree(entry) }) {
