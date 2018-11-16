@@ -6,6 +6,7 @@ plugins {
     id "org.springframework.boot" version "2.1.0.RELEASE"
     id "io.spring.dependency-management" version "1.0.6.RELEASE"
     id "com.google.cloud.tools.jib" version "0.10.0"
+    // id "com.palantir.git-version" version "0.11.0"
 }
 
 configurations {
@@ -79,5 +80,5 @@ jar {
 jib {
     container.ports = [ "6565" ]
     from.image = "gcr.io/distroless/java@sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1"
-    to.image = "wmsnotes/server:latest"
+    to.image = "scheleaap/wmsnotes-server:latest"
 }
