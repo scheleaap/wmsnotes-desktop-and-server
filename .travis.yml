@@ -19,3 +19,7 @@ cache:
 install:
   - ./gradlew assemble
   - ./gradlew :server:jibDockerBuild
+
+deploy:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker push wmsnotes/server
