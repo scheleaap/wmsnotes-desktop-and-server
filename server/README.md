@@ -1,6 +1,8 @@
 # WMS Notes Server
 
 The server component for WMS Notes, a hierarchical or tree-based note-taking application.
+For general information about WMS Notes, read the main [README](../README.md).
+
 
 ## Running
 
@@ -19,6 +21,7 @@ In order to allow clients to access the server, port **6565** must be opened on 
 ```bash
 ufw allow 6565/tcp
 ```
+
 
 ## Building
 
