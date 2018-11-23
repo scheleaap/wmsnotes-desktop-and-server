@@ -107,30 +107,37 @@ internal class SynchronizerTest {
     @Test
     fun `outbound sync, don't process newly created remote events`() {
         // Given
-        val localEvent = modelEvent(eventId = 1, noteId = 1, revision = 1)
-        val remoteEventForLocalEvent = modelEvent(eventId = 11, noteId = 1, revision = 11)
-        every { localEvents.getEvents() }.returns(Observable.just(localEvent))
+        val localEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 1)
+        val localEvent2 = modelEvent(eventId = 2, noteId = 1, revision = 2)
+        val remoteEventForLocalEvent1 = modelEvent(eventId = 11, noteId = 1, revision = 11)
+        val remoteEventForLocalEvent2 = modelEvent(eventId = 12, noteId = 1, revision = 12)
+        every { localEvents.getEvents() }.returns(Observable.just(localEvent1))
         every { remoteEvents.getEvents() }.returns(Observable.empty())
-        val remoteRequest = givenARemoteResponseForALocalEvent(localEvent, null, remoteSuccess(remoteEventForLocalEvent.eventId, remoteEventForLocalEvent.revision))
+        val remoteRequest1 = givenARemoteResponseForALocalEvent(localEvent1, null, remoteSuccess(remoteEventForLocalEvent1.eventId, remoteEventForLocalEvent1.revision))
+        val remoteRequest2 = givenARemoteResponseForALocalEvent(localEvent2, remoteEventForLocalEvent1.revision, remoteSuccess(remoteEventForLocalEvent2.eventId, remoteEventForLocalEvent2.revision))
         val s = createSynchronizer()
+        val conflictObserver = s.getConflicts().test()
         s.synchronize()
-        every { localEvents.getEvents() }.returns(Observable.empty())
-        every { remoteEvents.getEvents() }.returns(Observable.just(remoteEventForLocalEvent))
-        givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEventForLocalEvent, localEvent.revision, mockk())
+        every { localEvents.getEvents() }.returns(Observable.just(localEvent2)) // A new event just got added; should not cause a conflict
+        every { remoteEvents.getEvents() }.returns(Observable.just(remoteEventForLocalEvent1))
+        givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEventForLocalEvent1, localEvent1.revision, mockk())
+        givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEventForLocalEvent2, localEvent2.revision, mockk())
 
         // When
         s.synchronize()
 
         // Then
         verifySequence {
-            remoteCommandService.postCommand(remoteRequest)
+            remoteCommandService.postCommand(remoteRequest1)
+            remoteCommandService.postCommand(remoteRequest2)
         }
         verify {
-            remoteEvents.removeEvent(remoteEventForLocalEvent)
+            remoteEvents.removeEvent(remoteEventForLocalEvent1)
         }
         verify(exactly = 0) {
             commandProcessor.blockingProcessCommand(any())
         }
+        assertThat(conflictObserver.values().toList()).isEqualTo(listOf(emptySet<String>()))
     }
 
     @Test
@@ -195,30 +202,36 @@ internal class SynchronizerTest {
     @Test
     fun `inbound sync, don't process newly created local events`() {
         // Given
-        val remoteEvent = modelEvent(eventId = 1, noteId = 1, revision = 1)
-        val localEventForRemoteEvent = modelEvent(eventId = 11, noteId = 1, revision = 11)
+        val remoteEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 1)
+        val remoteEvent2 = modelEvent(eventId = 2, noteId = 1, revision = 2)
+        val localEventForRemoteEvent1 = modelEvent(eventId = 11, noteId = 1, revision = 11)
+        val localEventForRemoteEvent2 = modelEvent(eventId = 12, noteId = 1, revision = 12)
         every { localEvents.getEvents() }.returns(Observable.empty())
-        every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent))
-        val command = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent, null, localEventForRemoteEvent)
+        every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent1))
+        val command1 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent1, null, localEventForRemoteEvent1)
+        val command2 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent2, localEventForRemoteEvent1.revision, localEventForRemoteEvent2)
         val s = createSynchronizer()
+        val conflictObserver = s.getConflicts().test()
         s.synchronize()
-        every { localEvents.getEvents() }.returns(Observable.just(localEventForRemoteEvent))
-        every { remoteEvents.getEvents() }.returns(Observable.empty())
-        givenARemoteResponseForALocalEvent(localEventForRemoteEvent, remoteEvent.revision, remoteError())
+        every { localEvents.getEvents() }.returns(Observable.just(localEventForRemoteEvent1))
+        every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent2)) // A new event just got added; should not cause a conflict
+        givenARemoteResponseForALocalEvent(localEventForRemoteEvent1, remoteEvent1.revision, remoteError())
 
         // When
         s.synchronize()
 
         // Then
         verifySequence {
-            commandProcessor.blockingProcessCommand(command)
+            commandProcessor.blockingProcessCommand(command1)
+            commandProcessor.blockingProcessCommand(command2)
         }
         verify {
-            localEvents.removeEvent(localEventForRemoteEvent)
+            localEvents.removeEvent(localEventForRemoteEvent1)
         }
         verify(exactly = 0) {
             remoteCommandService.postCommand(any())
         }
+        assertThat(conflictObserver.values().toList()).isEqualTo(listOf(emptySet<String>()))
     }
 
     @Test
@@ -269,8 +282,8 @@ internal class SynchronizerTest {
         assertThat(conflictData).isEqualTo(Synchronizer.ConflictData(
                 noteId = noteId,
                 base = note,
-                localEvents = listOf(localOutboundEvent1, localOutboundEvent2),
-                remoteEvents = listOf(remoteInboundEvent1, remoteInboundEvent2)
+                localConflictingEvents = listOf(localOutboundEvent1, localOutboundEvent2),
+                remoteConflictingEvents = listOf(remoteInboundEvent1, remoteInboundEvent2)
         ))
     }
 

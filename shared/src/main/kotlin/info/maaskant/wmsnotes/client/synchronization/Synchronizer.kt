@@ -38,12 +38,17 @@ class Synchronizer @Inject constructor(
     private val stateUpdates: BehaviorSubject<SynchronizerState> = BehaviorSubject.create()
     private val conflictingNoteIdsSubject: Subject<Set<String>> = BehaviorSubject.createDefault(emptySet())
 
+    @Synchronized
     fun synchronize() {
         val localOutboundEvents = localEvents.getEvents().toList().blockingGet()
         val remoteInboundEvents = remoteEvents.getEvents().toList().blockingGet()
-        val localOutboundNoteIds = localOutboundEvents.map { it.noteId }
-        val remoteInboundNoteIds = remoteInboundEvents.map { it.noteId }
-        val conflictingNoteIds = localOutboundNoteIds.intersect(remoteInboundNoteIds)
+        val localOutboundNoteIds = localOutboundEvents
+                .filter { it.eventId !in state.localEventIdsToIgnore }
+                .map { it.noteId }
+        val remoteInboundNoteIds = remoteInboundEvents
+                .filter { it.eventId !in state.remoteEventIdsToIgnore }
+                .map { it.noteId }
+        val conflictingNoteIds: Set<String> = localOutboundNoteIds.intersect(remoteInboundNoteIds)
         updateLastRevisions(localOutboundEvents, remoteInboundEvents)
         processLocalOutboundEvents(localOutboundEvents.toObservable().filter { it.noteId !in conflictingNoteIds })
         processRemoteInboundEvents(remoteInboundEvents.toObservable().filter { it.noteId !in conflictingNoteIds })
@@ -145,20 +150,21 @@ class Synchronizer @Inject constructor(
     }
 
     fun getConflicts(): Observable<Set<String>> {
-        return conflictingNoteIdsSubject
+        return conflictingNoteIdsSubject.distinctUntilChanged()
     }
 
+    @Synchronized
     fun getConflictData(noteId: String): ConflictData {
         return ConflictData(
                 noteId = noteId,
                 base = noteProjector.project(noteId = noteId, revision = state.lastSynchronizedLocalRevisions[noteId]
                         ?: throw IllegalStateException("There cannot be a conflict until at least one local event has been synchronized (noteId=$noteId)")),
-                localEvents = localEvents
+                localConflictingEvents = localEvents
                         .getEvents()
                         .filter { it.noteId == noteId }
                         .toList()
                         .blockingGet(),
-                remoteEvents = remoteEvents
+                remoteConflictingEvents = remoteEvents
                         .getEvents()
                         .filter { it.noteId == noteId }
                         .toList()
@@ -166,6 +172,7 @@ class Synchronizer @Inject constructor(
         )
     }
 
+    @Synchronized
     fun resolveConflict(noteId: String, lastLocalRevision: Int, lastRemoteRevision: Int, choice: ConflictResolutionChoice) {
         when (choice) {
             Synchronizer.ConflictResolutionChoice.LOCAL -> {
