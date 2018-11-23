@@ -10,8 +10,9 @@ import info.maaskant.wmsnotes.utilities.serialization.*
 import javax.inject.Inject
 
 data class SynchronizerState internal constructor(
-        val lastLocalRevisions: Map<String, Int?>,
-        val lastRemoteRevisions: Map<String, Int?>,
+        val lastSynchronizedLocalRevisions: Map<String, Int?>,
+        val lastKnownLocalRevisions: Map<String, Int?>,
+        val lastKnownRemoteRevisions: Map<String, Int?>,
         val localEventIdsToIgnore: Set<Int>,
         val remoteEventIdsToIgnore: Set<Int>
 ) {
@@ -27,21 +28,26 @@ data class SynchronizerState internal constructor(
     fun removeRemoteEventToIgnore(eventId: Int) =
             this.copy(remoteEventIdsToIgnore = remoteEventIdsToIgnore - eventId)
 
-    fun updateLastLocalRevision(noteId: String, revision: Int) =
-            this.copy(lastLocalRevisions = lastLocalRevisions + (noteId to revision))
+    fun updateLastSynchronizedLocalRevision(noteId: String, revision: Int) =
+            this.copy(lastSynchronizedLocalRevisions = lastSynchronizedLocalRevisions + (noteId to revision))
 
-    fun updateLastRemoteRevision(noteId: String, revision: Int) =
-            this.copy(lastRemoteRevisions = lastRemoteRevisions + (noteId to revision))
+    fun updateLastKnownLocalRevision(noteId: String, revision: Int) =
+            this.copy(lastKnownLocalRevisions = lastKnownLocalRevisions + (noteId to revision))
+
+    fun updateLastKnownRemoteRevision(noteId: String, revision: Int) =
+            this.copy(lastKnownRemoteRevisions = lastKnownRemoteRevisions + (noteId to revision))
 
     companion object {
         fun create(
-                lastLocalRevisions: Map<String, Int?> = emptyMap(),
-                lastRemoteRevisions: Map<String, Int?> = emptyMap(),
+                lastSynchronizedLocalRevisions: Map<String, Int?> = emptyMap(),
+                lastKnownLocalRevisions: Map<String, Int?> = emptyMap(),
+                lastKnownRemoteRevisions: Map<String, Int?> = emptyMap(),
                 localEventIdsToIgnore: Set<Int> = emptySet(),
                 remoteEventIdsToIgnore: Set<Int> = emptySet()
         ) = SynchronizerState(
-                lastLocalRevisions = lastLocalRevisions.withDefault { null },
-                lastRemoteRevisions = lastRemoteRevisions.withDefault { null },
+                lastSynchronizedLocalRevisions = lastSynchronizedLocalRevisions.withDefault { null },
+                lastKnownLocalRevisions = lastKnownLocalRevisions.withDefault { null },
+                lastKnownRemoteRevisions = lastKnownRemoteRevisions.withDefault { null },
                 localEventIdsToIgnore = localEventIdsToIgnore,
                 remoteEventIdsToIgnore = remoteEventIdsToIgnore
         )
@@ -55,11 +61,15 @@ class KryoSynchronizerStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) 
 
     private class KryoSynchronizerStateSerializer : Serializer<SynchronizerState>() {
         override fun write(kryo: Kryo, output: Output, it: SynchronizerState) {
-            output.writeMapWithNullableValues(it.lastLocalRevisions) { key, value ->
+            output.writeMapWithNullableValues(it.lastSynchronizedLocalRevisions) { key, value ->
                 output.writeString(key)
                 output.writeNullableInt(value)
             }
-            output.writeMapWithNullableValues(it.lastRemoteRevisions) { key, value ->
+            output.writeMapWithNullableValues(it.lastKnownLocalRevisions) { key, value ->
+                output.writeString(key)
+                output.writeNullableInt(value)
+            }
+            output.writeMapWithNullableValues(it.lastKnownRemoteRevisions) { key, value ->
                 output.writeString(key)
                 output.writeNullableInt(value)
             }
@@ -72,10 +82,13 @@ class KryoSynchronizerStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) 
         }
 
         override fun read(kryo: Kryo, input: Input, clazz: Class<out SynchronizerState>): SynchronizerState {
-            val lastLocalRevisions = input.readMapWithNullableValues<String, Int?> {
+            val lastSynchronizedLocalRevisions = input.readMapWithNullableValues<String, Int?> {
                 input.readString() to input.readNullableInt(true)
             }
-            val lastRemoteRevisions = input.readMapWithNullableValues<String, Int?> {
+            val lastKnownLocalRevisions = input.readMapWithNullableValues<String, Int?> {
+                input.readString() to input.readNullableInt(true)
+            }
+            val lastKnownRemoteRevisions = input.readMapWithNullableValues<String, Int?> {
                 input.readString() to input.readNullableInt(true)
             }
             val localEventIdsToIgnore = input.readSet<Int> {
@@ -85,8 +98,9 @@ class KryoSynchronizerStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) 
                 input.readInt(true)
             }
             return SynchronizerState.create(
-                    lastLocalRevisions = lastLocalRevisions,
-                    lastRemoteRevisions = lastRemoteRevisions,
+                    lastSynchronizedLocalRevisions = lastSynchronizedLocalRevisions,
+                    lastKnownLocalRevisions = lastKnownLocalRevisions,
+                    lastKnownRemoteRevisions = lastKnownRemoteRevisions,
                     localEventIdsToIgnore = localEventIdsToIgnore,
                     remoteEventIdsToIgnore = remoteEventIdsToIgnore
             )

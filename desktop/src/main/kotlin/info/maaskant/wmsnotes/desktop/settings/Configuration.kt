@@ -6,10 +6,10 @@ object Configuration {
             false
 
     const val delay =
-            true
-//            false
-
-    const val cache =
 //            true
             false
+
+    const val cache =
+            true
+//            false
 }

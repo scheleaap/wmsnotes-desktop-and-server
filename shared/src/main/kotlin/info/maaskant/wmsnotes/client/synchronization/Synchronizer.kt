@@ -5,6 +5,7 @@ import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableE
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
@@ -16,7 +17,6 @@ import io.grpc.StatusRuntimeException
 import io.reactivex.Observable
 import io.reactivex.rxkotlin.toObservable
 import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
@@ -53,10 +53,10 @@ class Synchronizer @Inject constructor(
     private fun updateLastRevisions(localOutboundEvents: List<Event>, remoteInboundEvents: List<Event>) {
         var stateInUpdate = state
         localOutboundEvents.forEach { event ->
-            stateInUpdate = stateInUpdate.updateLastLocalRevision(event.noteId, event.revision)
+            stateInUpdate = stateInUpdate.updateLastKnownLocalRevision(event.noteId, event.revision)
         }
         remoteInboundEvents.forEach { event ->
-            stateInUpdate = stateInUpdate.updateLastRemoteRevision(event.noteId, event.revision)
+            stateInUpdate = stateInUpdate.updateLastKnownRemoteRevision(event.noteId, event.revision)
         }
         if (stateInUpdate != state) {
             updateState(stateInUpdate)
@@ -71,7 +71,7 @@ class Synchronizer @Inject constructor(
                 .forEach {
                     if (it.eventId !in state.localEventIdsToIgnore) {
                         logger.debug("Processing local event: $it")
-                        val command = eventToCommandMapper.map(it, state.lastRemoteRevisions[it.noteId])
+                        val command = eventToCommandMapper.map(it, state.lastKnownRemoteRevisions[it.noteId])
                         try {
                             val request = grpcCommandMapper.toGrpcPostCommandRequest(command)
                             logger.debug("Sending command to server: $request")
@@ -80,12 +80,17 @@ class Synchronizer @Inject constructor(
                                     .postCommand(request)
                             if (response.status == Command.PostCommandResponse.Status.SUCCESS) {
                                 localEvents.removeEvent(it)
-                                if (response.newEventId > 0) {
-                                    updateState(state
-                                            .updateLastRemoteRevision(it.noteId, response.newRevision)
-                                            .ignoreRemoteEvent(response.newEventId)
-                                    )
-                                }
+                                updateState(state
+                                        .updateLastSynchronizedLocalRevision(it.noteId, it.revision)
+                                        .run {
+                                            if (response.newEventId > 0) {
+                                                this
+                                                        .updateLastKnownRemoteRevision(it.noteId, response.newRevision)
+                                                        .ignoreRemoteEvent(response.newEventId)
+                                            } else {
+                                                this
+                                            }
+                                        })
                                 logger.debug("Local event successfully processed: $it")
                             } else {
                                 noteIdsWithErrors += it.noteId
@@ -119,14 +124,17 @@ class Synchronizer @Inject constructor(
                 .forEach {
                     if (it.eventId !in state.remoteEventIdsToIgnore) {
                         logger.debug("Processing remote event: $it")
-                        val command = eventToCommandMapper.map(it, state.lastLocalRevisions[it.noteId])
+                        val command = eventToCommandMapper.map(it, state.lastKnownLocalRevisions[it.noteId])
                         try {
-                            processCommandLocallyAndUpdateState(command)
+                            val localEvent = processCommandLocallyAndUpdateState(command)
                             remoteEvents.removeEvent(it)
+                            if (localEvent != null) {
+                                updateState(state.updateLastSynchronizedLocalRevision(it.noteId, localEvent.revision))
+                            }
                             logger.debug("Remote event successfully processed: $it")
                         } catch (t: Throwable) {
                             noteIdsWithErrors += it.noteId
-                            logger.debug("Command not processed locally: $command + ${state.lastLocalRevisions[it.noteId]}", t)
+                            logger.debug("Command not processed locally: $command + ${state.lastKnownLocalRevisions[it.noteId]}", t)
                         }
                     } else {
                         remoteEvents.removeEvent(it)
@@ -138,6 +146,24 @@ class Synchronizer @Inject constructor(
 
     fun getConflicts(): Observable<Set<String>> {
         return conflictingNoteIdsSubject
+    }
+
+    fun getConflictData(noteId: String): ConflictData {
+        return ConflictData(
+                noteId = noteId,
+                base = noteProjector.project(noteId = noteId, revision = state.lastSynchronizedLocalRevisions[noteId]
+                        ?: throw IllegalStateException("There cannot be a conflict until at least one local event has been synchronized (noteId=$noteId)")),
+                localEvents = localEvents
+                        .getEvents()
+                        .filter { it.noteId == noteId }
+                        .toList()
+                        .blockingGet(),
+                remoteEvents = remoteEvents
+                        .getEvents()
+                        .filter { it.noteId == noteId }
+                        .toList()
+                        .blockingGet()
+        )
     }
 
     fun resolveConflict(noteId: String, lastLocalRevision: Int, lastRemoteRevision: Int, choice: ConflictResolutionChoice) {
@@ -176,14 +202,15 @@ class Synchronizer @Inject constructor(
         }
     }
 
-    private fun processCommandLocallyAndUpdateState(command: info.maaskant.wmsnotes.model.Command) {
+    private fun processCommandLocallyAndUpdateState(command: info.maaskant.wmsnotes.model.Command): Event? {
         val event = commandProcessor.blockingProcessCommand(command)
         if (event != null) {
             updateState(state
-                    .updateLastLocalRevision(event.noteId, event.revision)
+                    .updateLastKnownLocalRevision(event.noteId, event.revision)
                     .ignoreLocalEvent(event.eventId)
             )
         }
+        return event
     }
 
     private fun updateState(state: SynchronizerState) {
@@ -192,6 +219,8 @@ class Synchronizer @Inject constructor(
     }
 
     override fun getStateUpdates(): Observable<SynchronizerState> = stateUpdates
+
+    data class ConflictData(val noteId: String, val base: Note, val localEvents: List<Event>, val remoteEvents: List<Event>)
 
     enum class ConflictResolutionChoice {
         LOCAL,

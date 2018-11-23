@@ -27,7 +27,7 @@ internal class SynchronizerTest {
     private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub = mockk()
     private val eventToCommandMapper: EventToCommandMapper = mockk()
     private val grpcCommandMapper: GrpcCommandMapper = mockk()
-    private lateinit var state: SynchronizerState
+    private lateinit var initialState: SynchronizerState
     private val noteProjector: NoteProjector = mockk()
 
     @BeforeEach
@@ -43,7 +43,7 @@ internal class SynchronizerTest {
         )
         every { localEvents.removeEvent(any()) }.just(Runs)
         every { remoteEvents.removeEvent(any()) }.just(Runs)
-        state = SynchronizerState.create()
+        initialState = SynchronizerState.create()
     }
 
     @Test
@@ -58,6 +58,7 @@ internal class SynchronizerTest {
         val remoteRequest2 = givenARemoteResponseForALocalEvent(event2, event1.revision, remoteSuccess(event2.eventId, event2.revision))
         val remoteRequest3 = givenARemoteResponseForALocalEvent(event3, null, remoteSuccess(event3.eventId, event3.revision))
         val s = createSynchronizer()
+        val stateObserver = s.getStateUpdates().test()
 
         // When
         s.synchronize()
@@ -72,6 +73,9 @@ internal class SynchronizerTest {
             remoteCommandService.postCommand(remoteRequest3)
             localEvents.removeEvent(event3)
         }
+        val finalState = stateObserver.values().last()
+        assertThat(finalState.lastSynchronizedLocalRevisions[event1.noteId]).isEqualTo(event2.revision)
+        assertThat(finalState.lastSynchronizedLocalRevisions[event3.noteId]).isEqualTo(event3.revision)
     }
 
     @Test
@@ -144,6 +148,7 @@ internal class SynchronizerTest {
         val command2 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent2, localEvent1.eventId, localEvent2)
         val command3 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent3, null, localEvent3)
         val s = createSynchronizer()
+        val stateObserver = s.getStateUpdates().test()
 
         // When
         s.synchronize()
@@ -158,6 +163,9 @@ internal class SynchronizerTest {
             commandProcessor.blockingProcessCommand(command3)
             remoteEvents.removeEvent(remoteEvent3)
         }
+        val finalState = stateObserver.values().last()
+        assertThat(finalState.lastSynchronizedLocalRevisions[remoteEvent1.noteId]).isEqualTo(localEvent2.revision)
+        assertThat(finalState.lastSynchronizedLocalRevisions[remoteEvent3.noteId]).isEqualTo(localEvent3.revision)
     }
 
     @Test
@@ -236,6 +244,37 @@ internal class SynchronizerTest {
     }
 
     @Test
+    fun `conflict resolution data`() {
+        // Given
+        val note = createExistingNote()
+        val localOutboundEvent1 = modelEvent(eventId = 10, noteId = 1, revision = 1)
+        val localOutboundEvent2 = modelEvent(eventId = 11, noteId = 1, revision = 2)
+        val localEvents = createInMemoryEventRepository(localOutboundEvent1, localOutboundEvent2)
+        val remoteInboundEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 10)
+        val remoteInboundEvent2 = modelEvent(eventId = 2, noteId = 1, revision = 11)
+        val remoteEvents = createInMemoryEventRepository(remoteInboundEvent1, remoteInboundEvent2)
+        val noteId = localOutboundEvent2.noteId
+        val previousLocalRevision = localOutboundEvent1.revision - 1
+        initialState = initialState
+                .updateLastSynchronizedLocalRevision(noteId, previousLocalRevision)
+                .updateLastKnownRemoteRevision(noteId, remoteInboundEvent2.revision - 1)
+        givenAProjection(noteId, previousLocalRevision, note)
+        val s = createSynchronizer(localEvents, remoteEvents)
+        s.synchronize()
+
+        // When
+        val conflictData = s.getConflictData(localOutboundEvent2.noteId)
+
+        // Then
+        assertThat(conflictData).isEqualTo(Synchronizer.ConflictData(
+                noteId = noteId,
+                base = note,
+                localEvents = listOf(localOutboundEvent1, localOutboundEvent2),
+                remoteEvents = listOf(remoteInboundEvent1, remoteInboundEvent2)
+        ))
+    }
+
+    @Test
     fun `conflict resolution, local`() {
         // Given
         val localOutboundEvent1 = modelEvent(eventId = 10, noteId = 1, revision = 1)
@@ -246,13 +285,15 @@ internal class SynchronizerTest {
         val remoteEvents = createInMemoryEventRepository(remoteInboundEvent1, remoteInboundEvent2)
         val remoteRequest1 = givenARemoteResponseForALocalEvent(localOutboundEvent1, remoteInboundEvent2.revision, remoteSuccess(remoteInboundEvent2.eventId + 1, remoteInboundEvent2.revision + 1))
         val remoteRequest2 = givenARemoteResponseForALocalEvent(localOutboundEvent2, remoteInboundEvent2.revision + 1, remoteSuccess(remoteInboundEvent2.eventId + 2, remoteInboundEvent2.revision + 2))
-        state = state.updateLastRemoteRevision(remoteInboundEvent2.noteId, remoteInboundEvent2.revision - 1)
+        val noteId = localOutboundEvent1.noteId
+        initialState = initialState.updateLastKnownRemoteRevision(noteId, remoteInboundEvent2.revision - 1)
         val s = createSynchronizer(localEvents, remoteEvents)
+        val stateObserver = s.getStateUpdates().test()
         s.synchronize()
 
         // When
         s.resolveConflict(
-                noteId = localOutboundEvent2.noteId,
+                noteId = noteId,
                 lastLocalRevision = localOutboundEvent2.revision,
                 lastRemoteRevision = remoteInboundEvent2.revision,
                 choice = Synchronizer.ConflictResolutionChoice.LOCAL
@@ -267,6 +308,8 @@ internal class SynchronizerTest {
         }
         assertThat(remoteEvents.getEvent(remoteInboundEvent1.eventId)).isNull()
         assertThat(remoteEvents.getEvent(remoteInboundEvent2.eventId)).isNull()
+        val finalState = stateObserver.values().last()
+        assertThat(finalState.lastSynchronizedLocalRevisions[noteId]).isEqualTo(localOutboundEvent2.revision)
     }
 
     @Test
@@ -282,13 +325,15 @@ internal class SynchronizerTest {
         val localEventForRemoteInboundEvent2 = modelEvent(eventId = localOutboundEvent2.eventId + 2, noteId = 1, revision = localOutboundEvent2.revision + 2)
         val command1 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent1, localOutboundEvent2.revision, localEventForRemoteInboundEvent1)
         val command2 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent2, localOutboundEvent2.revision + 1, localEventForRemoteInboundEvent2)
-        state = state.updateLastRemoteRevision(remoteInboundEvent2.noteId, remoteInboundEvent2.revision - 1)
+        val noteId = localOutboundEvent1.noteId
+        initialState = initialState.updateLastKnownRemoteRevision(noteId, remoteInboundEvent2.revision - 1)
         val s = createSynchronizer(localEvents, remoteEvents)
+        val stateObserver = s.getStateUpdates().test()
         s.synchronize()
 
         // When
         s.resolveConflict(
-                noteId = localOutboundEvent2.noteId,
+                noteId = noteId,
                 lastLocalRevision = localOutboundEvent2.revision,
                 lastRemoteRevision = remoteInboundEvent2.revision,
                 choice = Synchronizer.ConflictResolutionChoice.REMOTE
@@ -303,6 +348,8 @@ internal class SynchronizerTest {
         }
         assertThat(localEvents.getEvent(localOutboundEvent1.eventId)).isNull()
         assertThat(localEvents.getEvent(localOutboundEvent2.eventId)).isNull()
+        val finalState = stateObserver.values().last()
+        assertThat(finalState.lastSynchronizedLocalRevisions[noteId]).isEqualTo(localEventForRemoteInboundEvent2.revision)
     }
 
     @Test
@@ -323,15 +370,17 @@ internal class SynchronizerTest {
         every { commandProcessor.blockingProcessCommand(command1) }.returns(localEventForCopiedNote)
         val command2 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent1, localOutboundEvent2.revision, localEventForRemoteInboundEvent1)
         val command3 = givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteInboundEvent2, localOutboundEvent2.revision + 1, localEventForRemoteInboundEvent2)
-        state = state
-                .updateLastLocalRevision(localOutboundEvent2.noteId, localOutboundEvent2.revision)
-                .updateLastRemoteRevision(remoteInboundEvent2.noteId, remoteInboundEvent2.revision)
+        val noteId = localOutboundEvent1.noteId
+        initialState = initialState
+                .updateLastKnownLocalRevision(noteId, localOutboundEvent2.revision)
+                .updateLastKnownRemoteRevision(noteId, remoteInboundEvent2.revision)
         val s = createSynchronizer(localEvents, remoteEvents)
+        val stateObserver = s.getStateUpdates().test()
         s.synchronize()
 
         // When
         s.resolveConflict(
-                noteId = localOutboundEvent2.noteId,
+                noteId = noteId,
                 lastLocalRevision = localOutboundEvent2.revision,
                 lastRemoteRevision = remoteInboundEvent2.revision,
                 choice = Synchronizer.ConflictResolutionChoice.BOTH
@@ -347,6 +396,8 @@ internal class SynchronizerTest {
         }
         assertThat(localEvents.getEvent(localOutboundEvent1.eventId)).isNull()
         assertThat(localEvents.getEvent(localOutboundEvent2.eventId)).isNull()
+        val finalState = stateObserver.values().last()
+        assertThat(finalState.lastSynchronizedLocalRevisions[noteId]).isEqualTo(localEventForRemoteInboundEvent2.revision)
     }
 
     private fun createInMemoryEventRepository(vararg events: Event): ModifiableEventRepository {
@@ -359,6 +410,7 @@ internal class SynchronizerTest {
 
     private fun createExistingNote(): Note {
         val note: Note = mockk()
+        every { note.revision }.returns(5)
         every { note.exists }.returns(true)
         every { note.title }.returns("projected title")
         return note
@@ -377,7 +429,7 @@ internal class SynchronizerTest {
                     grpcCommandMapper,
                     commandProcessor,
                     noteProjector,
-                    state
+                    initialState
             )
 
     private fun givenALocalEventIsReturnedIfARemoteEventIsProcessed(remoteEvent: Event, lastRevision: Int?, localEvent: Event): Command {
@@ -394,8 +446,10 @@ internal class SynchronizerTest {
         return command
     }
 
-    private fun givenAProjection(event: Event, note: Note): Note {
-        every { noteProjector.project(event.noteId, event.revision) }.returns(note)
+    private fun givenAProjection(event: Event, note: Note): Note = givenAProjection(event.noteId, event.revision, note)
+
+    private fun givenAProjection(noteId: String, revision: Int, note: Note): Note {
+        every { noteProjector.project(noteId, revision) }.returns(note)
         return note
     }
 
