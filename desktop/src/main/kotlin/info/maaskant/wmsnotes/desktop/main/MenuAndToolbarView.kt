@@ -153,14 +153,17 @@ class MenuAndToolbarView : View() {
                     button {
                         text = "TEST"
                         actionEvents()
-                                .subscribe {
+                                .map {
                                     val chooser: ConflictResolutionChooser = find<ConflictResolutionChooser>(
                                             scope = scope,
-                                            params = mapOf(ConflictResolutionChooser::noteId to "abc")
+                                            params = mapOf(ConflictResolutionChooser::noteId to "53507bde-be93-406f-9609-4d4406bddedb")
                                     ).apply {
                                         openModal(block = true)
                                     }
-                                    println("CONFLICT RESOLVING RESULT: " + chooser.result)
+                                    chooser.choice.firstElement().blockingGet()
+                                }
+                                .subscribe {
+                                    println("CONFLICT RESOLVING RESULT: " + it)
                                 }
                     }
                 }

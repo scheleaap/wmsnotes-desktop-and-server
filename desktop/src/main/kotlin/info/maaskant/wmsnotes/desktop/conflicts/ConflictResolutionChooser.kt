@@ -1,46 +1,86 @@
 package info.maaskant.wmsnotes.desktop.conflicts
 
+import com.github.thomasnield.rxkotlinfx.actionEvents
 import info.maaskant.wmsnotes.client.synchronization.Synchronizer
 import info.maaskant.wmsnotes.desktop.util.Messages
+import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
+import io.reactivex.subjects.BehaviorSubject
+import javafx.beans.property.ObjectProperty
+import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.SimpleStringProperty
+import javafx.geometry.Orientation
 import javafx.scene.control.ButtonBar
+import javafx.scene.control.Labeled
+import javafx.scene.control.RadioButton
+import javafx.scene.layout.Priority
 import tornadofx.*
-import java.util.*
+
 
 class ConflictResolutionChooser : Fragment() {
-    private val applicationTitle = "WMS Notes"
+    private val padding = 0.75.em
 
-    val noteProjector: NoteProjector by di()
-    val synchronizer:Synchronizer by di()
+    private val synchronizer: Synchronizer by di()
 
     val noteId: String by param()
+    private val windowTitle = "Conflict Resolution of note $noteId"
+    private val conflictData = synchronizer.getConflictData(noteId)
+    private val localNote = NoteProjector.project(conflictData.base, conflictData.localEvents)
+    private val remoteNote = NoteProjector.project(conflictData.base, conflictData.remoteEvents)
 
-    var result: Choice = Choice.NO_CHOICE
-        private set
+    val choice: BehaviorSubject<Choice> = BehaviorSubject.createDefault(Choice.NO_CHOICE)
 
     override val root = borderpane {
+        style { padding = box(this@ConflictResolutionChooser.padding) }
         center = form {
-            setPrefSize(940.0, 610.0)
-            hbox(8) {
-                fieldset(Messages["ConflictResolutionChooser.localVersion"]) {
-                    this += find<NoteFragment>()
+            style { padding = box(0.em) }
+            vbox {
+                hbox {
+                    style { spacing = this@ConflictResolutionChooser.padding }
+                    this += find<NoteFragment>(
+                            NoteFragment::fieldsetTitle to Messages["ConflictResolutionChooser.localVersion"],
+                            NoteFragment::note to localNote
+                    )
+                    this += find<NoteFragment>(
+                            NoteFragment::fieldsetTitle to Messages["ConflictResolutionChooser.remoteVersion"],
+                            NoteFragment::note to remoteNote
+                    )
                 }
-                fieldset(Messages["ConflictResolutionChooser.remoteVersion"]) {
-                    this += find<NoteFragment>()
+                fieldset("Choice") {
+                    hbox {
+                        style { padding = box(top = this@ConflictResolutionChooser.padding, right = 0.em, bottom = 0.em, left = 0.em) }
+                        val group = togglegroup()
+                        radiobutton(Messages["ConflictResolutionChooser.keepLocalVersion"], group = group) {
+                            actionEvents().map { Choice.LOCAL }.subscribe(choice)
+                        }
+                        region { hgrow = Priority.ALWAYS }
+                        radiobutton(Messages["ConflictResolutionChooser.keepBoth"], group = group){
+                            actionEvents().map { Choice.BOTH }.subscribe(choice)
+                        }
+                        region { hgrow = Priority.ALWAYS }
+                        radiobutton(Messages["ConflictResolutionChooser.keepRemoteVersion"], group = group){
+                            actionEvents().map { Choice.REMOTE }.subscribe(choice)
+                        }
+                    }
                 }
             }
         }
         bottom = buttonbar {
-            button(Messages["dialog.cancel"], ButtonBar.ButtonData.CANCEL_CLOSE)
-            button(Messages["dialog.ok"], ButtonBar.ButtonData.OK_DONE)
+            style { padding = box(top = this@ConflictResolutionChooser.padding, right = 0.em, bottom = 0.em, left = 0.em) }
+            button(Messages["dialog.cancel"], ButtonBar.ButtonData.CANCEL_CLOSE) {
+                actionEvents().subscribe { close() }
+            }
+            button(Messages["dialog.ok"], ButtonBar.ButtonData.OK_DONE) {
+                choice.map { it == Choice.NO_CHOICE }.subscribe(this::setDisable)
+                actionEvents().subscribe { close() }
+            }
         }
     }
 
     init {
-        title = applicationTitle
+        title = windowTitle
 
-        println(noteId)
-        println(synchronizer.getConflicts().blockingFirst())
     }
 
     enum class Choice {
@@ -52,20 +92,31 @@ class ConflictResolutionChooser : Fragment() {
 }
 
 internal class NoteFragment : Fragment() {
+    val fieldsetTitle: String by param()
+    val note: Note by param()
 
-    override val root = vbox {
-        field(Messages["note.title"]) { textfield { isEditable = false;text = UUID.randomUUID().toString() } }
-        field(Messages["note.content"]) {
-            textarea {
-                isEditable = false
-                prefHeight = 200.0
+    override val root = fieldset(fieldsetTitle, labelPosition = Orientation.VERTICAL) {
+        vbox {
+            field(Messages["note.title"]) {
+                textfield {
+                    isEditable = false
+                    text = note.title
+                }
             }
-        }
-        field(Messages["note.attachments"]) {
-            vbox {
-                label("att 1")
-                label("att 2")
-                label("att 3")
+            field(Messages["note.content"], Orientation.VERTICAL) {
+                textarea {
+                    isEditable = false
+                    prefHeight = 200.0
+                    text = note.content
+                    vgrow = Priority.ALWAYS
+                }
+            }
+            field(Messages["note.attachments"]) {
+                vbox {
+                    for ((name, hash) in note.attachmentHashes) {
+                        label("$name ($hash)")
+                    }
+                }
             }
         }
     }
