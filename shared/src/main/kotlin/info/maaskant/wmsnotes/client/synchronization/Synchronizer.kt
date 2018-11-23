@@ -36,7 +36,7 @@ class Synchronizer @Inject constructor(
 
     private var state = initialState ?: SynchronizerState.create()
     private val stateUpdates: BehaviorSubject<SynchronizerState> = BehaviorSubject.create()
-    private val conflictingNoteIdsSubject: Subject<Set<String>> = PublishSubject.create()
+    private val conflictingNoteIdsSubject: Subject<Set<String>> = BehaviorSubject.createDefault(emptySet())
 
     fun synchronize() {
         val localOutboundEvents = localEvents.getEvents().toList().blockingGet()

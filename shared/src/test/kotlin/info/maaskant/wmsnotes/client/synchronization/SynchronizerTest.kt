@@ -232,7 +232,7 @@ internal class SynchronizerTest {
             commandProcessor.blockingProcessCommand(any())?.wasNot(Called)
         }
         testObserver.assertNoErrors()
-        assertThat(testObserver.values()).isEqualTo(listOf(setOf(localOutboundEvent.noteId)))
+        assertThat(testObserver.values().toList()).isEqualTo(listOf(emptySet(), setOf(localOutboundEvent.noteId)))
     }
 
     @Test
