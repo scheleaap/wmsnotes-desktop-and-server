@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.model.projection.cache
 
 import info.maaskant.wmsnotes.model.AttachmentAddedEvent
+import info.maaskant.wmsnotes.model.ContentChangedEvent
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore
@@ -46,7 +47,7 @@ internal class CachingNoteProjectorTest {
         every { noteCache.get(noteId, noteAfterEvent1.revision) }.returns(null)
         every { noteCache.get(noteId, noteAfterEvent2.revision) }.returns(null)
         every { noteCache.getLatest(noteId, noteAfterEvent2.revision) }.returns(null)
-        every { eventStore.getEventsOfNote(noteId, afterRevision = null) }.returns(Observable.just(event1, event2))
+        every { eventStore.getEventsOfNote(noteId, afterRevision = null) }.returns(Observable.just(event1, event2, event3))
         val p = CachingNoteProjector(eventStore, noteCache)
 
         // When
@@ -63,7 +64,7 @@ internal class CachingNoteProjectorTest {
         every { noteCache.get(noteId, noteAfterEvent1.revision) }.returns(noteAfterEvent1)
         every { noteCache.get(noteId, noteAfterEvent2.revision) }.returns(null)
         every { noteCache.getLatest(noteId, noteAfterEvent2.revision) }.returns(noteAfterEvent1)
-        every { eventStore.getEventsOfNote(noteId, afterRevision = noteAfterEvent1.revision) }.returns(Observable.just(event2))
+        every { eventStore.getEventsOfNote(noteId, afterRevision = noteAfterEvent1.revision) }.returns(Observable.just(event2, event3))
         val p = CachingNoteProjector(eventStore, noteCache)
 
         // When
@@ -82,7 +83,7 @@ internal class CachingNoteProjectorTest {
         every { noteCache.get(noteId, noteAfterEvent3.revision) }.returns(noteAfterEvent3)
         every { noteCache.getLatest(noteId, lastRevision = null) }.returns(noteAfterEvent3)
         every { noteCache.getLatest(noteId, lastRevision = noteAfterEvent2.revision) }.returns(noteAfterEvent2)
-        every { eventStore.getEventsOfNote(noteId, afterRevision = noteAfterEvent2.revision) }.returns(Observable.empty())
+        every { eventStore.getEventsOfNote(noteId, afterRevision = noteAfterEvent2.revision) }.returns(Observable.just(event3))
         every { eventStore.getEventsOfNote(noteId, afterRevision = noteAfterEvent3.revision) }.returns(Observable.empty())
         val p = CachingNoteProjector(eventStore, noteCache)
 

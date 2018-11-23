@@ -18,6 +18,7 @@ class CachingNoteProjector @Inject constructor(
         val cached: Note? = noteCache.getLatest(noteId, lastRevision = revision)
         return eventStore
                 .getEventsOfNote(noteId, afterRevision = cached?.revision)
+                .filter { it.revision <= revision }
                 .reduceWith({ cached ?: Note() }, { note: Note, event: Event -> note.apply(event).component1() })
                 .blockingGet()
     }
@@ -35,5 +36,4 @@ class CachingNoteProjector @Inject constructor(
                     .doOnNext { noteCache.put(it) }
         }
     }
-
 }
