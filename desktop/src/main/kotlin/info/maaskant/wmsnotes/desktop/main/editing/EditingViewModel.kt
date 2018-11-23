@@ -28,11 +28,11 @@ class EditingViewModel @Inject constructor(
     final val ast: Subject<Node> = PublishSubject.create()
     final val html: Subject<String> = PublishSubject.create()
 
-    private final val isDirty: Subject<Boolean> = BehaviorSubject.create()
+    private final val isDirtySubject: Subject<Boolean> = BehaviorSubject.create()
     private var isDirtyValue: Boolean = false
-    private final val isEnabled: BehaviorSubject<Boolean> = BehaviorSubject.create()
+    private final val isEnabledSubject: BehaviorSubject<Boolean> = BehaviorSubject.create()
     private var isEnabledValue: Boolean = false
-    private final val note: BehaviorSubject<Optional<Note>> = BehaviorSubject.create()
+    private final val noteSubject: BehaviorSubject<Optional<Note>> = BehaviorSubject.create()
     private var noteValue: Note? = null
     private var textValue: String = ""
     private val textUpdatesForEditor: Subject<String> = PublishSubject.create()
@@ -76,52 +76,50 @@ class EditingViewModel @Inject constructor(
                 .subscribe(::setNote) { logger.warn("Error", it) }
     }
 
-    final fun isDirty(): Observable<Boolean> = isDirty.distinctUntilChanged()
+    final fun isDirty(): Observable<Boolean> = isDirtySubject.distinctUntilChanged()
 
     @Synchronized
     private fun setDirty(dirty: Boolean) {
         this.isDirtyValue = dirty
-        this.isDirty.onNext(dirty)
+        this.isDirtySubject.onNext(dirty)
     }
 
-    final fun isEnabled(): Observable<Boolean> = isEnabled.distinctUntilChanged()
+    final fun isEnabled(): Observable<Boolean> = isEnabledSubject.distinctUntilChanged()
 
     @Synchronized
     private fun setEnabled(enabled: Boolean) {
         this.isEnabledValue = enabled
-        this.isEnabled.onNext(enabled)
+        this.isEnabledSubject.onNext(enabled)
     }
 
-    final fun getNote(): Observable<Optional<Note>> = note
-
-    final fun getTextUpdatesForEditor(): Observable<String> = textUpdatesForEditor
+    final fun getNote(): Observable<Optional<Note>> = noteSubject
 
     @Synchronized
     private fun setNote(note: Optional<Note>) {
         if (noteValue?.noteId == note.value?.noteId || !isDirtyValue) {
             if (!isDirtyValue) {
-                setTextInternal(note, true)
+                setText(note, true)
             } else if (noteValue != null && noteValue?.noteId == note.value?.noteId && textValue == note.value?.content) {
                 setDirty(false)
-                setTextInternal(note, true)
+                setText(note, false)
             }
             this.noteValue = note.value
-            this.note.onNext(note)
+            this.noteSubject.onNext(note)
         } else {
-            logger.warn("Attempt to change note while dirty (current=${this.note.value}, new=$note)")
-        }
-    }
-
-    @Synchronized
-    private fun setTextInternal(note: Optional<Note>, updateEditor: Boolean) {
-        this.textValue = note.value?.content ?: ""
-        if (updateEditor) {
-            this.textUpdatesForEditor.onNext(this.textValue)
+            logger.warn("Attempt to change note while dirty (current=${this.noteValue}, new=$note)")
         }
     }
 
     @Synchronized
     fun getText() = textValue
+
+    @Synchronized
+    private fun setText(note: Optional<Note>, updateEditor: Boolean) {
+        this.textValue = note.value?.content ?: ""
+        if (updateEditor) {
+            this.textUpdatesForEditor.onNext(this.textValue)
+        }
+    }
 
     @Synchronized
     fun setText(text: String) {
@@ -133,4 +131,5 @@ class EditingViewModel @Inject constructor(
         setDirty(!isSameAsNoteContent)
     }
 
+    final fun getTextUpdatesForEditor(): Observable<String> = textUpdatesForEditor
 }

@@ -57,6 +57,25 @@ internal class EditingViewModelTest {
     }
 
     @Test
+    fun `default values`() {
+        // Given
+        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
+        val dirtyObserver = model.isDirty().test()
+        val enabledObserver = model.isEnabled().test()
+        val noteObserver = model.getNote().test()
+        val textUpdatesForEditorObserver = model.getTextUpdatesForEditor().test()
+
+        // When
+
+        // Then
+        assertThat(model.getText()).isEqualTo("")
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(false))
+        assertThat(enabledObserver.values().toList()).isEqualTo(listOf(false))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional<info.maaskant.wmsnotes.model.projection.Note>()))
+        assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(emptyList<String>())
+    }
+
+    @Test
     fun `switch from nothing to note`() {
         // Given
         val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
@@ -71,11 +90,11 @@ internal class EditingViewModelTest {
         selectionSwitchingProcess.onNext(Loading(false))
 
         // Then
-        assertThat(enabledObserver.values()).isEqualTo(listOf(false, true))
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(false))
-        assertThat(noteObserver.values()).isEqualTo(listOf(Optional(), Optional(note1Notification1.note)))
+        assertThat(enabledObserver.values().toList()).isEqualTo(listOf(false, true))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(false))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional(), Optional(note1Notification1.note)))
         assertThat(model.getText()).isEqualTo(note1Notification1.note.content)
-        assertThat(textUpdatesForEditorObserver.values()).isEqualTo(listOf(note1Notification1.note.content))
+        assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(listOf(note1Notification1.note.content))
     }
 
     @Test
@@ -93,11 +112,11 @@ internal class EditingViewModelTest {
         selectionSwitchingProcess.onNext(Loading(false))
 
         // Then
-        assertThat(enabledObserver.values()).isEqualTo(listOf(true, false))
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(false))
-        assertThat(noteObserver.values()).isEqualTo(listOf(Optional(note1Notification1.note), Optional()))
+        assertThat(enabledObserver.values().toList()).isEqualTo(listOf(true, false))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(false))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional(note1Notification1.note), Optional()))
         assertThat(model.getText()).isEqualTo("")
-        assertThat(textUpdatesForEditorObserver.values()).isEqualTo(listOf(""))
+        assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(listOf(""))
     }
 
     @Test
@@ -114,10 +133,10 @@ internal class EditingViewModelTest {
         selectionSwitchingProcess.onNext(Nothing)
 
         // Then
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(true))
-        assertThat(noteObserver.values()).isEqualTo(listOf(Optional(note1Notification1.note)))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(true))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional(note1Notification1.note)))
         assertThat(model.getText()).isEqualTo("changed")
-        assertThat(textUpdatesForEditorObserver.values()).isEqualTo(emptyList<String>())
+        assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(emptyList<String>())
     }
 
     @Test
@@ -136,11 +155,11 @@ internal class EditingViewModelTest {
         selectionSwitchingProcess.onNext(Loading(false))
 
         // Then
-        assertThat(enabledObserver.values()).isEqualTo(listOf(true, false, true))
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(false))
-        assertThat(noteObserver.values()).isEqualTo(listOf(Optional(note1Notification1.note), Optional(note2Notification.note)))
+        assertThat(enabledObserver.values().toList()).isEqualTo(listOf(true, false, true))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(false))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional(note1Notification1.note), Optional(note2Notification.note)))
         assertThat(model.getText()).isEqualTo(note2Notification.note.content)
-        assertThat(textUpdatesForEditorObserver.values()).isEqualTo(listOf(note2Notification.note.content))
+        assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(listOf(note2Notification.note.content))
     }
 
     @Test
@@ -159,10 +178,10 @@ internal class EditingViewModelTest {
         selectionSwitchingProcess.onNext(Loading(false))
 
         // Then
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(true))
-        assertThat(noteObserver.values()).isEqualTo(listOf(Optional(note1Notification1.note)))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(true))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional(note1Notification1.note)))
         assertThat(model.getText()).isEqualTo("changed")
-        assertThat(textUpdatesForEditorObserver.values()).isEqualTo(emptyList<String>())
+        assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(emptyList<String>())
     }
 
     @Test
@@ -180,11 +199,11 @@ internal class EditingViewModelTest {
         selectionSwitchingProcess.onNext(Loading(false))
 
         // Then
-        assertThat(enabledObserver.values()).isEqualTo(listOf(true))
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(false))
-        assertThat(noteObserver.values()).isEqualTo(listOf(Optional(note1Notification1.note), Optional(note1Notification2.note)))
+        assertThat(enabledObserver.values().toList()).isEqualTo(listOf(true))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(false))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional(note1Notification1.note), Optional(note1Notification2.note)))
         assertThat(model.getText()).isEqualTo(note1Notification2.note.content)
-        assertThat(textUpdatesForEditorObserver.values()).isEqualTo(listOf(note1Notification2.note.content))
+        assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(listOf(note1Notification2.note.content))
     }
 
     @Test
@@ -202,10 +221,10 @@ internal class EditingViewModelTest {
         selectionSwitchingProcess.onNext(Loading(false))
 
         // Then
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(true))
-        assertThat(noteObserver.values()).isEqualTo(listOf(Optional(note1Notification1.note), Optional(note1Notification2.note)))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(true))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional(note1Notification1.note), Optional(note1Notification2.note)))
         assertThat(model.getText()).isEqualTo("changed")
-        assertThat(textUpdatesForEditorObserver.values()).isEqualTo(emptyList<String>())
+        assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(emptyList<String>())
     }
 
     @Test
@@ -223,10 +242,10 @@ internal class EditingViewModelTest {
         selectionSwitchingProcess.onNext(Loading(false))
 
         // Then
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(true, false))
-        assertThat(noteObserver.values()).isEqualTo(listOf(Optional(note1Notification1.note), Optional(note1Notification2.note)))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(true, false))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional(note1Notification1.note), Optional(note1Notification2.note)))
         assertThat(model.getText()).isEqualTo(note1Notification2.note.content)
-        assertThat(textUpdatesForEditorObserver.values()).isEqualTo(listOf(note1Notification2.note.content))
+        assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(emptyList<String>())
     }
 
     @Test
@@ -241,24 +260,7 @@ internal class EditingViewModelTest {
         selectionSwitchingProcess.onNext(Loading(false))
 
         // Then
-        assertThat(enabledObserver.values()).isEqualTo(listOf(false))
-    }
-
-    @Test
-    fun `default values`() {
-        // Given
-        val model = EditingViewModel(navigationViewModel, renderer, scheduler = scheduler)
-        val dirtyObserver = model.isDirty().test()
-        val enabledObserver = model.isEnabled().test()
-        val noteObserver = model.getNote().test()
-
-        // When
-
-        // Then
-        assertThat(model.getText()).isEqualTo("")
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(false))
-        assertThat(enabledObserver.values()).isEqualTo(listOf(false))
-        assertThat(noteObserver.values()).isEqualTo(listOf(Optional<info.maaskant.wmsnotes.model.projection.Note>()))
+        assertThat(enabledObserver.values().toList()).isEqualTo(listOf(false))
     }
 
     @Test
@@ -273,7 +275,7 @@ internal class EditingViewModelTest {
 
         // Then
         assertThat(model.getText()).isEqualTo("changed")
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(false, true))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(false, true))
     }
 
     @Test
@@ -289,7 +291,7 @@ internal class EditingViewModelTest {
 
         // Then
         assertThat(model.getText()).isEqualTo("changed")
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(true))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(true))
     }
 
     @Test
@@ -305,7 +307,7 @@ internal class EditingViewModelTest {
 
         // Then
         assertThat(model.getText()).isEqualTo(note1Notification1.note.content)
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(true, false))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(true, false))
     }
 
     @Test
@@ -319,7 +321,7 @@ internal class EditingViewModelTest {
         // When / then
         assertThrows<IllegalStateException> { model.setText("new") }
         assertThat(model.getText()).isEqualTo(note1Notification1.note.content)
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(false))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(false))
     }
 
     @Test
@@ -335,7 +337,7 @@ internal class EditingViewModelTest {
 
         // Then
         assertThat(model.getText()).isEqualTo(note1Notification1.note.content)
-        assertThat(dirtyObserver.values()).isEqualTo(listOf(false))
+        assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(false))
     }
 
     @Test
@@ -357,7 +359,7 @@ internal class EditingViewModelTest {
         model.setText("different")
 
         // Then
-        assertThat(navigationAllowedObserver.values()).isEqualTo(listOf(true, false))
+        assertThat(navigationAllowedObserver.values().toList()).isEqualTo(listOf(true, false))
     }
 
     private fun givenEditingIsDisabled() {
