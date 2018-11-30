@@ -1,4 +1,4 @@
-# WMS Notes
+# WMS Notes [![Build Status](https://travis-ci.org/scheleaap/wmsnotes-desktop-java.svg?branch=master)](https://travis-ci.org/scheleaap/wmsnotes-desktop-java)
 
 WMS Notes is a *hierarchical* or *tree-based* note-taking application.
 
