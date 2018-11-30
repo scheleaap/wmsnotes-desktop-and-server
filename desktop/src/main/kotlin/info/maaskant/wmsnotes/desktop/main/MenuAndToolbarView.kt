@@ -152,6 +152,7 @@ class MenuAndToolbarView : View() {
                     }
                     button {
                         text = "TEST"
+                        // TODO: WAIT UNTIL NOTE IS NOT DIRTY
                         actionEvents()
                                 .map {
                                     val chooser: ConflictResolutionChooser = find<ConflictResolutionChooser>(

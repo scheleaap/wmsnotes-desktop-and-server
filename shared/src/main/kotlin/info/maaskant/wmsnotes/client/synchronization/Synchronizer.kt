@@ -227,7 +227,8 @@ class Synchronizer @Inject constructor(
 
     override fun getStateUpdates(): Observable<SynchronizerState> = stateUpdates
 
-    data class ConflictData(val noteId: String, val base: Note, val localEvents: List<Event>, val remoteEvents: List<Event>)
+    data class ConflictData(val noteId: String, val base: Note, val localConflictingEvents: List<Event>, val remoteConflictingEvents: List<Event>)
+    data class ConflictResolution(val noteId: String, val localCompensatingEvents: List<Event>, val remoteCompensatingEvents: List<Event>)
 
     enum class ConflictResolutionChoice {
         LOCAL,

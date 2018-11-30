@@ -6,14 +6,8 @@ import info.maaskant.wmsnotes.desktop.util.Messages
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import io.reactivex.subjects.BehaviorSubject
-import javafx.beans.property.ObjectProperty
-import javafx.beans.property.SimpleBooleanProperty
-import javafx.beans.property.SimpleObjectProperty
-import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Orientation
 import javafx.scene.control.ButtonBar
-import javafx.scene.control.Labeled
-import javafx.scene.control.RadioButton
 import javafx.scene.layout.Priority
 import tornadofx.*
 
@@ -26,8 +20,8 @@ class ConflictResolutionChooser : Fragment() {
     val noteId: String by param()
     private val windowTitle = "Conflict Resolution of note $noteId"
     private val conflictData = synchronizer.getConflictData(noteId)
-    private val localNote = NoteProjector.project(conflictData.base, conflictData.localEvents)
-    private val remoteNote = NoteProjector.project(conflictData.base, conflictData.remoteEvents)
+    private val localNote = NoteProjector.project(conflictData.base, conflictData.localConflictingEvents)
+    private val remoteNote = NoteProjector.project(conflictData.base, conflictData.remoteConflictingEvents)
 
     val choice: BehaviorSubject<Choice> = BehaviorSubject.createDefault(Choice.NO_CHOICE)
 
