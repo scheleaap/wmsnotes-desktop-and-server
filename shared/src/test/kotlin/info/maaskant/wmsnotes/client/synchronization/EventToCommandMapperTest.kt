@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 
 internal class EventToCommandMapperTest {
-
     @TestFactory
     fun test(): List<DynamicTest> {
         val noteId = "note-1"
