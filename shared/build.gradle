@@ -26,6 +26,7 @@ dependencies {
     // gRPC
     api "io.grpc:grpc-protobuf-lite:$grpcVersion"
     api "io.grpc:grpc-stub:$grpcVersion"
+    compileOnly "javax.annotation:javax.annotation-api:1.2" // See https://github.com/grpc/grpc-java/issues/4725
 
     // Testing
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.3.1")
