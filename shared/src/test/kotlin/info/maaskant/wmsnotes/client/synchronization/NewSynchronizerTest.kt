@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.client.synchronization
 
+import info.maaskant.wmsnotes.client.synchronization.CompensatingActionExecutor.EventIdAndRevision
 import info.maaskant.wmsnotes.client.synchronization.CompensatingActionExecutor.ExecutionResult
 import info.maaskant.wmsnotes.client.synchronization.SynchronizationStrategy.ResolutionResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.SynchronizationStrategy.ResolutionResult.Solution
@@ -97,8 +98,8 @@ internal class NewSynchronizerTest {
         }.returns(Solution(compensatingAction))
         every { compensatingActionExecutor.execute(compensatingAction) }.returns(ExecutionResult(
                 success = true,
-                newLocalEvents = listOf(localEventForRemoteEvent1, localEventForRemoteEvent2),
-                newRemoteEvents = listOf(remoteEventForLocalEvent1, remoteEventForLocalEvent2)
+                newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent1), EventIdAndRevision(localEventForRemoteEvent2)),
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent1), EventIdAndRevision(remoteEventForLocalEvent2))
         ))
         val s = createSynchronizer()
         val stateObserver = s.getStateUpdates().test()
@@ -155,13 +156,13 @@ internal class NewSynchronizerTest {
         }.returns(Solution(listOf(compensatingAction1, compensatingAction2)))
         every { compensatingActionExecutor.execute(compensatingAction1) }.returns(ExecutionResult(
                 success = true,
-                newLocalEvents = listOf(localEventForRemoteEvent1),
-                newRemoteEvents = listOf(remoteEventForLocalEvent1)
+                newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent1)),
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent1))
         ))
         every { compensatingActionExecutor.execute(compensatingAction2) }.returns(ExecutionResult(
                 success = true,
-                newLocalEvents = listOf(localEventForRemoteEvent2),
-                newRemoteEvents = listOf(remoteEventForLocalEvent2)
+                newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent2)),
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent2))
         ))
         val s = createSynchronizer()
         val stateObserver = s.getStateUpdates().test()
@@ -220,12 +221,12 @@ internal class NewSynchronizerTest {
         every { compensatingActionExecutor.execute(compensatingAction1) }.returns(ExecutionResult(
                 success = false,
                 newLocalEvents = emptyList(), // Local failed
-                newRemoteEvents = listOf(remoteEventForLocalEvent1)
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent1))
         ))
         every { compensatingActionExecutor.execute(compensatingAction2) }.returns(ExecutionResult(
                 success = false,
-                newLocalEvents = listOf(localEventForRemoteEvent2),
-                newRemoteEvents = listOf(remoteEventForLocalEvent2)
+                newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent2)),
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent2))
         ))
         val s = createSynchronizer()
         val stateObserver = s.getStateUpdates().test()
@@ -291,13 +292,13 @@ internal class NewSynchronizerTest {
         }.returns(Solution(listOf(compensatingAction2)))
         every { compensatingActionExecutor.execute(compensatingAction1) }.returns(ExecutionResult(
                 success = true,
-                newLocalEvents = listOf(13),
-                newRemoteEvents = listOf(3)
+                newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent1)),
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent1))
         ))
         every { compensatingActionExecutor.execute(compensatingAction2) }.returns(ExecutionResult(
                 success = true,
-                newLocalEvents = listOf(14),
-                newRemoteEvents = listOf(4)
+                newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent2)),
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent2))
         ))
         val s = createSynchronizer()
         val stateObserver = s.getStateUpdates().test()
@@ -365,12 +366,12 @@ internal class NewSynchronizerTest {
         every { compensatingActionExecutor.execute(compensatingAction1) }.returns(ExecutionResult(
                 success = false,
                 newLocalEvents = emptyList(), // Local failed
-                newRemoteEvents = listOf(remoteEventForLocalEvent1)
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent1))
         ))
         every { compensatingActionExecutor.execute(compensatingAction2) }.returns(ExecutionResult(
                 success = true,
-                newLocalEvents = listOf(localEventForRemoteEvent1),
-                newRemoteEvents = listOf(remoteEventForLocalEvent2)
+                newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent1)),
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent2))
         ))
         val s = createSynchronizer()
         val stateObserver = s.getStateUpdates().test()
@@ -420,8 +421,8 @@ internal class NewSynchronizerTest {
         }.returns(Solution(compensatingAction))
         every { compensatingActionExecutor.execute(compensatingAction) }.returns(ExecutionResult(
                 success = true,
-                newLocalEvents = listOf(localEventForRemoteEvent1),
-                newRemoteEvents = listOf(remoteEventForLocalEvent1)
+                newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent1)),
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent1))
         ))
         val s = createSynchronizer()
         s.synchronize()
@@ -454,8 +455,10 @@ internal class NewSynchronizerTest {
                     compensatingActionExecutor,
                     initialState
             )
-}
 
-private fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
-    return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, title = "Title $noteId")
+    companion object {
+        internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
+            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, title = "Title $noteId")
+        }
+    }
 }
