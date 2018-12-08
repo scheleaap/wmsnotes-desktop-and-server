@@ -75,11 +75,11 @@ internal class DifferenceCompensatorTest {
                 val compensator = DifferenceCompensator()
 
                 // When
-                val actions = compensator.compensate(differences = setOf(difference), target = target)
+                val events = compensator.compensate(differences = setOf(difference), target = target)
 
                 // Then
-                assertThat(actions).isEqualTo(setOf(
-                        DifferenceCompensator.CompensatingAction(
+                assertThat(events).isEqualTo(setOf(
+                        DifferenceCompensator.CompensatingEvents(
                                 leftEvents = if (target == DifferenceCompensator.Target.LEFT) listOf(compensatingEvent) else emptyList(),
                                 rightEvents = if (target == DifferenceCompensator.Target.RIGHT) listOf(compensatingEvent) else emptyList()
                         )
@@ -96,11 +96,11 @@ internal class DifferenceCompensatorTest {
         val compensator = DifferenceCompensator()
 
         // When
-        val actions = compensator.compensate(differences = setOf(difference), target = DifferenceCompensator.Target.LEFT)
+        val events = compensator.compensate(differences = setOf(difference), target = DifferenceCompensator.Target.LEFT)
 
         // Then
-        assertThat(actions).isEqualTo(setOf(
-                DifferenceCompensator.CompensatingAction(leftEvents = emptyList(), rightEvents = listOf(
+        assertThat(events).isEqualTo(setOf(
+                DifferenceCompensator.CompensatingEvents(leftEvents = emptyList(), rightEvents = listOf(
                         AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName),
                         AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = attachmentContent)
                 ))
@@ -115,11 +115,11 @@ internal class DifferenceCompensatorTest {
         val compensator = DifferenceCompensator()
 
         // When
-        val actions = compensator.compensate(differences = setOf(difference), target = DifferenceCompensator.Target.RIGHT)
+        val events = compensator.compensate(differences = setOf(difference), target = DifferenceCompensator.Target.RIGHT)
 
         // Then
-        assertThat(actions).isEqualTo(setOf(
-                DifferenceCompensator.CompensatingAction(leftEvents = listOf(
+        assertThat(events).isEqualTo(setOf(
+                DifferenceCompensator.CompensatingEvents(leftEvents = listOf(
                         AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName),
                         AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = differentContent)
                 ), rightEvents = emptyList())
@@ -137,10 +137,10 @@ internal class DifferenceCompensatorTest {
         val compensator = DifferenceCompensator()
 
         // When
-        val actions = compensator.compensate(differences = differences, target = DifferenceCompensator.Target.RIGHT)
+        val events = compensator.compensate(differences = differences, target = DifferenceCompensator.Target.RIGHT)
 
         // Then
-        val eventClasses = actions.first().leftEvents.map { it::class }
+        val eventClasses = events.first().leftEvents.map { it::class }
         assertThat(eventClasses).isEqualTo(listOf(
                 NoteCreatedEvent::class,
                 ContentChangedEvent::class,
@@ -159,10 +159,10 @@ internal class DifferenceCompensatorTest {
         val compensator = DifferenceCompensator()
 
         // When
-        val actions = compensator.compensate(differences = differences, target = DifferenceCompensator.Target.LEFT)
+        val events = compensator.compensate(differences = differences, target = DifferenceCompensator.Target.LEFT)
 
         // Then
-        val eventClasses = actions.first().rightEvents.map { it::class }
+        val eventClasses = events.first().rightEvents.map { it::class }
         assertThat(eventClasses).isEqualTo(listOf(
                 ContentChangedEvent::class,
                 AttachmentDeletedEvent::class,

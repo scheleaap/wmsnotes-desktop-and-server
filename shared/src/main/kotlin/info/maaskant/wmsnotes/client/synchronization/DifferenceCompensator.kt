@@ -3,7 +3,7 @@ package info.maaskant.wmsnotes.client.synchronization
 import info.maaskant.wmsnotes.model.Event
 
 class DifferenceCompensator {
-    fun compensate(differences: Set<Difference>, target: Target): Set<CompensatingAction> {
+    fun compensate(differences: Set<Difference>, target: Target): Set<CompensatingEvents> {
         TODO()
     }
 
@@ -12,5 +12,5 @@ class DifferenceCompensator {
         RIGHT
     }
 
-    data class CompensatingAction(val leftEvents: List<Event>, val rightEvents: List<Event>)
+    data class CompensatingEvents(val leftEvents: List<Event>, val rightEvents: List<Event>)
 }
