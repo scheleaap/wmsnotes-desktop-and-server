@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test
 // resolving conflict (type = REMOTE) if note was deleted locally
 // resolving conflict (type = BOTH) if note was deleted locally
 internal class SynchronizerTest {
-
     private val localEvents: ModifiableEventRepository = mockk()
     private val remoteEvents: ModifiableEventRepository = mockk()
     private val eventStore: EventStore = mockk()

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.TestFactory
 
 internal class DifferenceCompensatorTest {
     private val noteId = "note"
-    private val title = "title"
     private val attachmentName = "att"
     private val attachmentContent = "data".toByteArray()
 
@@ -78,11 +77,9 @@ internal class DifferenceCompensatorTest {
                 val events = compensator.compensate(differences = setOf(difference), target = target)
 
                 // Then
-                assertThat(events).isEqualTo(setOf(
-                        DifferenceCompensator.CompensatingEvents(
-                                leftEvents = if (target == DifferenceCompensator.Target.LEFT) listOf(compensatingEvent) else emptyList(),
-                                rightEvents = if (target == DifferenceCompensator.Target.RIGHT) listOf(compensatingEvent) else emptyList()
-                        )
+                assertThat(events).isEqualTo(DifferenceCompensator.CompensatingEvents(
+                        leftEvents = if (target == DifferenceCompensator.Target.LEFT) listOf(compensatingEvent) else emptyList(),
+                        rightEvents = if (target == DifferenceCompensator.Target.RIGHT) listOf(compensatingEvent) else emptyList()
                 ))
             }
         }
@@ -99,12 +96,10 @@ internal class DifferenceCompensatorTest {
         val events = compensator.compensate(differences = setOf(difference), target = DifferenceCompensator.Target.LEFT)
 
         // Then
-        assertThat(events).isEqualTo(setOf(
-                DifferenceCompensator.CompensatingEvents(leftEvents = emptyList(), rightEvents = listOf(
-                        AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName),
-                        AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = attachmentContent)
-                ))
-        ))
+        assertThat(events).isEqualTo(DifferenceCompensator.CompensatingEvents(leftEvents = emptyList(), rightEvents = listOf(
+                AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName),
+                AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = attachmentContent)
+        )))
     }
 
     @Test
@@ -118,12 +113,10 @@ internal class DifferenceCompensatorTest {
         val events = compensator.compensate(differences = setOf(difference), target = DifferenceCompensator.Target.RIGHT)
 
         // Then
-        assertThat(events).isEqualTo(setOf(
-                DifferenceCompensator.CompensatingEvents(leftEvents = listOf(
-                        AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName),
-                        AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = differentContent)
-                ), rightEvents = emptyList())
-        ))
+        assertThat(events).isEqualTo(DifferenceCompensator.CompensatingEvents(leftEvents = listOf(
+                AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName),
+                AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = differentContent)
+        ), rightEvents = emptyList()))
     }
 
     @Test
@@ -140,7 +133,7 @@ internal class DifferenceCompensatorTest {
         val events = compensator.compensate(differences = differences, target = DifferenceCompensator.Target.RIGHT)
 
         // Then
-        val eventClasses = events.first().leftEvents.map { it::class }
+        val eventClasses = events.leftEvents.map { it::class }
         assertThat(eventClasses).isEqualTo(listOf(
                 NoteCreatedEvent::class,
                 ContentChangedEvent::class,
@@ -162,7 +155,7 @@ internal class DifferenceCompensatorTest {
         val events = compensator.compensate(differences = differences, target = DifferenceCompensator.Target.LEFT)
 
         // Then
-        val eventClasses = events.first().rightEvents.map { it::class }
+        val eventClasses = events.rightEvents.map { it::class }
         assertThat(eventClasses).isEqualTo(listOf(
                 ContentChangedEvent::class,
                 AttachmentDeletedEvent::class,
