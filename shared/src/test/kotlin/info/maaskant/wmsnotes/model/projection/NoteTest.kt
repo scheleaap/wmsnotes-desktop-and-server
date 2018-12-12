@@ -348,6 +348,54 @@ internal class NoteTest {
         assertThat(noteAfter).isEqualTo(noteBefore)
     }
 
+    @Test
+    fun `title changed`() {
+        // Given
+        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title 1"))
+        val eventIn = TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, title = "Title 2")
+
+        // When
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
+
+        // Then
+        assertThat(eventOut).isEqualTo(eventIn)
+        assertThat(noteBefore.revision).isEqualTo(1)
+        assertThat(noteBefore.title).isEqualTo("")
+        assertThat(noteAfter.revision).isEqualTo(2)
+        assertThat(noteAfter.title).isEqualTo("Title 2")
+    }
+
+    @Test
+    fun `title changed, idempotence 1`() {
+        // Given
+        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
+        val eventIn = TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, title = "Title")
+
+        // When
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
+
+        // Then
+        assertThat(eventOut).isNull()
+        assertThat(noteAfter).isEqualTo(noteBefore)
+    }
+
+    @Test
+    fun `title changed, idempotence 2`() {
+        // Given
+        val noteBefore = noteWithEvents(
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title 1"),
+                TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, title = "Title 2")
+        )
+        val eventIn = TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, title = "Title 2")
+
+        // When
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
+
+        // Then
+        assertThat(eventOut).isNull()
+        assertThat(noteAfter).isEqualTo(noteBefore)
+    }
+
     @TestFactory
     fun `equals and hashCode for all fields`(): List<DynamicTest> {
         val revision = 0
