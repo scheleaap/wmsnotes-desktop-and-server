@@ -79,6 +79,12 @@ internal class ManualMergeStrategyTest {
                 newRemoteEvents = compensatingEventsForRemote
         ))
         assertThat(conflictObserver.values().toList()).isEqualTo(listOf(setOf(noteId), emptySet()))
+
+        // When
+        val mergeResult2 = strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
+
+        // Then
+        assertThat(mergeResult2).isEqualTo(NoSolution)
     }
 
     @Test
