@@ -15,7 +15,7 @@ data class EventImporterState(val lastEventId: Int?)
 
 class KryoEventImporterStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) : KryoSerializer<EventImporterState>(
         kryoPool,
-        Registration(EventImporterState::class.java, KryoEventImporterStateSerializer(),31)
+        Registration(EventImporterState::class.java, KryoEventImporterStateSerializer(), 31)
 ) {
 
     private class KryoEventImporterStateSerializer : Serializer<EventImporterState>() {
