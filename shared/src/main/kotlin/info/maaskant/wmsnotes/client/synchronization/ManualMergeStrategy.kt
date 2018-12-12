@@ -40,6 +40,6 @@ class ManualMergeStrategy : MergeStrategy {
     enum class ConflictResolutionChoice {
         LOCAL,
         REMOTE,
-//        BOTH,
+        BOTH,
     }
 }
