@@ -2,7 +2,6 @@ package info.maaskant.wmsnotes.server.event
 
 import com.google.protobuf.ByteString
 import info.maaskant.wmsnotes.model.*
-import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -58,13 +57,22 @@ internal class GrpcEventMapperTest {
                         name = "att"
                     }.build()
                 }.build(),
-                ContentChangedEvent(eventId = 1,noteId = "note", revision = 1, content = "data")
+                ContentChangedEvent(eventId = 1, noteId = "note", revision = 1, content = "data")
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"
                     revision = 1
                     contentChanged = Event.GetEventsResponse.ContentChangedEvent.newBuilder().apply {
                         content = "data"
+                    }.build()
+                }.build(),
+                TitleChangedEvent(eventId = 1, noteId = "note", revision = 1, title = "Title")
+                        to Event.GetEventsResponse.newBuilder().apply {
+                    eventId = 1
+                    noteId = "note"
+                    revision = 1
+                    titleChanged = Event.GetEventsResponse.TitleChangedEvent.newBuilder().apply {
+                        title = "Title"
                     }.build()
                 }.build()
                 // Add more classes here

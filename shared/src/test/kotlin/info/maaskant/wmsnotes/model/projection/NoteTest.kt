@@ -2,7 +2,6 @@ package info.maaskant.wmsnotes.model.projection
 
 import info.maaskant.wmsnotes.model.*
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Fail.fail
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -22,7 +21,8 @@ internal class NoteTest {
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3),
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file"),
-                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "data")
+                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "data"),
+                TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, title = "Title")
                 // Add more classes here
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
@@ -42,7 +42,8 @@ internal class NoteTest {
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2),
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "file", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "file"),
-                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, content = "data")
+                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, content = "data"),
+                TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, title = "Title")
                 // Add more classes here
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
@@ -62,7 +63,8 @@ internal class NoteTest {
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 1),
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 1, name = "file", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 1, name = "file"),
-                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 1, content = "data")
+                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 1, content = "data"),
+                TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title")
                 // Add more classes here
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
@@ -80,7 +82,9 @@ internal class NoteTest {
     fun `events that are not allowed if the note does not exist`(): List<DynamicTest> {
         return listOf(
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file", content = "data".toByteArray()),
-                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "data")
+                AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file"),
+                ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "data"),
+                TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, title = "Title")
                 // Add more classes here
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {

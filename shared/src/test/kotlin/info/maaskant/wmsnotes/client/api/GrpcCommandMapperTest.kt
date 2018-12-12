@@ -4,7 +4,10 @@ import com.google.protobuf.ByteString
 import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class GrpcCommandMapperTest {
@@ -50,6 +53,13 @@ internal class GrpcCommandMapperTest {
                     lastRevision = 1
                     changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().apply {
                         content = "data"
+                    }.build()
+                }.build(),
+                ChangeTitleCommand(noteId = "note", lastRevision = 1, title = "Title") to Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
+                    changeTitle = Command.PostCommandRequest.ChangeTitleCommand.newBuilder().apply {
+                        title = "Title"
                     }.build()
                 }.build()
                 // Add more classes here

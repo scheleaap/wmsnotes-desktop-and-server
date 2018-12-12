@@ -13,7 +13,8 @@ internal class KryoEventSerializerTest : KryoSerializerTest<Event>() {
             NoteDeletedEvent(eventId = 1, noteId = noteId, revision = 1),
             AttachmentAddedEvent(eventId = 1, noteId = noteId, revision = 1, name = "att-1", content = "DATA".toByteArray()),
             AttachmentDeletedEvent(eventId = 1, noteId = noteId, revision = 1, name = "att-1"),
-            ContentChangedEvent(eventId = 0, noteId = noteId, revision = 1, content = "data")
+            ContentChangedEvent(eventId = 0, noteId = noteId, revision = 1, content = "data"),
+            TitleChangedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title")
             // Add more classes here
     )
 

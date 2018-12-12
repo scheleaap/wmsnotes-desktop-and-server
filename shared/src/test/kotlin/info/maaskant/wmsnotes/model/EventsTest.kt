@@ -30,7 +30,8 @@ internal class EventsTest {
                 NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
                 AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1"),
-                ContentChangedEvent(eventId = 0, noteId = "note-1", revision = 1, content = "data")
+                ContentChangedEvent(eventId = 0, noteId = "note-1", revision = 1, content = "data"),
+                TitleChangedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1")
                 // Add more classes here
         ).map {
             DynamicTest.dynamicTest(it::class.simpleName) {
@@ -73,6 +74,11 @@ internal class EventsTest {
                         o = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "data"),
                         sameButCopy = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "data"),
                         differents = listOf(ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "different"))
+                ),
+                Item(
+                        o = TitleChangedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title"),
+                        sameButCopy = TitleChangedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title"),
+                        differents = listOf(TitleChangedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Different"))
                 )
                 // Add more classes here
         ).map {

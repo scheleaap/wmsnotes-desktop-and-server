@@ -95,7 +95,14 @@ internal class GrpcCommandMapperTest {
                     changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().apply {
                         content = "data"
                     }.build()
-                }.build() to ChangeContentCommand(noteId = "note", lastRevision = 1, content = "data")
+                }.build() to ChangeContentCommand(noteId = "note", lastRevision = 1, content = "data"),
+                Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
+                    changeTitle = Command.PostCommandRequest.ChangeTitleCommand.newBuilder().apply {
+                        title = "Title"
+                    }.build()
+                }.build() to ChangeTitleCommand(noteId = "note", lastRevision = 1, title = "Title")
                 // Add more classes here
         )
         return items.map { (request, expectedCommand) ->

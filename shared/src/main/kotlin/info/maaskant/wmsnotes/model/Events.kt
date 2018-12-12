@@ -95,3 +95,18 @@ class ContentChangedEvent(eventId: Int, noteId: String, revision: Int, val conte
 
     override fun hashCode() = Objects.hash(content, super.hashCode())
 }
+
+class TitleChangedEvent(eventId: Int, noteId: String, revision: Int, val title: String) : Event(eventId, noteId, revision) {
+    override fun withEventId(eventId: Int): TitleChangedEvent {
+        return TitleChangedEvent(eventId = eventId, noteId = noteId, revision = revision, title = title)
+    }
+
+    override fun toString() = kotlinToString(properties = arrayOf(TitleChangedEvent::eventId, TitleChangedEvent::noteId, TitleChangedEvent::revision, TitleChangedEvent::title))
+
+    override fun equals(other: Any?) = kotlinEquals(
+            other = other,
+            properties = arrayOf(TitleChangedEvent::title),
+            superEquals = { super.equals(other) })
+
+    override fun hashCode() = Objects.hash(title, super.hashCode())
+}

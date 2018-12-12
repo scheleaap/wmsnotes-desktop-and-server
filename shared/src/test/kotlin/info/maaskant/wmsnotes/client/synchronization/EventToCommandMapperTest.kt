@@ -17,7 +17,8 @@ internal class EventToCommandMapperTest {
                 NoteDeletedEvent(eventId = 1, noteId = noteId, revision = eventRevision) to DeleteNoteCommand(noteId, lastRevision),
                 AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1", content = "data".toByteArray()) to AddAttachmentCommand(noteId, lastRevision, "att-1", "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1") to DeleteAttachmentCommand(noteId, lastRevision, "att-1"),
-                ContentChangedEvent(eventId = 0, noteId = noteId, revision = eventRevision, content = "data") to ChangeContentCommand(noteId, lastRevision, "data")
+                ContentChangedEvent(eventId = 0, noteId = noteId, revision = eventRevision, content = "data") to ChangeContentCommand(noteId, lastRevision, "data"),
+                TitleChangedEvent(eventId = 0, noteId = noteId, revision = eventRevision, title = "Title") to ChangeTitleCommand(noteId, lastRevision, "Title")
                 // Add more classes here
         )
         return pairs.map { (event, expectedCommand) ->
