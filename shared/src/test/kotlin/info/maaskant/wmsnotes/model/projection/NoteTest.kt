@@ -19,6 +19,7 @@ internal class NoteTest {
     fun `wrong revision`(): List<DynamicTest> {
         return listOf(
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3),
+                NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3),
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file"),
                 ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "data"),
@@ -40,6 +41,7 @@ internal class NoteTest {
     fun `wrong note id`(): List<DynamicTest> {
         return listOf(
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2),
+                NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2),
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "file", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2, name = "file"),
                 ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, content = "data"),
@@ -61,6 +63,7 @@ internal class NoteTest {
     fun `events that are not allowed as first event`(): List<DynamicTest> {
         return listOf(
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 1),
+                NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 1),
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 1, name = "file", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 1, name = "file"),
                 ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 1, content = "data"),
@@ -191,6 +194,60 @@ internal class NoteTest {
                 NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
         )
         val eventIn = NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3)
+
+        // When
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
+
+        // Then
+        assertThat(eventOut).isNull()
+        assertThat(noteAfter).isEqualTo(noteBefore)
+    }
+
+    @Test
+    fun `undelete`() {
+        // Given
+        val noteBefore = noteWithEvents(
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"),
+                NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
+        )
+        val eventIn = NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3)
+
+        // When
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
+
+        // Then
+        assertThat(eventOut).isEqualTo(eventIn)
+        assertThat(noteBefore.revision).isEqualTo(2)
+        assertThat(noteBefore.exists).isEqualTo(false)
+        assertThat(noteAfter.revision).isEqualTo(3)
+        assertThat(noteAfter.exists).isEqualTo(true)
+    }
+
+    @Test
+    fun `undelete, idempotence`() {
+        // Given
+        val noteBefore = noteWithEvents(
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"),
+                NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2),
+                NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3)
+        )
+        val eventIn = NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 4)
+
+        // When
+        val (noteAfter, eventOut) = noteBefore.apply(eventIn)
+
+        // Then
+        assertThat(eventOut).isNull()
+        assertThat(noteAfter).isEqualTo(noteBefore)
+    }
+
+    @Test
+    fun `undelete, ignore after create`() {
+        // Given
+        val noteBefore = noteWithEvents(
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"),
+                )
+        val eventIn = NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
 
         // When
         val (noteAfter, eventOut) = noteBefore.apply(eventIn)

@@ -77,6 +77,11 @@ internal class GrpcCommandMapperTest {
                 Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     lastRevision = 1
+                    undeleteNote = Command.PostCommandRequest.UndeleteNoteCommand.newBuilder().build()
+                }.build() to UndeleteNoteCommand(noteId = "note", lastRevision = 1),
+                Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
                     addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
                         name = "att"
                         content = ByteString.copyFrom("data".toByteArray())

@@ -45,7 +45,7 @@ internal class MergingSynchronizationStrategyTest {
         every { noteProjector.project(noteId, oldLocalEvent1.revision) }.returns(baseNote)
         givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1, oldLocalEvent2))
         givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
-        every { mergeStrategy.merge(baseNote, localNote, remoteNote) }.returns(Solution(
+        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
         ))
@@ -79,7 +79,7 @@ internal class MergingSynchronizationStrategyTest {
         every { noteProjector.project(noteId, oldLocalEvent1.revision) }.returns(baseNote)
         givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1, oldLocalEvent2))
         givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
-        every { mergeStrategy.merge(baseNote, localNote, remoteNote) }.returns(NoSolution)
+        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(NoSolution)
         val strategy = MergingSynchronizationStrategy()
 
         // When

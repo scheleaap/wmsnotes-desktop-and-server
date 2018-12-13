@@ -7,6 +7,7 @@ sealed class Command
 
 data class CreateNoteCommand(val noteId: String?, val title: String) : Command()
 data class DeleteNoteCommand(val noteId: String, val lastRevision: Int) : Command()
+data class UndeleteNoteCommand(val noteId: String, val lastRevision: Int) : Command()
 
 data class AddAttachmentCommand(val noteId: String, val lastRevision: Int, val name: String, val content: ByteArray) : Command() {
     private val contentLength = content.size

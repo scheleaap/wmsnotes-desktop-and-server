@@ -34,6 +34,14 @@ class NoteDeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(even
     override fun toString() = kotlinToString(properties = arrayOf(NoteDeletedEvent::eventId, NoteDeletedEvent::noteId, NoteDeletedEvent::revision))
 }
 
+class NoteUndeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(eventId, noteId, revision) {
+    override fun withEventId(eventId: Int): NoteUndeletedEvent {
+        return NoteUndeletedEvent(eventId = eventId, noteId = noteId, revision = revision)
+    }
+
+    override fun toString() = kotlinToString(properties = arrayOf(NoteUndeletedEvent::eventId, NoteUndeletedEvent::noteId, NoteUndeletedEvent::revision))
+}
+
 class AttachmentAddedEvent(eventId: Int, noteId: String, revision: Int, val name: String, val content: ByteArray) : Event(eventId, noteId, revision) {
     private val contentLength = content.size
 

@@ -3,7 +3,7 @@ package info.maaskant.wmsnotes.client.synchronization
 import info.maaskant.wmsnotes.model.Event
 
 class DifferenceCompensator {
-    fun compensate(differences: Set<Difference>, target: Target): CompensatingEvents {
+    fun compensate(noteId: String, differences: Set<Difference>, target: Target): CompensatingEvents {
         TODO()
     }
 

@@ -28,6 +28,7 @@ internal class EventsTest {
         return listOf(
                 NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1"),
                 NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
+                NoteUndeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
                 AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1"),
                 ContentChangedEvent(eventId = 0, noteId = "note-1", revision = 1, content = "data"),
@@ -56,6 +57,11 @@ internal class EventsTest {
                         o = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
                         sameButCopy = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
                         differents = listOf(NoteDeletedEvent(eventId = 1, noteId = "different", revision = 1))
+                ),
+                Item(
+                        o = NoteUndeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
+                        sameButCopy = NoteUndeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
+                        differents = listOf(NoteUndeletedEvent(eventId = 1, noteId = "different", revision = 1))
                 ),
                 Item(
                         o = AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),

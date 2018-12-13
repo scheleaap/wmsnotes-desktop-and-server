@@ -54,16 +54,20 @@ internal class ManualMergeStrategyTest {
     @Test
     fun `resolve, local`() {
         // Given
-        val localEvents: List<Event> = mockk()
-        val remoteEvents: List<Event> = mockk()
+        val localEvent1: Event = mockk()
+        val localEvent2: Event = mockk()
+        val localEvents = listOf(localEvent1, localEvent2)
+        val remoteEvent1: Event = mockk()
+        val remoteEvent2: Event = mockk()
+        val remoteEvents = listOf(remoteEvent1, remoteEvent2)
         val baseNote: Note = createExistingNote(noteId)
         val localNote: Note = createExistingNote(noteId)
         val remoteNote: Note = createExistingNote(noteId)
-        val differences: Set<Difference> = givenDifferences(localNote, remoteNote)
-        val compensatingEventsForRemote: List<Event> = mockk()
-        givenCompensatingEvents(differences, DifferenceCompensator.Target.LEFT, CompensatingEvents(
-                leftEvents = localEvents,
-                rightEvents = compensatingEventsForRemote
+        val compensatingEvent1: Event = mockk()
+        val compensatingEvent2: Event = mockk()
+        givenCompensatingEvents(givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.LEFT, CompensatingEvents(
+                leftEvents = emptyList(),
+                rightEvents = listOf(compensatingEvent1, compensatingEvent1)
         ))
         val strategy = createStrategy()
         strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
@@ -76,7 +80,7 @@ internal class ManualMergeStrategyTest {
         // Then
         assertThat(mergeResult).isEqualTo(Solution(
                 newLocalEvents = localEvents,
-                newRemoteEvents = compensatingEventsForRemote
+                newRemoteEvents = remoteEvents + listOf(compensatingEvent1, compensatingEvent2)
         ))
         assertThat(conflictObserver.values().toList()).isEqualTo(listOf(setOf(noteId), emptySet()))
 
@@ -89,27 +93,66 @@ internal class ManualMergeStrategyTest {
 
     @Test
     fun `resolve, right`() {
-        TODO("Copy from left once it works")
+        // Given
+        val localEvent1: Event = mockk()
+        val localEvent2: Event = mockk()
+        val localEvents = listOf(localEvent1, localEvent2)
+        val remoteEvent1: Event = mockk()
+        val remoteEvent2: Event = mockk()
+        val remoteEvents = listOf(remoteEvent1, remoteEvent2)
+        val baseNote: Note = createExistingNote(noteId)
+        val localNote: Note = createExistingNote(noteId)
+        val remoteNote: Note = createExistingNote(noteId)
+        val compensatingEvent1: Event = mockk()
+        val compensatingEvent2: Event = mockk()
+        givenCompensatingEvents(givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
+                leftEvents = listOf(compensatingEvent1, compensatingEvent2),
+                rightEvents = emptyList()
+        ))
+        val strategy = createStrategy()
+        strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
+        val conflictObserver = strategy.getConflictedNoteIds().test()
+
+        // When
+        strategy.resolve(noteId, ConflictResolutionChoice.REMOTE)
+        val mergeResult = strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
+
+        // Then
+        assertThat(mergeResult).isEqualTo(Solution(
+                newLocalEvents = localEvents + listOf(compensatingEvent1, compensatingEvent2),
+                newRemoteEvents = remoteEvents
+        ))
+        assertThat(conflictObserver.values().toList()).isEqualTo(listOf(setOf(noteId), emptySet()))
+
+        // When
+        val mergeResult2 = strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
+
+        // Then
+        assertThat(mergeResult2).isEqualTo(NoSolution)
     }
 
     @Test
     fun `resolve, both`() {
         // Given
-        val localEvents: List<Event> = mockk()
-        val remoteEvents: List<Event> = mockk()
+        val localEvent1: Event = mockk()
+        val localEvent2: Event = mockk()
+        val localEvents = listOf(localEvent1, localEvent2)
+        val remoteEvent1: Event = mockk()
+        val remoteEvent2: Event = mockk()
+        val remoteEvents = listOf(remoteEvent1, remoteEvent2)
         val baseNote: Note = createExistingNote(noteId)
         val localNote: Note = createExistingNote(noteId)
         val remoteNote: Note = createExistingNote(noteId)
-        val differences1: Set<Difference> = givenDifferences(localNote, remoteNote)
-        val differences2: Set<Difference> = givenDifferences(TODO("match a Note that exists and whose revision is 1"), localNote)
-        val compensatingEventsForLocal: List<Event> = mockk()
-        val compensatingEventsForNewNote: List<Event> = mockk()
-        givenCompensatingEvents(differences1, DifferenceCompensator.Target.RIGHT, CompensatingEvents(
-                leftEvents = compensatingEventsForLocal,
-                rightEvents = remoteEvents
+        val compensatingEvent1: Event = mockk()
+        val compensatingEvent2: Event = mockk()
+        val compensatingEvent3: Event = mockk()
+        val compensatingEvent4: Event = mockk()
+        givenCompensatingEvents(givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
+                leftEvents = listOf(compensatingEvent1, compensatingEvent2),
+                rightEvents = emptyList()
         ))
-        givenCompensatingEvents(differences2, DifferenceCompensator.Target.RIGHT, CompensatingEvents(
-                leftEvents = compensatingEventsForNewNote,
+        givenCompensatingEvents(givenDifferences(Note(), localNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
+                leftEvents = listOf(compensatingEvent3, compensatingEvent4),
                 rightEvents = emptyList()
         ))
         val strategy = createStrategy()
@@ -122,10 +165,16 @@ internal class ManualMergeStrategyTest {
 
         // Then
         assertThat(mergeResult).isEqualTo(Solution(
-                newLocalEvents = compensatingEventsForLocal + compensatingEventsForNewNote,
-                newRemoteEvents = compensatingEventsForNewNote
+                newLocalEvents = localEvents + listOf(compensatingEvent1, compensatingEvent2, compensatingEvent3, compensatingEvent4),
+                newRemoteEvents = remoteEvents + listOf(compensatingEvent3, compensatingEvent4)
         ))
         assertThat(conflictObserver.values().toList()).isEqualTo(listOf(setOf(noteId), emptySet()))
+
+        // When
+        val mergeResult2 = strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
+
+        // Then
+        assertThat(mergeResult2).isEqualTo(NoSolution)
     }
 
     @Test
@@ -162,7 +211,7 @@ internal class ManualMergeStrategyTest {
     private fun createStrategy() = ManualMergeStrategy()
 
     private fun givenCompensatingEvents(differences: Set<Difference>, target: DifferenceCompensator.Target, compensatingEvents: CompensatingEvents): CompensatingEvents {
-        every { differenceCompensator.compensate(differences, target = DifferenceCompensator.Target.LEFT) }.returns(compensatingEvents)
+        every { differenceCompensator.compensate(differences, target = target) }.returns(compensatingEvents)
         return compensatingEvents
     }
 

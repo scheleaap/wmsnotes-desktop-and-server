@@ -33,6 +33,11 @@ internal class GrpcCommandMapperTest {
                     lastRevision = 1
                     deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
                 }.build(),
+                UndeleteNoteCommand(noteId = "note", lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
+                    undeleteNote = Command.PostCommandRequest.UndeleteNoteCommand.newBuilder().build()
+                }.build(),
                 AddAttachmentCommand(noteId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()) to Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     lastRevision = 1

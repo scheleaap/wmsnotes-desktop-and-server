@@ -40,6 +40,12 @@ internal class GrpcEventMapperTest {
                     eventId = 1
                     noteId = "note"
                     revision = 1
+                    noteUndeleted = Event.GetEventsResponse.NoteUndeletedEvent.newBuilder().build()
+                }.build() to NoteDeletedEvent(eventId = 1, noteId = "note", revision = 1),
+                Event.GetEventsResponse.newBuilder().apply {
+                    eventId = 1
+                    noteId = "note"
+                    revision = 1
                     attachmentAdded = Event.GetEventsResponse.AttachmentAddedEvent.newBuilder().apply {
                         name = "att"
                         content = ByteString.copyFrom("data".toByteArray())
