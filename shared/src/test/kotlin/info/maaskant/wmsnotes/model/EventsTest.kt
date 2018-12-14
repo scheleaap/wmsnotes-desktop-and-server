@@ -26,13 +26,14 @@ internal class EventsTest {
     @TestFactory
     fun `withEventId for all event types`(): List<DynamicTest> {
         return listOf(
-                NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1"),
+                NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Title 1", content = "Text"),
                 NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
                 NoteUndeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
                 AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1"),
-                ContentChangedEvent(eventId = 0, noteId = "note-1", revision = 1, content = "data"),
-                TitleChangedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1")
+                ContentChangedEvent(eventId = 0, noteId = "note-1", revision = 1, content = "Text"),
+                TitleChangedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1"),
+                MovedEvent(eventId = 0, noteId = "note-1", revision = 1, path = Path("el1", "el2"))
                 // Add more classes here
         ).map {
             DynamicTest.dynamicTest(it::class.simpleName) {
@@ -49,9 +50,13 @@ internal class EventsTest {
     fun `equals and hashCode for all event types`(): List<DynamicTest> {
         return listOf(
                 Item(
-                        o = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1"),
-                        sameButCopy = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1"),
-                        differents = listOf(NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "different"))
+                        o = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Title", content = "Text"),
+                        sameButCopy = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Title", content = "Text"),
+                        differents = listOf(
+                                NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "different"), title = "Title", content = "Text"),
+                                NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Different", content = "Text"),
+                                NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Title", content = "Different")
+                        )
                 ),
                 Item(
                         o = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
@@ -77,14 +82,19 @@ internal class EventsTest {
                         differents = listOf(AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "different"))
                 ),
                 Item(
-                        o = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "data"),
-                        sameButCopy = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "data"),
-                        differents = listOf(ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "different"))
+                        o = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "Text"),
+                        sameButCopy = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "Text"),
+                        differents = listOf(ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "Different"))
                 ),
                 Item(
                         o = TitleChangedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title"),
                         sameButCopy = TitleChangedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title"),
                         differents = listOf(TitleChangedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Different"))
+                ),
+                Item(
+                        o = MovedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2")),
+                        sameButCopy = MovedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2")),
+                        differents = listOf(MovedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "different")))
                 )
                 // Add more classes here
         ).map {

@@ -15,13 +15,14 @@ internal class CommandToEventMapperTest {
         val eventRevision = lastRevision + 1
 
         val pairs = listOf(
-                CreateNoteCommand(noteId, "Title 1") to NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"),
-                DeleteNoteCommand(noteId, lastRevision) to NoteDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision),
-                UndeleteNoteCommand(noteId, lastRevision) to NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision),
-                AddAttachmentCommand(noteId, lastRevision, "att-1", "data".toByteArray()) to AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1", content = "data".toByteArray()),
-                DeleteAttachmentCommand(noteId, lastRevision, "att-1") to AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1"),
-                ChangeContentCommand(noteId, lastRevision, "data") to ContentChangedEvent(eventId = 0, noteId = noteId, revision = eventRevision, content = "data"),
-                ChangeTitleCommand(noteId, lastRevision, "Title") to TitleChangedEvent(eventId = 0, noteId = noteId, revision = eventRevision, title = "Title")
+                CreateNoteCommand(noteId = noteId, title = "Title 1") to NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Title 1"),
+                DeleteNoteCommand(noteId = noteId, lastRevision = lastRevision) to NoteDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision),
+                UndeleteNoteCommand(noteId = noteId, lastRevision = lastRevision) to NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision),
+                AddAttachmentCommand(noteId = noteId, lastRevision = lastRevision, name = "att-1", content = "data".toByteArray()) to AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1", content = "data".toByteArray()),
+                DeleteAttachmentCommand(noteId = noteId, lastRevision = lastRevision, name = "att-1") to AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1"),
+                ChangeContentCommand(noteId = noteId, lastRevision = lastRevision, content = "Text") to ContentChangedEvent(eventId = 0, noteId = noteId, revision = eventRevision, content = "Text"),
+                ChangeTitleCommand(noteId = noteId, lastRevision = lastRevision, title = "Title") to TitleChangedEvent(eventId = 0, noteId = noteId, revision = eventRevision, title = "Title"),
+                MoveCommand(noteId = noteId, lastRevision = lastRevision, path = Path("el1", "el2")) to MovedEvent(eventId = 0, noteId = noteId, revision = eventRevision, path = Path("el1", "el2"))
                 // Add more classes here
         )
         return pairs.map { (command, expectedEvent) ->

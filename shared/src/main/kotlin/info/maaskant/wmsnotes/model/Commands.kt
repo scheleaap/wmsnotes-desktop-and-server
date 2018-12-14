@@ -5,7 +5,7 @@ import java.util.*
 
 sealed class Command
 
-data class CreateNoteCommand(val noteId: String?, val title: String) : Command()
+data class CreateNoteCommand(val noteId: String?, val path: Path, val title: String, val content: String) : Command()
 data class DeleteNoteCommand(val noteId: String, val lastRevision: Int) : Command()
 data class UndeleteNoteCommand(val noteId: String, val lastRevision: Int) : Command()
 
@@ -42,3 +42,5 @@ data class DeleteAttachmentCommand(val noteId: String, val lastRevision: Int, va
 data class ChangeContentCommand(val noteId: String, val lastRevision: Int, val content: String) : Command()
 
 data class ChangeTitleCommand(val noteId: String, val lastRevision: Int, val title: String) : Command()
+
+data class MoveCommand(val noteId: String, val lastRevision: Int, val path: Path) : Command()

@@ -53,11 +53,11 @@ internal class GrpcCommandMapperTest {
                         name = "att"
                     }.build()
                 }.build(),
-                ChangeContentCommand(noteId = "note", lastRevision = 1, content = "data") to Command.PostCommandRequest.newBuilder().apply {
+                ChangeContentCommand(noteId = "note", lastRevision = 1, content = "Text") to Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     lastRevision = 1
                     changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().apply {
-                        content = "data"
+                        content = "Text"
                     }.build()
                 }.build(),
                 ChangeTitleCommand(noteId = "note", lastRevision = 1, title = "Title") to Command.PostCommandRequest.newBuilder().apply {
@@ -65,6 +65,13 @@ internal class GrpcCommandMapperTest {
                     lastRevision = 1
                     changeTitle = Command.PostCommandRequest.ChangeTitleCommand.newBuilder().apply {
                         title = "Title"
+                    }.build()
+                }.build(),
+                MoveCommand(noteId = "note", lastRevision = 1, path = Path("el1", "el2")) to Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
+                    move = Command.PostCommandRequest.MoveCommand.newBuilder().apply {
+                        path = TODO()
                     }.build()
                 }.build()
                 // Add more classes here

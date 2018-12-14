@@ -65,9 +65,9 @@ internal class GrpcEventMapperTest {
                     noteId = "note"
                     revision = 1
                     contentChanged = Event.GetEventsResponse.ContentChangedEvent.newBuilder().apply {
-                        content = "data"
+                        content = "Text"
                     }.build()
-                }.build() to ContentChangedEvent(eventId = 1, noteId = "note", revision = 1, content = "data"),
+                }.build() to ContentChangedEvent(eventId = 1, noteId = "note", revision = 1, content = "Text"),
                 Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"
@@ -75,7 +75,15 @@ internal class GrpcEventMapperTest {
                     titleChanged = Event.GetEventsResponse.TitleChangedEvent.newBuilder().apply {
                         title = "Title"
                     }.build()
-                }.build() to TitleChangedEvent(eventId = 1, noteId = "note", revision = 1, title = "Title")
+                }.build() to TitleChangedEvent(eventId = 1, noteId = "note", revision = 1, title = "Title"),
+                Event.GetEventsResponse.newBuilder().apply {
+                    eventId = 1
+                    noteId = "note"
+                    revision = 1
+                    moved = Event.GetEventsResponse.MovedEvent.newBuilder().apply {
+                        path = TODO()
+                    }.build()
+                }.build() to MovedEvent(eventId = 1, noteId = "note", revision = 1, path = Path("el1", "el2"))
                 // Add more classes here
         )
         return items.map { (event, expectedResponse) ->

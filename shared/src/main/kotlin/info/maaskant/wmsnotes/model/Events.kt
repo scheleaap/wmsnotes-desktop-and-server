@@ -11,9 +11,9 @@ sealed class Event(val eventId: Int, val noteId: String, val revision: Int) {
     override fun hashCode() = Objects.hash(eventId, noteId, revision)
 }
 
-class NoteCreatedEvent(eventId: Int, noteId: String, revision: Int, val title: String) : Event(eventId, noteId, revision) {
+class NoteCreatedEvent(eventId: Int, noteId: String, revision: Int, val path: Path, val title: String, val content: String) : Event(eventId, noteId, revision) {
     override fun withEventId(eventId: Int): NoteCreatedEvent {
-        return NoteCreatedEvent(eventId = eventId, noteId = noteId, revision = revision, title = title)
+        return NoteCreatedEvent(eventId = eventId, noteId = noteId, revision = revision, path = Path("a"), title = title, content = "")
     }
 
     override fun toString() = kotlinToString(properties = arrayOf(NoteCreatedEvent::eventId, NoteCreatedEvent::noteId, NoteCreatedEvent::revision, NoteCreatedEvent::title))
@@ -117,4 +117,19 @@ class TitleChangedEvent(eventId: Int, noteId: String, revision: Int, val title: 
             superEquals = { super.equals(other) })
 
     override fun hashCode() = Objects.hash(title, super.hashCode())
+}
+
+class MovedEvent(eventId: Int, noteId: String, revision: Int, val path: Path) : Event(eventId, noteId, revision) {
+    override fun withEventId(eventId: Int): MovedEvent {
+        return MovedEvent(eventId = eventId, noteId = noteId, revision = revision, path = path)
+    }
+
+    override fun toString() = kotlinToString(properties = arrayOf(MovedEvent::eventId, MovedEvent::noteId, MovedEvent::revision, MovedEvent::path))
+
+    override fun equals(other: Any?) = kotlinEquals(
+            other = other,
+            properties = arrayOf(MovedEvent::path),
+            superEquals = { super.equals(other) })
+
+    override fun hashCode() = Objects.hash(path, super.hashCode())
 }

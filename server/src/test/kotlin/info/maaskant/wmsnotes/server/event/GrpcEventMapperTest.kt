@@ -64,13 +64,13 @@ internal class GrpcEventMapperTest {
                         name = "att"
                     }.build()
                 }.build(),
-                ContentChangedEvent(eventId = 1, noteId = "note", revision = 1, content = "data")
+                ContentChangedEvent(eventId = 1, noteId = "note", revision = 1, content = "Text")
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"
                     revision = 1
                     contentChanged = Event.GetEventsResponse.ContentChangedEvent.newBuilder().apply {
-                        content = "data"
+                        content = "Text"
                     }.build()
                 }.build(),
                 TitleChangedEvent(eventId = 1, noteId = "note", revision = 1, title = "Title")
@@ -80,6 +80,15 @@ internal class GrpcEventMapperTest {
                     revision = 1
                     titleChanged = Event.GetEventsResponse.TitleChangedEvent.newBuilder().apply {
                         title = "Title"
+                    }.build()
+                }.build(),
+                MovedEvent(eventId = 1, noteId = "note", revision = 1, path = Path("el1", "el2"))
+                        to Event.GetEventsResponse.newBuilder().apply {
+                    eventId = 1
+                    noteId = "note"
+                    revision = 1
+                    moved = Event.GetEventsResponse.MovedEvent.newBuilder().apply {
+                        path = TODO()
                     }.build()
                 }.build()
                 // Add more classes here
