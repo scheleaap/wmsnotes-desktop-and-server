@@ -65,7 +65,8 @@ internal class ManualMergeStrategyTest {
         val remoteNote: Note = createExistingNote(noteId)
         val compensatingEvent1: Event = mockk()
         val compensatingEvent2: Event = mockk()
-        givenCompensatingEvents(givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.LEFT, CompensatingEvents(
+
+        givenCompensatingEvents(noteId, givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.LEFT, CompensatingEvents(
                 leftEvents = emptyList(),
                 rightEvents = listOf(compensatingEvent1, compensatingEvent1)
         ))
@@ -105,7 +106,7 @@ internal class ManualMergeStrategyTest {
         val remoteNote: Note = createExistingNote(noteId)
         val compensatingEvent1: Event = mockk()
         val compensatingEvent2: Event = mockk()
-        givenCompensatingEvents(givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
+        givenCompensatingEvents(noteId, givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
                 leftEvents = listOf(compensatingEvent1, compensatingEvent2),
                 rightEvents = emptyList()
         ))
@@ -147,11 +148,11 @@ internal class ManualMergeStrategyTest {
         val compensatingEvent2: Event = mockk()
         val compensatingEvent3: Event = mockk()
         val compensatingEvent4: Event = mockk()
-        givenCompensatingEvents(givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
+        givenCompensatingEvents(noteId, givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
                 leftEvents = listOf(compensatingEvent1, compensatingEvent2),
                 rightEvents = emptyList()
         ))
-        givenCompensatingEvents(givenDifferences(Note(), localNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
+        givenCompensatingEvents(noteId, givenDifferences(Note(), localNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
                 leftEvents = listOf(compensatingEvent3, compensatingEvent4),
                 rightEvents = emptyList()
         ))
@@ -191,7 +192,7 @@ internal class ManualMergeStrategyTest {
         val remoteNote2: Note = createExistingNote(noteId)
         val differences1: Set<Difference> = givenDifferences(localNote1, remoteNote1)
         val compensatingEventsForRemote1: List<Event> = mockk()
-        givenCompensatingEvents(differences1, DifferenceCompensator.Target.LEFT, CompensatingEvents(
+        givenCompensatingEvents(noteId, differences1, DifferenceCompensator.Target.LEFT, CompensatingEvents(
                 leftEvents = localEvents1,
                 rightEvents = compensatingEventsForRemote1
         ))
@@ -208,10 +209,10 @@ internal class ManualMergeStrategyTest {
         assertThat(conflictObserver.values().toList()).isEqualTo(listOf(setOf(noteId), emptySet(), setOf(noteId)))
     }
 
-    private fun createStrategy() = ManualMergeStrategy()
+    private fun createStrategy() = ManualMergeStrategy(differenceAnalyzer, differenceCompensator)
 
-    private fun givenCompensatingEvents(differences: Set<Difference>, target: DifferenceCompensator.Target, compensatingEvents: CompensatingEvents): CompensatingEvents {
-        every { differenceCompensator.compensate(differences, target = target) }.returns(compensatingEvents)
+    private fun givenCompensatingEvents(noteId: String, differences: Set<Difference>, target: DifferenceCompensator.Target, compensatingEvents: CompensatingEvents): CompensatingEvents {
+        every { differenceCompensator.compensate(noteId, differences, target = target) }.returns(compensatingEvents)
         return compensatingEvents
     }
 

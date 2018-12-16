@@ -5,7 +5,10 @@ import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.projection.Note
 import io.reactivex.Observable
 
-class ManualMergeStrategy : MergeStrategy {
+class ManualMergeStrategy @Inject constructor(
+        differenceAnalyzer: DifferenceAnalyzer,
+        differenceCompensator: DifferenceCompensator
+) : MergeStrategy {
     override fun merge(
             localEvents: List<Event>,
             remoteEvents: List<Event>,

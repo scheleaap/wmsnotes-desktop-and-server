@@ -52,6 +52,7 @@ internal class DifferenceCompensatorTest {
         )
         return items.map { (difference, target, compensatingEvents) ->
             DynamicTest.dynamicTest("$difference, $target chosen") {
+                // Given
                 val compensator = DifferenceCompensator()
 
                 // When
@@ -130,6 +131,7 @@ internal class DifferenceCompensatorTest {
         )
         return items.map { (difference, target, compensatingEvents) ->
             DynamicTest.dynamicTest("$difference, $target chosen") {
+                // Given
                 val compensator = DifferenceCompensator()
 
                 // When
