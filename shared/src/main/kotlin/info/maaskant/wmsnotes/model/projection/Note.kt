@@ -71,7 +71,7 @@ class Note private constructor(
             is AttachmentAddedEvent -> applyAttachmentAdded(event)
             is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
             is ContentChangedEvent -> applyContentChanged(event)
-            is TitleChangedEvent -> TODO()
+            is TitleChangedEvent -> applyTitleChanged(event)
         }
     }
 
@@ -132,6 +132,14 @@ class Note private constructor(
         } else {
             noChanges()
         }
+    }
+
+    private fun applyTitleChanged(event: TitleChangedEvent): Pair<Note, Event?> {
+        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
+        return if (title == event.title) noChanges() else copy(
+                revision = event.revision,
+                title = event.title
+        ) to event
     }
 
     private fun applyUndeleted(event: NoteUndeletedEvent): Pair<Note, Event?> {

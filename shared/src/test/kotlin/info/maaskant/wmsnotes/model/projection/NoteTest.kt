@@ -418,7 +418,7 @@ internal class NoteTest {
         // Then
         assertThat(eventOut).isEqualTo(eventIn)
         assertThat(noteBefore.revision).isEqualTo(1)
-        assertThat(noteBefore.title).isEqualTo("")
+        assertThat(noteBefore.title).isEqualTo("Title 1")
         assertThat(noteAfter.revision).isEqualTo(2)
         assertThat(noteAfter.title).isEqualTo("Title 2")
     }
@@ -427,7 +427,7 @@ internal class NoteTest {
     fun `title changed, idempotence 1`() {
         // Given
         val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"))
-        val eventIn = TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, title = "Title")
+        val eventIn = TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, title = "Title")
 
         // When
         val (noteAfter, eventOut) = noteBefore.apply(eventIn)
