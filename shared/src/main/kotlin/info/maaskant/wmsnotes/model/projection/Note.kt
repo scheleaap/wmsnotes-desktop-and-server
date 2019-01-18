@@ -67,10 +67,10 @@ class Note private constructor(
         return when (event) {
             is NoteCreatedEvent -> applyCreated(event)
             is NoteDeletedEvent -> applyDeleted(event)
+            is NoteUndeletedEvent -> applyUndeleted(event)
             is AttachmentAddedEvent -> applyAttachmentAdded(event)
             is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
             is ContentChangedEvent -> applyContentChanged(event)
-            is NoteUndeletedEvent -> TODO()
             is TitleChangedEvent -> TODO()
         }
     }
@@ -128,6 +128,17 @@ class Note private constructor(
         return if (exists) {
             copy(
                     exists = false,
+                    revision = event.revision
+            ) to event
+        } else {
+            noChanges()
+        }
+    }
+
+    private fun applyUndeleted(event: NoteUndeletedEvent): Pair<Note, Event?> {
+        return if (!exists) {
+            copy(
+                    exists = true,
                     revision = event.revision
             ) to event
         } else {
