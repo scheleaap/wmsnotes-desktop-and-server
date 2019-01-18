@@ -1,9 +1,7 @@
 package info.maaskant.wmsnotes.client.synchronization
 
-import info.maaskant.wmsnotes.model.AttachmentAddedEvent
-import info.maaskant.wmsnotes.model.AttachmentDeletedEvent
-import info.maaskant.wmsnotes.model.ContentChangedEvent
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.client.synchronization.ExistenceDifference.ExistenceType.*
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.projection.Note
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
@@ -30,7 +28,7 @@ internal class DifferenceAnalyzerTest {
     }
 
     @Test
-    fun existence() {
+    fun `existence 1`() {
         // Given
         val left = Note()
         val right = left.apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
@@ -40,9 +38,21 @@ internal class DifferenceAnalyzerTest {
         val differences = analyzer.compare(left, right)
 
         // Then
-        assertThat(differences).contains(
-                ExistenceDifference(/*false*/TODO(), /*true*/TODO())
-        )
+        assertThat(differences).contains(ExistenceDifference(NOT_YET_CREATED, EXISTS))
+    }
+
+    @Test
+    fun `existence 2`() {
+        // Given
+        val left = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+        val right = left.apply(NoteDeletedEvent(eventId = 2, noteId = noteId, revision = 2)).first
+        val analyzer = DifferenceAnalyzer()
+
+        // When
+        val differences = analyzer.compare(left, right)
+
+        // Then
+        assertThat(differences).contains(ExistenceDifference(EXISTS, DELETED))
     }
 
     @Test
@@ -56,7 +66,7 @@ internal class DifferenceAnalyzerTest {
         val differences = analyzer.compare(left, right)
 
         // Then
-        assertThat(differences).isEqualTo(listOf(
+        assertThat(differences).isEqualTo(setOf(
                 TitleDifference(title, "different")
         ))
     }
@@ -72,7 +82,7 @@ internal class DifferenceAnalyzerTest {
         val differences = analyzer.compare(left, right)
 
         // Then
-        assertThat(differences).isEqualTo(listOf(
+        assertThat(differences).isEqualTo(setOf(
                 ContentDifference("", "different")
         ))
     }
@@ -89,7 +99,7 @@ internal class DifferenceAnalyzerTest {
         val differences = analyzer.compare(left, right)
 
         // Then
-        assertThat(differences).isEqualTo(listOf(
+        assertThat(differences).isEqualTo(setOf(
                 AttachmentDifference(attachmentName, null, attachmentContent)
         ))
     }
@@ -107,7 +117,7 @@ internal class DifferenceAnalyzerTest {
         val differences = analyzer.compare(left, right)
 
         // Then
-        assertThat(differences).isEqualTo(listOf(
+        assertThat(differences).isEqualTo(setOf(
                 AttachmentDifference("att", attachmentContent, null)
         ))
     }
@@ -128,60 +138,24 @@ internal class DifferenceAnalyzerTest {
         val differences = analyzer.compare(left, right)
 
         // Then
-        assertThat(differences).isEqualTo(listOf(
+        assertThat(differences).isEqualTo(setOf(
                 AttachmentDifference("att", attachmentContent, differentContent)
         ))
     }
 
     @Test
-    fun `no differences`() {
-        TODO("replace other tests with this one")
-        val attachment1Name = UUID.randomUUID().toString()
-        val attachment2Name = UUID.randomUUID().toString()
-        val attachment3Name = UUID.randomUUID().toString()
-        val differentContent = "different".toByteArray()
+    fun `multiple differences`() {
+        // Given
         val left = Note()
-                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
-                .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = attachment1Name, content = attachmentContent)).first
         val right = left
-        val analyzer = DifferenceAnalyzer()
-
-        // When
-        val differences = analyzer.compare(left, right)
-
-        // Then
-        assertThat(differences).isEqualTo(emptySet<Difference>())
-    }
-
-    @Test
-    fun `all differences combined`() {
-        TODO("replace other tests with this one")
-        val attachment1Name = UUID.randomUUID().toString()
-        val attachment2Name = UUID.randomUUID().toString()
-        val attachment3Name = UUID.randomUUID().toString()
-        val differentContent = "different".toByteArray()
-        val left = Note()
                 .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
-                .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = attachment1Name, content = attachmentContent)).first
-                .apply(AttachmentAddedEvent(eventId = 3, noteId = noteId, revision = 3, name = attachment3Name, content = attachmentContent)).first
-        val right = Note()
-                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = "different")).first
-                .apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = "different")).first
-                .apply(AttachmentAddedEvent(eventId = 3, noteId = noteId, revision = 3, name = attachment2Name, content = attachmentContent)).first
-                .apply(AttachmentDeletedEvent(eventId = 4, noteId = noteId, revision = 4, name = attachment3Name)).first
-                .apply(AttachmentAddedEvent(eventId = 5, noteId = noteId, revision = 5, name = attachment3Name, content = differentContent)).first
+                .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = "att", content = attachmentContent)).first
         val analyzer = DifferenceAnalyzer()
 
         // When
         val differences = analyzer.compare(left, right)
 
         // Then
-        assertThat(differences).isEqualTo(setOf(
-                TitleDifference(title, "different"),
-                ContentDifference("", "different"),
-                AttachmentDifference(attachment1Name, attachmentContent, null),
-                AttachmentDifference(attachment2Name, null, attachmentContent),
-                AttachmentDifference(attachment3Name, attachmentContent, differentContent)
-        ))
+        assertThat(differences.size).isGreaterThan(1)
     }
 }

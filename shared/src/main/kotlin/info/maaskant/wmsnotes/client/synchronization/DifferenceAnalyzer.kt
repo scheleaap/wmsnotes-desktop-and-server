@@ -1,27 +1,63 @@
 package info.maaskant.wmsnotes.client.synchronization
 
+import au.com.console.kassava.kotlinEquals
 import info.maaskant.wmsnotes.model.projection.Note
 import java.util.*
 
 class DifferenceAnalyzer {
     fun compare(left: Note, right: Note): Set<Difference> {
-        if (left.exists != right.exists) {
-            return setOf(ExistenceDifference(TODO(), TODO()))
-        }
-        if (left.title != right.title) {
-            return setOf(TitleDifference(left.title, right.title))
-        }
-        if (left.content != right.content) {
-            return setOf(ContentDifference(left.content, right.content))
-        }
+        val differences: MutableSet<Difference> = mutableSetOf()
+
+        differences += compareExistence(left, right)
+        differences += compareTitle(left, right)
+        differences += compareContent(left, right)
+        differences += compareAttachments(left, right)
+        return differences
+    }
+
+    private fun compareAttachments(left: Note, right: Note): Set<Difference> {
+        val differences: MutableSet<Difference> = mutableSetOf()
         val leftAttachmentNames = left.attachments.keys
         val rightAttachmentNames = right.attachments.keys
         for (name in (leftAttachmentNames + rightAttachmentNames)) {
             if (left.attachmentHashes[name] != right.attachmentHashes[name]) {
-                return setOf(AttachmentDifference(name, left.attachments[name], right.attachments[name]))
+                differences += AttachmentDifference(name, left.attachments[name], right.attachments[name])
             }
         }
-        return emptySet()
+        return differences
+    }
+
+    private fun compareContent(left: Note, right: Note): Set<Difference> =
+            if (left.content != right.content) {
+                setOf(ContentDifference(left.content, right.content))
+            } else {
+                emptySet()
+            }
+
+    private fun compareExistence(left: Note, right: Note): Set<Difference> =
+            if (left.exists != right.exists) {
+                val leftStatus = getExistenceType(left)
+                val rightStatus = getExistenceType(right)
+                setOf(ExistenceDifference(leftStatus, rightStatus))
+            } else {
+                emptySet()
+            }
+
+    private fun compareTitle(left: Note, right: Note): Set<Difference> =
+            if (left.title != right.title) {
+                setOf(TitleDifference(left.title, right.title))
+            } else {
+                emptySet()
+            }
+
+    private fun getExistenceType(note: Note) = if (note.exists) {
+        ExistenceDifference.ExistenceType.EXISTS
+    } else {
+        if (note.revision > 0) {
+            ExistenceDifference.ExistenceType.DELETED
+        } else {
+            ExistenceDifference.ExistenceType.NOT_YET_CREATED
+        }
     }
 }
 
@@ -34,7 +70,16 @@ data class ExistenceDifference(val left: ExistenceType, val right: ExistenceType
         DELETED
     }
 }
-data class TitleDifference(val left: String, val right: String) : Difference()
+
+data class TitleDifference(val left: String, val right: String) : Difference() {
+    override fun equals(other: Any?) = kotlinEquals(
+            other = other,
+            properties = arrayOf(TitleDifference::left, TitleDifference::right)
+    )
+
+    override fun hashCode() = Objects.hash(left, right)
+}
+
 data class ContentDifference(val left: String, val right: String) : Difference()
 data class AttachmentDifference(val name: String, val left: ByteArray?, val right: ByteArray?) : Difference() {
     override fun equals(other: Any?): Boolean {

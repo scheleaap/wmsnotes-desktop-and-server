@@ -24,7 +24,8 @@ class NoteCreatedEvent(eventId: Int, noteId: String, revision: Int, val title: S
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
             properties = arrayOf(NoteCreatedEvent::title),
-            superEquals = { super.equals(other) })
+            superEquals = { super.equals(other) }
+    )
 
     override fun hashCode() = Objects.hash(title, super.hashCode())
 }
@@ -93,7 +94,8 @@ class AttachmentDeletedEvent(eventId: Int, noteId: String, revision: Int, val na
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
             properties = arrayOf(AttachmentDeletedEvent::name),
-            superEquals = { super.equals(other) })
+            superEquals = { super.equals(other) }
+    )
 
     override fun hashCode() = Objects.hash(name, super.hashCode())
 }
@@ -112,7 +114,8 @@ class ContentChangedEvent(eventId: Int, noteId: String, revision: Int, val conte
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
             properties = arrayOf(ContentChangedEvent::content),
-            superEquals = { super.equals(other) })
+            superEquals = { super.equals(other) }
+    )
 
     override fun hashCode() = Objects.hash(content, super.hashCode())
 }
@@ -129,7 +132,8 @@ class TitleChangedEvent(eventId: Int, noteId: String, revision: Int, val title: 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
             properties = arrayOf(TitleChangedEvent::title),
-            superEquals = { super.equals(other) })
+            superEquals = { super.equals(other) }
+    )
 
     override fun hashCode() = Objects.hash(title, super.hashCode())
 }
