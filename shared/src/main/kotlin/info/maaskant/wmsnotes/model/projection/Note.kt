@@ -92,8 +92,7 @@ class Note private constructor(
     }
 
     private fun applyAttachmentDeleted(event: AttachmentDeletedEvent): Pair<Note, Event?> {
-        // TODO: Implement test to enable this
-        // if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
+        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
         return if (event.name in attachments) {
             copy(
                     revision = event.revision,

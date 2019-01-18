@@ -81,6 +81,7 @@ internal class NoteTest {
         }
     }
 
+    // Does it make sense to disallow these events, when viewed in light of synchronization?
     @TestFactory
     fun `events that are not allowed if the note does not exist`(): List<DynamicTest> {
         return listOf(
