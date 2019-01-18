@@ -15,7 +15,7 @@ The application consists of three parts:
 
 ## Technical Details
 
-WMS Notes has been used to try out several new approaches and technologies, including:
+WMS Notes has been used to try out several approaches and technologies, including:
 * Event sourcing
 * Protobuf + gRPC
 * Kotlin
