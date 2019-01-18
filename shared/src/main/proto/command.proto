@@ -16,9 +16,11 @@ message PostCommandRequest {
     oneof command {
         CreateNoteCommand create_note = 10;
         DeleteNoteCommand delete_note = 11;
-        AddAttachmentCommand add_attachment = 12;
-        DeleteAttachmentCommand delete_attachment = 13;
-        ChangeContentCommand change_content = 14;
+        UndeleteNoteCommand undelete_note = 12;
+        AddAttachmentCommand add_attachment = 13;
+        DeleteAttachmentCommand delete_attachment = 14;
+        ChangeContentCommand change_content = 15;
+        ChangeTitleCommand change_title = 16;
     }
 
     message CreateNoteCommand {
@@ -26,6 +28,9 @@ message PostCommandRequest {
     }
 
     message DeleteNoteCommand {
+    }
+
+    message UndeleteNoteCommand {
     }
 
     message AddAttachmentCommand {
@@ -39,6 +44,10 @@ message PostCommandRequest {
 
     message ChangeContentCommand {
         string content = 1;
+    }
+
+    message ChangeTitleCommand {
+        string title = 1;
     }
 }
 

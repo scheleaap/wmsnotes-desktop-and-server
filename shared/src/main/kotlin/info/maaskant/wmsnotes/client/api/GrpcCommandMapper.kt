@@ -21,6 +21,7 @@ class GrpcCommandMapper @Inject constructor() {
                 lastRevision = command.lastRevision
                 deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
             }
+            is UndeleteNoteCommand -> TODO()
             is AddAttachmentCommand -> builder.apply {
                 noteId = command.noteId
                 lastRevision = command.lastRevision
@@ -43,6 +44,7 @@ class GrpcCommandMapper @Inject constructor() {
                     content = command.content
                 }.build()
             }
+            is ChangeTitleCommand -> TODO()
         }
         return builder.build()
     }

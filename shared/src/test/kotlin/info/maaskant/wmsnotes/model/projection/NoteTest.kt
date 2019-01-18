@@ -245,7 +245,7 @@ internal class NoteTest {
     fun `undelete, ignore after create`() {
         // Given
         val noteBefore = noteWithEvents(
-                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"),
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title")
                 )
         val eventIn = NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
 

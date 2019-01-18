@@ -6,6 +6,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import java.util.*
 
 internal class DifferenceCompensatorTest {
     private val noteId = "note"
@@ -15,7 +16,7 @@ internal class DifferenceCompensatorTest {
 
     @TestFactory
     fun existence(): List<DynamicTest> {
-        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = 0 /* TODO: should be random */, revision = 0, title = noteId)
+        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = UUID.randomUUID().toString() /* TODO: should be random */, revision = 0, title = noteId)
         val noteDeletedEvent = NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
         val noteUndeletedEvent = NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0)
         val items = listOf(

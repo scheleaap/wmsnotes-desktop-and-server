@@ -22,9 +22,11 @@ message GetEventsResponse {
     oneof event {
         NoteCreatedEvent note_created = 10;
         NoteDeletedEvent note_deleted = 11;
-        AttachmentAddedEvent attachment_added = 12;
-        AttachmentDeletedEvent attachment_deleted = 13;
-        ContentChangedEvent content_changed = 14;
+        NoteUndeletedEvent note_undeleted = 12;
+        AttachmentAddedEvent attachment_added = 13;
+        AttachmentDeletedEvent attachment_deleted = 14;
+        ContentChangedEvent content_changed = 15;
+        TitleChangedEvent title_changed = 16;
     }
 
     message NoteCreatedEvent {
@@ -32,6 +34,9 @@ message GetEventsResponse {
     }
 
     message NoteDeletedEvent {
+    }
+
+    message NoteUndeletedEvent {
     }
 
     message AttachmentAddedEvent {
@@ -45,5 +50,9 @@ message GetEventsResponse {
 
     message ContentChangedEvent {
         string content = 1;
+    }
+
+    message TitleChangedEvent {
+        string title = 1;
     }
 }

@@ -4,6 +4,7 @@ import info.maaskant.wmsnotes.client.synchronization.MergeStrategy.MergeResult
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.projection.Note
 import io.reactivex.Observable
+import javax.inject.Inject
 
 class ManualMergeStrategy @Inject constructor(
         differenceAnalyzer: DifferenceAnalyzer,

@@ -70,6 +70,8 @@ class Note private constructor(
             is AttachmentAddedEvent -> applyAttachmentAdded(event)
             is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
             is ContentChangedEvent -> applyContentChanged(event)
+            is NoteUndeletedEvent -> TODO()
+            is TitleChangedEvent -> TODO()
         }
     }
 

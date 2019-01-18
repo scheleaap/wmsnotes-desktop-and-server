@@ -66,97 +66,97 @@ class NewSynchronizer @Inject constructor(
         }
     }
 
-    private fun processLocalOutboundEvents(localOutboundEvents: Observable<Event>) {
-        var connectionProblem = false
-        val noteIdsWithErrors: MutableSet<String> = HashSet<String>()
-        localOutboundEvents
-                .filter { !connectionProblem && it.noteId !in noteIdsWithErrors }
-                .forEach {
-                    if (it.eventId !in state.localEventIdsToIgnore) {
-                        logger.debug("Processing local event: $it")
-                        val command = eventToCommandMapper.map(it, state.lastKnownRemoteRevisions[it.noteId])
-                        try {
-                            val request = grpcCommandMapper.toGrpcPostCommandRequest(command)
-                            logger.debug("Sending command to server: $request")
-                            val response = remoteCommandService
-                                    .apply { if (grpcDeadline != null) this.withDeadline(grpcDeadline) }
-                                    .postCommand(request)
-                            if (response.status == Command.PostCommandResponse.Status.SUCCESS) {
-                                localEvents.removeEvent(it)
-                                updateState(state
-                                        .updateLastSynchronizedLocalRevision(it.noteId, it.revision)
-                                        .run {
-                                            if (response.newEventId > 0) {
-                                                this
-                                                        .updateLastKnownRemoteRevision(it.noteId, response.newRevision)
-                                                        .ignoreRemoteEvent(response.newEventId)
-                                            } else {
-                                                this
-                                            }
-                                        })
-                                logger.debug("Local event successfully processed: $it")
-                            } else {
-                                noteIdsWithErrors += it.noteId
-                                logger.debug("Command not processed by server: $request -> ${response.status} ${response.errorDescription}")
-                            }
-                        } catch (e: StatusRuntimeException) {
-                            when (e.status.code) {
-                                Status.Code.UNAVAILABLE -> {
-                                    logger.debug("Could not send command for event $it to server: server not available")
-                                    connectionProblem = true
-                                }
-                                Status.Code.DEADLINE_EXCEEDED -> {
-                                    logger.debug("Could not send command for event $it to server: server is taking too long to respond")
-                                    connectionProblem = true
-                                }
-                                else -> logger.warn("Error sending command for event $it to server: ${e.status.code}, ${e.status.description}")
-                            }
-                        }
-                    } else {
-                        localEvents.removeEvent(it)
-                        updateState(state.removeLocalEventToIgnore(it.eventId))
-                        logger.debug("Ignored local event $it")
-                    }
-                }
-    }
+//    private fun processLocalOutboundEvents(localOutboundEvents: Observable<Event>) {
+//        var connectionProblem = false
+//        val noteIdsWithErrors: MutableSet<String> = HashSet<String>()
+//        localOutboundEvents
+//                .filter { !connectionProblem && it.noteId !in noteIdsWithErrors }
+//                .forEach {
+//                    if (it.eventId !in state.localEventIdsToIgnore) {
+//                        logger.debug("Processing local event: $it")
+//                        val command = eventToCommandMapper.map(it, state.lastKnownRemoteRevisions[it.noteId])
+//                        try {
+//                            val request = grpcCommandMapper.toGrpcPostCommandRequest(command)
+//                            logger.debug("Sending command to server: $request")
+//                            val response = remoteCommandService
+//                                    .apply { if (grpcDeadline != null) this.withDeadline(grpcDeadline) }
+//                                    .postCommand(request)
+//                            if (response.status == Command.PostCommandResponse.Status.SUCCESS) {
+//                                localEvents.removeEvent(it)
+//                                updateState(state
+//                                        .updateLastSynchronizedLocalRevision(it.noteId, it.revision)
+//                                        .run {
+//                                            if (response.newEventId > 0) {
+//                                                this
+//                                                        .updateLastKnownRemoteRevision(it.noteId, response.newRevision)
+//                                                        .ignoreRemoteEvent(response.newEventId)
+//                                            } else {
+//                                                this
+//                                            }
+//                                        })
+//                                logger.debug("Local event successfully processed: $it")
+//                            } else {
+//                                noteIdsWithErrors += it.noteId
+//                                logger.debug("Command not processed by server: $request -> ${response.status} ${response.errorDescription}")
+//                            }
+//                        } catch (e: StatusRuntimeException) {
+//                            when (e.status.code) {
+//                                Status.Code.UNAVAILABLE -> {
+//                                    logger.debug("Could not send command for event $it to server: server not available")
+//                                    connectionProblem = true
+//                                }
+//                                Status.Code.DEADLINE_EXCEEDED -> {
+//                                    logger.debug("Could not send command for event $it to server: server is taking too long to respond")
+//                                    connectionProblem = true
+//                                }
+//                                else -> logger.warn("Error sending command for event $it to server: ${e.status.code}, ${e.status.description}")
+//                            }
+//                        }
+//                    } else {
+//                        localEvents.removeEvent(it)
+//                        updateState(state.removeLocalEventToIgnore(it.eventId))
+//                        logger.debug("Ignored local event $it")
+//                    }
+//                }
+//    }
 
-    private fun processRemoteInboundEvents(remoteInboundEvents: Observable<Event>) {
-        val noteIdsWithErrors: MutableSet<String> = HashSet<String>()
-        remoteInboundEvents
-                .filter { it.noteId !in noteIdsWithErrors }
-                .forEach {
-                    if (it.eventId !in state.remoteEventIdsToIgnore) {
-                        logger.debug("Processing remote event: $it")
-                        val command = eventToCommandMapper.map(it, state.lastKnownLocalRevisions[it.noteId])
-                        try {
-                            val localEvent = processCommandLocallyAndUpdateState(command)
-                            remoteEvents.removeEvent(it)
-                            if (localEvent != null) {
-                                updateState(state.updateLastSynchronizedLocalRevision(it.noteId, localEvent.revision))
-                            }
-                            logger.debug("Remote event successfully processed: $it")
-                        } catch (t: Throwable) {
-                            noteIdsWithErrors += it.noteId
-                            logger.debug("Command not processed locally: $command + ${state.lastKnownLocalRevisions[it.noteId]}", t)
-                        }
-                    } else {
-                        remoteEvents.removeEvent(it)
-                        updateState(state.removeRemoteEventToIgnore(it.eventId))
-                        logger.debug("Ignored remote event $it")
-                    }
-                }
-    }
+//    private fun processRemoteInboundEvents(remoteInboundEvents: Observable<Event>) {
+//        val noteIdsWithErrors: MutableSet<String> = HashSet<String>()
+//        remoteInboundEvents
+//                .filter { it.noteId !in noteIdsWithErrors }
+//                .forEach {
+//                    if (it.eventId !in state.remoteEventIdsToIgnore) {
+//                        logger.debug("Processing remote event: $it")
+//                        val command = eventToCommandMapper.map(it, state.lastKnownLocalRevisions[it.noteId])
+//                        try {
+//                            val localEvent = processCommandLocallyAndUpdateState(command)
+//                            remoteEvents.removeEvent(it)
+//                            if (localEvent != null) {
+//                                updateState(state.updateLastSynchronizedLocalRevision(it.noteId, localEvent.revision))
+//                            }
+//                            logger.debug("Remote event successfully processed: $it")
+//                        } catch (t: Throwable) {
+//                            noteIdsWithErrors += it.noteId
+//                            logger.debug("Command not processed locally: $command + ${state.lastKnownLocalRevisions[it.noteId]}", t)
+//                        }
+//                    } else {
+//                        remoteEvents.removeEvent(it)
+//                        updateState(state.removeRemoteEventToIgnore(it.eventId))
+//                        logger.debug("Ignored remote event $it")
+//                    }
+//                }
+//    }
 
-    private fun processCommandLocallyAndUpdateState(command: info.maaskant.wmsnotes.model.Command): Event? {
-        val event = commandProcessor.blockingProcessCommand(command)
-        if (event != null) {
-            updateState(state
-                    .updateLastKnownLocalRevision(event.noteId, event.revision)
-                    .ignoreLocalEvent(event.eventId)
-            )
-        }
-        return event
-    }
+//    private fun processCommandLocallyAndUpdateState(command: info.maaskant.wmsnotes.model.Command): Event? {
+//        val event = commandProcessor.blockingProcessCommand(command)
+//        if (event != null) {
+//            updateState(state
+//                    .updateLastKnownLocalRevision(event.noteId, event.revision)
+//                    .ignoreLocalEvent(event.eventId)
+//            )
+//        }
+//        return event
+//    }
 
     private fun updateState(state: SynchronizerState) {
         this.state = state

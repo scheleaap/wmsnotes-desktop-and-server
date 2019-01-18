@@ -41,7 +41,7 @@ internal class DifferenceAnalyzerTest {
 
         // Then
         assertThat(differences).contains(
-                ExistenceDifference(false, true)
+                ExistenceDifference(/*false*/TODO(), /*true*/TODO())
         )
     }
 
@@ -150,7 +150,7 @@ internal class DifferenceAnalyzerTest {
         val differences = analyzer.compare(left, right)
 
         // Then
-        assertThat(differences).isEqualTo(emptySet())
+        assertThat(differences).isEqualTo(emptySet<Difference>())
     }
 
     @Test

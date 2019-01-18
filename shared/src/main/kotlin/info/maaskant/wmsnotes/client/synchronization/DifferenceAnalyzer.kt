@@ -6,7 +6,7 @@ import java.util.*
 class DifferenceAnalyzer {
     fun compare(left: Note, right: Note): Set<Difference> {
         if (left.exists != right.exists) {
-            return setOf(ExistenceDifference(left.exists, right.exists))
+            return setOf(ExistenceDifference(TODO(), TODO()))
         }
         if (left.title != right.title) {
             return setOf(TitleDifference(left.title, right.title))
