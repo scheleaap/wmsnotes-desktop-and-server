@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import java.util.*
 
 internal class EventsTest {
     @Test
@@ -99,6 +100,18 @@ internal class EventsTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `equals for NoteDeletedEvent and NoteUndeletedEvent`() {
+        // These two classes are identical with regards to their fields, but they still must never be equal.
+
+        // Given
+        val e1 = NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1)
+        val e2 = NoteUndeletedEvent(eventId = 0, noteId = "note-1", revision = 1)
+
+        // When / then
+        assertThat(e1).isNotEqualTo(e2)
     }
 }
 

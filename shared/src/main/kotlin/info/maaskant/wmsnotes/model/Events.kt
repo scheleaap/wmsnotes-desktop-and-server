@@ -1,10 +1,11 @@
 package info.maaskant.wmsnotes.model
 
+import au.com.console.kassava.SupportsMixedTypeEquality
 import au.com.console.kassava.kotlinEquals
 import au.com.console.kassava.kotlinToString
 import java.util.*
 
-sealed class Event(val eventId: Int, val noteId: String, val revision: Int) {
+sealed class Event(val eventId: Int, val noteId: String, val revision: Int) : SupportsMixedTypeEquality {
     abstract fun withEventId(eventId: Int): Event
 
     override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Event::eventId, Event::noteId, Event::revision))
@@ -17,6 +18,8 @@ class NoteCreatedEvent(eventId: Int, noteId: String, revision: Int, val title: S
     }
 
     override fun toString() = kotlinToString(properties = arrayOf(NoteCreatedEvent::eventId, NoteCreatedEvent::noteId, NoteCreatedEvent::revision, NoteCreatedEvent::title))
+
+    override fun canEqual(other: Any?) = other is NoteCreatedEvent
 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
@@ -32,6 +35,8 @@ class NoteDeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(even
     }
 
     override fun toString() = kotlinToString(properties = arrayOf(NoteDeletedEvent::eventId, NoteDeletedEvent::noteId, NoteDeletedEvent::revision))
+
+    override fun canEqual(other: Any?) = other is NoteDeletedEvent
 }
 
 class NoteUndeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(eventId, noteId, revision) {
@@ -40,6 +45,8 @@ class NoteUndeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(ev
     }
 
     override fun toString() = kotlinToString(properties = arrayOf(NoteUndeletedEvent::eventId, NoteUndeletedEvent::noteId, NoteUndeletedEvent::revision))
+
+    override fun canEqual(other: Any?) = other is NoteUndeletedEvent
 }
 
 class AttachmentAddedEvent(eventId: Int, noteId: String, revision: Int, val name: String, val content: ByteArray) : Event(eventId, noteId, revision) {
@@ -50,6 +57,8 @@ class AttachmentAddedEvent(eventId: Int, noteId: String, revision: Int, val name
     }
 
     override fun toString() = kotlinToString(properties = arrayOf(AttachmentAddedEvent::eventId, AttachmentAddedEvent::noteId, AttachmentAddedEvent::revision, AttachmentAddedEvent::name, AttachmentAddedEvent::contentLength))
+
+    override fun canEqual(other: Any?) = other is AttachmentAddedEvent
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -79,6 +88,8 @@ class AttachmentDeletedEvent(eventId: Int, noteId: String, revision: Int, val na
 
     override fun toString() = kotlinToString(properties = arrayOf(AttachmentDeletedEvent::eventId, AttachmentDeletedEvent::noteId, AttachmentDeletedEvent::revision))
 
+    override fun canEqual(other: Any?) = other is AttachmentDeletedEvent
+
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
             properties = arrayOf(AttachmentDeletedEvent::name),
@@ -96,6 +107,8 @@ class ContentChangedEvent(eventId: Int, noteId: String, revision: Int, val conte
 
     override fun toString() = kotlinToString(properties = arrayOf(ContentChangedEvent::eventId, ContentChangedEvent::noteId, ContentChangedEvent::revision, ContentChangedEvent::contentLength))
 
+    override fun canEqual(other: Any?) = other is ContentChangedEvent
+
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
             properties = arrayOf(ContentChangedEvent::content),
@@ -110,6 +123,8 @@ class TitleChangedEvent(eventId: Int, noteId: String, revision: Int, val title: 
     }
 
     override fun toString() = kotlinToString(properties = arrayOf(TitleChangedEvent::eventId, TitleChangedEvent::noteId, TitleChangedEvent::revision, TitleChangedEvent::title))
+
+    override fun canEqual(other: Any?) = other is TitleChangedEvent
 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
