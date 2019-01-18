@@ -20,7 +20,10 @@ class GrpcCommandMapper {
                     noteId = request.noteId,
                     lastRevision = request.lastRevision
             )
-            Command.PostCommandRequest.CommandCase.UNDELETE_NOTE -> TODO()
+            Command.PostCommandRequest.CommandCase.UNDELETE_NOTE -> UndeleteNoteCommand(
+                    noteId = request.noteId,
+                    lastRevision = request.lastRevision
+            )
             Command.PostCommandRequest.CommandCase.ADD_ATTACHMENT -> AddAttachmentCommand(
                     noteId = request.noteId,
                     lastRevision = request.lastRevision,
@@ -38,7 +41,11 @@ class GrpcCommandMapper {
                     lastRevision = request.lastRevision,
                     content = request.changeContent.content
             )
-            Command.PostCommandRequest.CommandCase.CHANGE_TITLE -> TODO()
+            Command.PostCommandRequest.CommandCase.CHANGE_TITLE -> ChangeTitleCommand(
+                    noteId = request.noteId,
+                    lastRevision = request.lastRevision,
+                    title = request.changeTitle.title
+            )
         }
     }
 }

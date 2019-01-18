@@ -26,7 +26,9 @@ class GrpcEventMapper @Inject constructor() {
             is NoteDeletedEvent -> builder.apply {
                 noteDeleted = Event.GetEventsResponse.NoteDeletedEvent.newBuilder().build()
             }
-            is NoteUndeletedEvent -> TODO()
+            is NoteUndeletedEvent -> builder.apply {
+                noteUndeleted = Event.GetEventsResponse.NoteUndeletedEvent.newBuilder().build()
+            }
             is AttachmentAddedEvent -> builder.apply {
                 attachmentAdded = Event.GetEventsResponse.AttachmentAddedEvent.newBuilder().apply {
                     name = event.name
@@ -43,7 +45,11 @@ class GrpcEventMapper @Inject constructor() {
                     content = event.content
                 }.build()
             }
-            is TitleChangedEvent -> TODO()
+            is TitleChangedEvent -> builder.apply {
+                titleChanged = Event.GetEventsResponse.TitleChangedEvent.newBuilder().apply {
+                    title = event.title
+                }.build()
+            }
         }
         return builder.build()
     }

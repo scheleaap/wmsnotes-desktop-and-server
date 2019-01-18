@@ -41,7 +41,7 @@ internal class GrpcEventMapperTest {
                     noteId = "note"
                     revision = 1
                     noteUndeleted = Event.GetEventsResponse.NoteUndeletedEvent.newBuilder().build()
-                }.build() to NoteDeletedEvent(eventId = 1, noteId = "note", revision = 1),
+                }.build() to NoteUndeletedEvent(eventId = 1, noteId = "note", revision = 1),
                 Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"
