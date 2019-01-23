@@ -17,5 +17,13 @@ The application consists of three parts:
 
 WMS Notes has been used to try out several approaches and technologies, including:
 * Event sourcing
-* Protobuf + gRPC
+* [Reactive extensions](http://reactivex.io/) (specifically [RxJava](https://www.google.com/search?client=firefox-b&q=rxjava), [RxKotlin](https://github.com/ReactiveX/RxKotlin) and [RxAndroid](https://github.com/ReactiveX/RxAndroid))
+* JavaFX (and the [TornadoFX](https://tornadofx.io/) framework for Kotlin)
+* [Protobuf](https://developers.google.com/protocol-buffers/) + [gRPC](https://grpc.io/)
 * Kotlin
+
+Besides the technologies mentioned above, the project also uses:
+* Spring Boot
+* [Kryo](https://github.com/EsotericSoftware/kryo) (serialization framework)
+* JUnit 5
+* [MockK](https://mockk.io/) (Kotlin mocking framework)
