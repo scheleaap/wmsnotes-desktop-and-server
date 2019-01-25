@@ -13,8 +13,8 @@ internal class LocalOnlySynchronizationStrategyTest {
         // Given
         val event1: Event = mockk()
         val event2: Event = mockk()
-        val localEvents = emptyList<Event>()
-        val remoteEvents = listOf(event1, event2)
+        val localEvents = listOf(event1, event2)
+        val remoteEvents = emptyList<Event>()
         val strategy = LocalOnlySynchronizationStrategy()
 
         // When
@@ -23,14 +23,14 @@ internal class LocalOnlySynchronizationStrategyTest {
         // Then
         assertThat(result).isEqualTo(Solution(listOf(
                 CompensatingAction(
-                        compensatedLocalEvents = emptyList(),
-                        compensatedRemoteEvents = listOf(event1),
+                        compensatedLocalEvents = listOf(event1),
+                        compensatedRemoteEvents = emptyList(),
                         newLocalEvents = emptyList(),
                         newRemoteEvents = listOf(event1)
                 ),
                 CompensatingAction(
-                        compensatedLocalEvents = emptyList(),
-                        compensatedRemoteEvents = listOf(event2),
+                        compensatedLocalEvents = listOf(event2),
+                        compensatedRemoteEvents = emptyList(),
                         newLocalEvents = emptyList(),
                         newRemoteEvents = listOf(event2)
                 )
@@ -43,8 +43,8 @@ internal class LocalOnlySynchronizationStrategyTest {
         val event1: Event = mockk()
         val event2: Event = mockk()
         val event3: Event = mockk()
-        val localEvents = listOf(event1)
-        val remoteEvents = listOf(event2, event3)
+        val localEvents = listOf(event1, event2)
+        val remoteEvents = listOf(event3)
         val strategy = LocalOnlySynchronizationStrategy()
 
         // When
@@ -65,6 +65,6 @@ internal class LocalOnlySynchronizationStrategyTest {
         val result = strategy.resolve(localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(NoSolution)
+        assertThat(result).isEqualTo(Solution(emptyList()))
     }
 }
