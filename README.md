@@ -4,7 +4,7 @@ WMS Notes is a *hierarchical* or *tree-based* note-taking application.
 
 Features:
 * A hierarchy of notes and folders
-* Synchronization across desktop and Android phone
+* Synchronization across desktop and Android phone, enabling offline note editing
 * Note-taking in Markdown format
 * Image attachments
 
