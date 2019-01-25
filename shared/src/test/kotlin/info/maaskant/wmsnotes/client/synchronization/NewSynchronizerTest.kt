@@ -328,19 +328,21 @@ internal class NewSynchronizerTest {
         // Given
         val localEvent1 = modelEvent(eventId = 11, noteId = 1, revision = 1)
         val localEvent2 = modelEvent(eventId = 12, noteId = 2, revision = 2)
+        val localEvent3 = modelEvent(eventId = 13, noteId = 1, revision = 2)
         val remoteEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 11)
         val remoteEvent2 = modelEvent(eventId = 2, noteId = 2, revision = 12)
-        val localEventForRemoteEvent1 = modelEvent(eventId = 13, noteId = 1, revision = 3)
-        val localEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 2, revision = 4)
-        val remoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 13)
-        val remoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 2, revision = 14)
-        every { localEvents.getEvents() }.returns(Observable.just(localEvent1, localEvent2))
+        val localEventForRemoteEvent1 = modelEvent(eventId = 14, noteId = 1, revision = 3)
+        val localEventForRemoteEvent2 = modelEvent(eventId = 15, noteId = 2, revision = 3)
+        val remoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 12)
+        val remoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 2, revision = 13)
+        val remoteEventForLocalEvent3 = modelEvent(eventId = 5, noteId = 1, revision = 13)
+        every { localEvents.getEvents() }.returns(Observable.just(localEvent1, localEvent2,localEvent3))
         every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent1, remoteEvent2))
         val compensatingAction1 = CompensatingAction(
-                compensatedLocalEvents = listOf(localEvent1),
+                compensatedLocalEvents = listOf(localEvent1,localEvent3),
                 compensatedRemoteEvents = listOf(remoteEvent1),
                 newLocalEvents = listOf(localEventForRemoteEvent1),
-                newRemoteEvents = listOf(remoteEventForLocalEvent1)
+                newRemoteEvents = listOf(remoteEventForLocalEvent1,remoteEventForLocalEvent3)
         )
         val compensatingAction2 = CompensatingAction(
                 compensatedLocalEvents = listOf(localEvent2),
@@ -350,7 +352,7 @@ internal class NewSynchronizerTest {
         )
         every {
             synchronizationStrategy.resolve(
-                    localEvents = listOf(localEvent1),
+                    localEvents = listOf(localEvent1,localEvent3),
                     remoteEvents = listOf(remoteEvent1)
             )
         }.returns(Solution(listOf(compensatingAction1)))
@@ -363,7 +365,7 @@ internal class NewSynchronizerTest {
         every { compensatingActionExecutor.execute(compensatingAction1) }.returns(ExecutionResult(
                 success = true,
                 newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent1)),
-                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent1))
+                newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent1), EventIdAndRevision(remoteEventForLocalEvent3))
         ))
         every { compensatingActionExecutor.execute(compensatingAction2) }.returns(ExecutionResult(
                 success = true,
@@ -383,6 +385,7 @@ internal class NewSynchronizerTest {
             compensatingActionExecutor.execute(compensatingAction1)
             remoteEvents.removeEvent(remoteEvent1)
             localEvents.removeEvent(localEvent1)
+            localEvents.removeEvent(localEvent3)
             compensatingActionExecutor.execute(compensatingAction2)
             remoteEvents.removeEvent(remoteEvent2)
             localEvents.removeEvent(localEvent2)
@@ -390,7 +393,7 @@ internal class NewSynchronizerTest {
         val finalState = stateObserver.values().last()
         assertThat(finalState.lastKnownLocalRevisions[localEvent1.noteId]).isEqualTo(localEventForRemoteEvent1.revision)
         assertThat(finalState.lastKnownLocalRevisions[localEvent2.noteId]).isEqualTo(localEventForRemoteEvent2.revision)
-        assertThat(finalState.lastKnownRemoteRevisions[localEvent1.noteId]).isEqualTo(remoteEventForLocalEvent1.revision)
+        assertThat(finalState.lastKnownRemoteRevisions[localEvent1.noteId]).isEqualTo(remoteEventForLocalEvent3.revision)
         assertThat(finalState.lastKnownRemoteRevisions[localEvent2.noteId]).isEqualTo(remoteEventForLocalEvent2.revision)
         assertThat(finalState.lastSynchronizedLocalRevisions[localEvent1.noteId]).isEqualTo(localEventForRemoteEvent1.revision)
         assertThat(finalState.lastSynchronizedLocalRevisions[localEvent2.noteId]).isEqualTo(localEventForRemoteEvent2.revision)
@@ -471,7 +474,6 @@ internal class NewSynchronizerTest {
 //        assertThat(finalState.lastSynchronizedLocalRevisions[localEvent1.noteId]).isEqualTo(1)
     }
 
-    @Disabled
     @Test
     fun `do not synchronize events created during synchronization`() {
         // Given
@@ -498,6 +500,12 @@ internal class NewSynchronizerTest {
                 newLocalEvents = listOf(EventIdAndRevision(localEventForRemoteEvent1)),
                 newRemoteEvents = listOf(EventIdAndRevision(remoteEventForLocalEvent1))
         ))
+        every {
+            synchronizationStrategy.resolve(
+                    localEvents = listOf(localEventForRemoteEvent1),
+                    remoteEvents = listOf(remoteEventForLocalEvent1)
+            )
+        }.throws(RuntimeException("This is not supposed to be called"))
         val s = createSynchronizer()
         s.synchronize()
         every { localEvents.getEvents() }.returns(Observable.just(localEventForRemoteEvent1))
@@ -510,9 +518,11 @@ internal class NewSynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
+            compensatingActionExecutor.execute(compensatingAction)
             remoteEvents.removeEvent(remoteEvent1)
             localEvents.removeEvent(localEvent1)
-            compensatingActionExecutor.execute(compensatingAction)
+            localEvents.getEvents()
+            remoteEvents.getEvents()
             remoteEvents.removeEvent(remoteEventForLocalEvent1)
             localEvents.removeEvent(localEventForRemoteEvent1)
         }

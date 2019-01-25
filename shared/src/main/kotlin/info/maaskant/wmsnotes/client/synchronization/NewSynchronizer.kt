@@ -32,25 +32,51 @@ class NewSynchronizer @Inject constructor(
 
     @Synchronized
     fun synchronize() {
-        val localEventsToSynchronize: List<Event> = localEvents.getEvents().toList().blockingGet()
-        val remoteEventsToSynchronize: List<Event> = remoteEvents.getEvents().toList().blockingGet()
+        val localEvents = localEvents.getEvents().publish().refCount()
+        val remoteEvents = remoteEvents.getEvents().publish().refCount()
+        val localEventsToSynchronize: List<Event> = localEvents
+                .filter { it.eventId !in state.localEventIdsToIgnore }
+                .toList()
+                .blockingGet()
+        val remoteEventsToSynchronize: List<Event> = remoteEvents
+                .filter { it.eventId !in state.remoteEventIdsToIgnore }
+                .toList()
+                .blockingGet()
+        val localEventsToIgnore: List<Event> = localEvents
+                .filter { it.eventId in state.localEventIdsToIgnore }
+                .toList()
+                .blockingGet()
+        val remoteEventsToIgnore: List<Event> = remoteEvents
+                .filter { it.eventId in state.remoteEventIdsToIgnore }
+                .toList()
+                .blockingGet()
 
-        val r: SortedMap<String, LocalAndRemoteEvents> = groupLocalAndRemoteEventsByNote(localEventsToSynchronize, remoteEventsToSynchronize)
+        val eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents> = groupLocalAndRemoteEventsByNote(localEventsToSynchronize, remoteEventsToSynchronize)
+        val eventsToIgnore = LocalAndRemoteEvents(localEventsToIgnore, remoteEventsToIgnore)
 
-        for ((noteId, eventsToSynchronize) in r) {
-            val resolutionResult = synchronizationStrategy.resolve(eventsToSynchronize.localEvents, eventsToSynchronize.remoteEvents)
-            @Suppress("UNUSED_VARIABLE")
-            val a: Unit = when (resolutionResult) { // Assign to variable to force a compilation error if 'when' expression is not exhaustive.
+        synchronizeEvents(eventsToSynchronize)
+        removeEventsToIgnore(eventsToIgnore)
+    }
+
+    private fun synchronizeEvents(eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents>) {
+        for ((noteId, noteEventsToSynchronize) in eventsToSynchronize) {
+            val resolutionResult = synchronizationStrategy.resolve(noteEventsToSynchronize.localEvents, noteEventsToSynchronize.remoteEvents)
+            when (resolutionResult) {
                 SynchronizationStrategy.ResolutionResult.NoSolution -> {
                 }
                 is SynchronizationStrategy.ResolutionResult.Solution ->
-                    if (areCompensatingActionsValid(eventsToSynchronize.localEvents, eventsToSynchronize.remoteEvents, resolutionResult.compensatingActions)) {
+                    if (areCompensatingActionsValid(noteEventsToSynchronize.localEvents, noteEventsToSynchronize.remoteEvents, resolutionResult.compensatingActions)) {
                         executeCompensatingActions(resolutionResult.compensatingActions, noteId)
                     } else {
                     }
 
             }
         }
+    }
+
+    private fun removeEventsToIgnore(eventsToIgnore: LocalAndRemoteEvents) {
+        eventsToIgnore.remoteEvents.forEach { remoteEvents.removeEvent(it) }
+        eventsToIgnore.localEvents.forEach { localEvents.removeEvent(it) }
     }
 
     private fun areCompensatingActionsValid(
@@ -75,26 +101,6 @@ class NewSynchronizer @Inject constructor(
         return localEventIdsToSynchronize == compensatedLocalEventIds && remoteEventIdsToSynchronize == compensatedRemoteEventIds
     }
 
-    private fun groupLocalAndRemoteEventsByNote(localEvents: List<Event>, remoteEvents: List<Event>): SortedMap<String, LocalAndRemoteEvents> {
-        val localEventsByNote: Map<String, Collection<Event>> = localEvents.toObservable()
-                .toMultimap { it.noteId }
-                .blockingGet()
-        val remoteEventsByNote: Map<String, Collection<Event>> = remoteEvents.toObservable()
-                .toMultimap { it.noteId }
-                .blockingGet()
-        val noteIds = localEventsByNote.keys + remoteEventsByNote.keys
-        val result = noteIds.toObservable()
-                .toMap({ it }, {
-                    LocalAndRemoteEvents(
-                            localEvents = localEventsByNote[it]?.toList() ?: emptyList(),
-                            remoteEvents = remoteEventsByNote[it]?.toList() ?: emptyList()
-                    )
-                })
-                .blockingGet()
-                .toSortedMap()
-        return result
-    }
-
     private fun executeCompensatingActions(compensatingActions: List<CompensatingAction>, noteId: String) {
         if (compensatingActions.isNotEmpty()) {
             val head = compensatingActions[0]
@@ -115,11 +121,14 @@ class NewSynchronizer @Inject constructor(
                             this
                                     .updateLastKnownLocalRevision(noteId, it.revision)
                                     .updateLastSynchronizedLocalRevision(noteId, it.revision)
+                                    .ignoreLocalEvent(it.eventId)
                         } ?: this
                     }
                     .run {
                         executionResult.newRemoteEvents.lastOrNull()?.let {
-                            this.updateLastKnownRemoteRevision(noteId, it.revision)
+                            this
+                                    .updateLastKnownRemoteRevision(noteId, it.revision)
+                                    .ignoreRemoteEvent(it.eventId)
                         } ?: this
                     }
             )
@@ -127,6 +136,26 @@ class NewSynchronizer @Inject constructor(
             compensatingAction.compensatedLocalEvents.forEach { localEvents.removeEvent(it) }
         }
         return executionResult.success
+    }
+
+    private fun groupLocalAndRemoteEventsByNote(localEvents: List<Event>, remoteEvents: List<Event>): SortedMap<String, LocalAndRemoteEvents> {
+        val localEventsByNote: Map<String, Collection<Event>> = localEvents.toObservable()
+                .toMultimap { it.noteId }
+                .blockingGet()
+        val remoteEventsByNote: Map<String, Collection<Event>> = remoteEvents.toObservable()
+                .toMultimap { it.noteId }
+                .blockingGet()
+        val noteIds = localEventsByNote.keys + remoteEventsByNote.keys
+        val result = noteIds.toObservable()
+                .toMap({ it }, {
+                    LocalAndRemoteEvents(
+                            localEvents = localEventsByNote[it]?.toList() ?: emptyList(),
+                            remoteEvents = remoteEventsByNote[it]?.toList() ?: emptyList()
+                    )
+                })
+                .blockingGet()
+                .toSortedMap()
+        return result
     }
 
     private fun updateState(state: SynchronizerState) {
