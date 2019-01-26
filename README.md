@@ -28,3 +28,5 @@ Besides the technologies mentioned above, the project also uses:
 * [Kryo](https://github.com/EsotericSoftware/kryo) (serialization framework)
 * JUnit 5
 * [MockK](https://mockk.io/) (Kotlin mocking framework)
+
+The Markdown editing and previewing panes have been gratefully taken from [Markdown Writer FX](https://github.com/JFormDesigner/markdown-writer-fx).
