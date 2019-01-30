@@ -12,7 +12,9 @@ import info.maaskant.wmsnotes.client.synchronization.DifferenceCompensator.Compe
 import info.maaskant.wmsnotes.model.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.*
 
+@Disabled("Tests written while traveling, code to be implemented next")
 internal class SimpleMergeStrategyTest {
     private val noteId = "note"
     private val attachmentContent1 = "data 1".toByteArray()

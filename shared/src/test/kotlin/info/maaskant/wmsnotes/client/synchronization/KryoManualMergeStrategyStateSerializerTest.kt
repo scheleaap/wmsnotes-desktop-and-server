@@ -5,7 +5,9 @@ import com.esotericsoftware.kryo.util.Pool
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.utilities.serialization.KryoSerializerTest
+import org.junit.jupiter.api.Disabled
 
+@Disabled("Tests written while traveling, code to be implemented next")
 internal class KryoManualMergeStrategyStateSerializerTest : KryoSerializerTest<ManualMergeStrategyState>() {
     private val noteId = "note"
     private val event1 = NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = "Title")

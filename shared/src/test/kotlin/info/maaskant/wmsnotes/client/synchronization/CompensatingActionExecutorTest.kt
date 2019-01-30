@@ -8,8 +8,10 @@ import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
+@Disabled("Tests written while traveling, code to be implemented next")
 internal class CompensatingActionExecutorTest {
     private val commandProcessor: CommandProcessor = mockk()
     private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub = mockk()

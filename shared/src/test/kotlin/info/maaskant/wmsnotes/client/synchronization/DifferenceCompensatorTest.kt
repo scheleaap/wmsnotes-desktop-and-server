@@ -3,11 +3,13 @@ package info.maaskant.wmsnotes.client.synchronization
 import info.maaskant.wmsnotes.client.synchronization.ExistenceDifference.ExistenceType.*
 import info.maaskant.wmsnotes.model.*
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import java.util.*
 
+@Disabled("Tests written while traveling, code to be implemented next")
 internal class DifferenceCompensatorTest {
     private val noteId = "note"
     private val attachmentName = "att"

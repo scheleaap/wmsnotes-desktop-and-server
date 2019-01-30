@@ -11,8 +11,10 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
+@Disabled("Tests written while traveling, code to be implemented next")
 internal class MergingSynchronizationStrategyTest {
     private val noteProjector: NoteProjector = mockk()
     private val mergeStrategy: MergeStrategy = mockk()

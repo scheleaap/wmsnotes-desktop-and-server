@@ -11,7 +11,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import info.maaskant.wmsnotes.client.synchronization.DifferenceCompensator.CompensatingEvents
 import info.maaskant.wmsnotes.model.Event
+import org.junit.jupiter.api.Disabled
 
+@Disabled("Tests written while traveling, code to be implemented next")
 internal class ManualMergeStrategyTest {
     private val noteId = "note"
 
