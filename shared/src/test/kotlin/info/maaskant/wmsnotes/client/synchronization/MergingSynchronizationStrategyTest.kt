@@ -11,10 +11,12 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-@Disabled("Tests written while traveling, code to be implemented next")
+// TODO:
+// - no local events --> error
+// - no remote events --> error
+// - note revision = 1 (i.e. revision - 1 does not work)
 internal class MergingSynchronizationStrategyTest {
     private val noteProjector: NoteProjector = mockk()
     private val mergeStrategy: MergeStrategy = mockk()
@@ -44,17 +46,17 @@ internal class MergingSynchronizationStrategyTest {
         val baseNote: Note = mockk()
         val localNote: Note = mockk()
         val remoteNote: Note = mockk()
-        every { noteProjector.project(noteId, oldLocalEvent1.revision) }.returns(baseNote)
+        every { noteProjector.project(noteId, oldLocalEvent1.revision - 1) }.returns(baseNote)
         givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1, oldLocalEvent2))
         givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
         every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
         ))
-        val strategy = MergingSynchronizationStrategy()
+        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
 
         // When
-        val result = strategy.resolve(localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
         assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.Solution(listOf(CompensatingAction(
@@ -78,14 +80,14 @@ internal class MergingSynchronizationStrategyTest {
         val baseNote: Note = mockk()
         val localNote: Note = mockk()
         val remoteNote: Note = mockk()
-        every { noteProjector.project(noteId, oldLocalEvent1.revision) }.returns(baseNote)
+        every { noteProjector.project(noteId, oldLocalEvent1.revision - 1) }.returns(baseNote)
         givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1, oldLocalEvent2))
         givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
         every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(NoSolution)
-        val strategy = MergingSynchronizationStrategy()
+        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
 
         // When
-        val result = strategy.resolve(localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
         assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.NoSolution)

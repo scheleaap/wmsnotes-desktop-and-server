@@ -60,7 +60,7 @@ class NewSynchronizer @Inject constructor(
 
     private fun synchronizeEvents(eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents>) {
         for ((noteId, noteEventsToSynchronize) in eventsToSynchronize) {
-            val resolutionResult = synchronizationStrategy.resolve(noteEventsToSynchronize.localEvents, noteEventsToSynchronize.remoteEvents)
+            val resolutionResult = synchronizationStrategy.resolve(noteId, noteEventsToSynchronize.localEvents, noteEventsToSynchronize.remoteEvents)
             when (resolutionResult) {
                 SynchronizationStrategy.ResolutionResult.NoSolution -> {
                 }

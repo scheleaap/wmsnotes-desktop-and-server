@@ -11,7 +11,6 @@ import io.mockk.*
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class NewSynchronizerTest {
@@ -46,7 +45,7 @@ internal class NewSynchronizerTest {
 
         // Then
         verify {
-            synchronizationStrategy.resolve(any(), any()).wasNot(Called)
+            synchronizationStrategy.resolve(any(), any(), any()).wasNot(Called)
             compensatingActionExecutor.execute(any()).wasNot(Called)
         }
     }
@@ -55,9 +54,10 @@ internal class NewSynchronizerTest {
     fun `nothing happens if synchronization strategy has no solution`() {
         // Given
         val localOutboundEvent: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
+        val noteId = localOutboundEvent.noteId
         every { localEvents.getEvents() }.returns(Observable.just(localOutboundEvent))
         every { remoteEvents.getEvents() }.returns(Observable.empty())
-        every { synchronizationStrategy.resolve(any(), any()) }.returns(NoSolution)
+        every { synchronizationStrategy.resolve(any(), any(), any()) }.returns(NoSolution)
         val s = createSynchronizer()
 
         // When
@@ -65,7 +65,7 @@ internal class NewSynchronizerTest {
 
         // Then
         verify {
-            synchronizationStrategy.resolve(listOf(localOutboundEvent), emptyList())
+            synchronizationStrategy.resolve(noteId, listOf(localOutboundEvent), emptyList())
             compensatingActionExecutor.execute(any()).wasNot(Called)
             // TODO
 //            localEvents.removeEvent(any()).wasNot(Called)
@@ -84,6 +84,7 @@ internal class NewSynchronizerTest {
         val localEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 1, revision = 4)
         val remoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 13)
         val remoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 1, revision = 14)
+        val noteId = localEvent1.noteId
         every { localEvents.getEvents() }.returns(Observable.just(localEvent1, localEvent2))
         every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent1, remoteEvent2))
         val compensatingAction = CompensatingAction(
@@ -94,6 +95,7 @@ internal class NewSynchronizerTest {
         )
         every {
             synchronizationStrategy.resolve(
+                    noteId = noteId,
                     localEvents = listOf(localEvent1, localEvent2),
                     remoteEvents = listOf(remoteEvent1, remoteEvent2)
             )
@@ -136,6 +138,7 @@ internal class NewSynchronizerTest {
         val localEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 1, revision = 4)
         val remoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 13)
         val remoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 1, revision = 14)
+        val noteId = localEvent1.noteId
         every { localEvents.getEvents() }.returns(Observable.just(localEvent1, localEvent2))
         every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent1, remoteEvent2))
         val compensatingAction1 = CompensatingAction(
@@ -152,6 +155,7 @@ internal class NewSynchronizerTest {
         )
         every {
             synchronizationStrategy.resolve(
+                    noteId = noteId,
                     localEvents = listOf(localEvent1, localEvent2),
                     remoteEvents = listOf(remoteEvent1, remoteEvent2)
             )
@@ -200,6 +204,7 @@ internal class NewSynchronizerTest {
         val localEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 1, revision = 4)
         val remoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 13)
         val remoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 1, revision = 14)
+        val noteId = localEvent1.noteId
         every { localEvents.getEvents() }.returns(Observable.just(localEvent1, localEvent2))
         every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent1, remoteEvent2))
         val compensatingAction1 = CompensatingAction(
@@ -216,6 +221,7 @@ internal class NewSynchronizerTest {
         )
         every {
             synchronizationStrategy.resolve(
+                    noteId = noteId,
                     localEvents = listOf(localEvent1, localEvent2),
                     remoteEvents = listOf(remoteEvent1, remoteEvent2)
             )
@@ -267,6 +273,7 @@ internal class NewSynchronizerTest {
         val localEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 1, revision = 4)
         val remoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 13)
         val remoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 1, revision = 14)
+        val noteId = localEvent1.noteId
         every { localEvents.getEvents() }.returns(Observable.just(localEvent1, localEvent2))
         every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent1, remoteEvent2))
         val compensatingAction1 = CompensatingAction(
@@ -283,6 +290,7 @@ internal class NewSynchronizerTest {
         )
         every {
             synchronizationStrategy.resolve(
+                    noteId = noteId,
                     localEvents = listOf(localEvent1, localEvent2),
                     remoteEvents = listOf(remoteEvent1, remoteEvent2)
             )
@@ -336,13 +344,15 @@ internal class NewSynchronizerTest {
         val remoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 12)
         val remoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 2, revision = 13)
         val remoteEventForLocalEvent3 = modelEvent(eventId = 5, noteId = 1, revision = 13)
-        every { localEvents.getEvents() }.returns(Observable.just(localEvent1, localEvent2,localEvent3))
+        val noteId1 = localEvent1.noteId
+        val noteId2 = localEvent2.noteId
+        every { localEvents.getEvents() }.returns(Observable.just(localEvent1, localEvent2, localEvent3))
         every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent1, remoteEvent2))
         val compensatingAction1 = CompensatingAction(
-                compensatedLocalEvents = listOf(localEvent1,localEvent3),
+                compensatedLocalEvents = listOf(localEvent1, localEvent3),
                 compensatedRemoteEvents = listOf(remoteEvent1),
                 newLocalEvents = listOf(localEventForRemoteEvent1),
-                newRemoteEvents = listOf(remoteEventForLocalEvent1,remoteEventForLocalEvent3)
+                newRemoteEvents = listOf(remoteEventForLocalEvent1, remoteEventForLocalEvent3)
         )
         val compensatingAction2 = CompensatingAction(
                 compensatedLocalEvents = listOf(localEvent2),
@@ -352,12 +362,14 @@ internal class NewSynchronizerTest {
         )
         every {
             synchronizationStrategy.resolve(
-                    localEvents = listOf(localEvent1,localEvent3),
+                    noteId = noteId1,
+                    localEvents = listOf(localEvent1, localEvent3),
                     remoteEvents = listOf(remoteEvent1)
             )
         }.returns(Solution(listOf(compensatingAction1)))
         every {
             synchronizationStrategy.resolve(
+                    noteId = noteId2,
                     localEvents = listOf(localEvent2),
                     remoteEvents = listOf(remoteEvent2)
             )
@@ -410,6 +422,8 @@ internal class NewSynchronizerTest {
         val localEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 2, revision = 4)
         val remoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 13)
         val remoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 2, revision = 14)
+        val noteId1 = localEvent1.noteId
+        val noteId2 = localEvent2.noteId
         every { localEvents.getEvents() }.returns(Observable.just(localEvent1, localEvent2))
         every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent1, remoteEvent2))
         val compensatingAction1 = CompensatingAction(
@@ -426,12 +440,14 @@ internal class NewSynchronizerTest {
         )
         every {
             synchronizationStrategy.resolve(
+                    noteId = noteId1,
                     localEvents = listOf(localEvent1),
                     remoteEvents = listOf(remoteEvent1)
             )
         }.returns(Solution(listOf(compensatingAction1)))
         every {
             synchronizationStrategy.resolve(
+                    noteId = noteId2,
                     localEvents = listOf(localEvent2),
                     remoteEvents = listOf(remoteEvent2)
             )
@@ -481,6 +497,7 @@ internal class NewSynchronizerTest {
         val remoteEvent1 = modelEvent(eventId = 1, noteId = 1, revision = 11)
         val localEventForRemoteEvent1 = modelEvent(eventId = 13, noteId = 1, revision = 3)
         val remoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 13)
+        val noteId = localEvent1.noteId
         every { localEvents.getEvents() }.returns(Observable.just(localEvent1))
         every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent1))
         val compensatingAction = CompensatingAction(
@@ -491,6 +508,7 @@ internal class NewSynchronizerTest {
         )
         every {
             synchronizationStrategy.resolve(
+                    noteId = noteId,
                     localEvents = listOf(localEvent1),
                     remoteEvents = listOf(remoteEvent1)
             )
@@ -502,6 +520,7 @@ internal class NewSynchronizerTest {
         ))
         every {
             synchronizationStrategy.resolve(
+                    noteId = noteId,
                     localEvents = listOf(localEventForRemoteEvent1),
                     remoteEvents = listOf(remoteEventForLocalEvent1)
             )
