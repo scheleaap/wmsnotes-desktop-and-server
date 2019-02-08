@@ -13,10 +13,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-// TODO:
-// - no local events --> error
-// - no remote events --> error
-// - note revision = 1 (i.e. revision - 1 does not work)
 internal class MergingSynchronizationStrategyTest {
     private val noteProjector: NoteProjector = mockk()
     private val mergeStrategy: MergeStrategy = mockk()
@@ -33,9 +29,9 @@ internal class MergingSynchronizationStrategyTest {
     fun solution() {
         // Given
         val oldLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = 1)
-        val oldLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = 1)
+        val oldLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = 2)
         val oldRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
-        val oldRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 1)
+        val oldRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 2)
         val newLocalEvent1: Event = mockk()
         val newLocalEvent2: Event = mockk()
         val newRemoteEvent1: Event = mockk()
@@ -84,6 +80,99 @@ internal class MergingSynchronizationStrategyTest {
         givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1, oldLocalEvent2))
         givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
         every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(NoSolution)
+        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
+
+        // When
+        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+
+        // Then
+        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.NoSolution)
+    }
+
+    @Test
+    fun `no local events`() {
+        // Given
+        val oldRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
+        val oldRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 1)
+        val newLocalEvent1: Event = mockk()
+        val newLocalEvent2: Event = mockk()
+        val newRemoteEvent1: Event = mockk()
+        val newRemoteEvent2: Event = mockk()
+        val noteId = oldRemoteEvent1.noteId
+        val localEvents = emptyList<Event>()
+        val remoteEvents = listOf(oldRemoteEvent1, oldRemoteEvent2)
+        val baseNote: Note = mockk()
+        val localNote: Note = mockk()
+        val remoteNote: Note = mockk()
+        givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
+        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+                newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
+                newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
+        ))
+        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
+
+        // When
+        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+
+        // Then
+        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.NoSolution)
+    }
+
+    @Test
+    fun `no remote events`() {
+        // Given
+        val oldLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = 1)
+        val oldLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = 1)
+        val newLocalEvent1: Event = mockk()
+        val newLocalEvent2: Event = mockk()
+        val newRemoteEvent1: Event = mockk()
+        val newRemoteEvent2: Event = mockk()
+        val noteId = oldLocalEvent1.noteId
+        val localEvents = listOf(oldLocalEvent1, oldLocalEvent2)
+        val remoteEvents = emptyList<Event>()
+        val baseNote: Note = mockk()
+        val localNote: Note = mockk()
+        val remoteNote: Note = mockk()
+        every { noteProjector.project(noteId, oldLocalEvent1.revision - 1) }.returns(baseNote)
+        givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1, oldLocalEvent2))
+        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+                newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
+                newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
+        ))
+        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
+
+        // When
+        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+
+        // Then
+        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.NoSolution)
+    }
+
+    @Test
+    fun `local event with revision 1`() {
+        // This situation should not normally occur, because it would mean there is a conflict involving a local note
+        // that has just been created. Perhaps it could occur in case the client crashes during a previous
+        // synchronization, though.
+
+        // Given
+        val oldLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = 1)
+        val oldRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
+        val oldRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 2)
+        val newLocalEvent1: Event = mockk()
+        val newRemoteEvent1: Event = mockk()
+        val noteId = oldLocalEvent1.noteId
+        val localEvents = listOf(oldLocalEvent1)
+        val remoteEvents = listOf(oldRemoteEvent1, oldRemoteEvent2)
+        val baseNote: Note = mockk()
+        val localNote: Note = mockk()
+        val remoteNote: Note = mockk()
+        every { noteProjector.project(noteId, oldLocalEvent1.revision - 1) }.returns(baseNote)
+        givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1))
+        givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
+        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+                newLocalEvents = listOf(newLocalEvent1),
+                newRemoteEvents = listOf(newRemoteEvent1)
+        ))
         val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
 
         // When
