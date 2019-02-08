@@ -6,9 +6,11 @@ import info.maaskant.wmsnotes.model.CreateNoteCommand
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import io.mockk.*
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 
+@Disabled("Tests written while traveling, code to be implemented next")
 internal class MarkdownFilesImporterTest {
     private val noteId = "note"
 
