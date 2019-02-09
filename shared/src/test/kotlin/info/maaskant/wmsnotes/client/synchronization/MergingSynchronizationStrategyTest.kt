@@ -157,18 +157,17 @@ internal class MergingSynchronizationStrategyTest {
         // Given
         val oldLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = 1)
         val oldRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
-        val oldRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 2)
         val newLocalEvent1: Event = mockk()
         val newRemoteEvent1: Event = mockk()
         val noteId = oldLocalEvent1.noteId
         val localEvents = listOf(oldLocalEvent1)
-        val remoteEvents = listOf(oldRemoteEvent1, oldRemoteEvent2)
+        val remoteEvents = listOf(oldRemoteEvent1)
         val baseNote: Note = mockk()
         val localNote: Note = mockk()
         val remoteNote: Note = mockk()
-        every { noteProjector.project(noteId, oldLocalEvent1.revision - 1) }.returns(baseNote)
-        givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1))
-        givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
+        every { noteProjector.project(noteId, 0) }.returns(baseNote)
+        every { baseNote.apply(oldLocalEvent1) }.returns(Pair(localNote, oldLocalEvent1))
+        every { baseNote.apply(oldRemoteEvent1) }.returns(Pair(remoteNote, oldRemoteEvent1))
         every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1),
                 newRemoteEvents = listOf(newRemoteEvent1)
@@ -179,7 +178,12 @@ internal class MergingSynchronizationStrategyTest {
         val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.NoSolution)
+        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.Solution(listOf(CompensatingAction(
+                compensatedLocalEvents = listOf(oldLocalEvent1),
+                compensatedRemoteEvents = listOf(oldRemoteEvent1),
+                newLocalEvents = listOf(newLocalEvent1),
+                newRemoteEvents = listOf(newRemoteEvent1)
+        ))))
     }
 
     private fun givenAnEventApplicationResult(

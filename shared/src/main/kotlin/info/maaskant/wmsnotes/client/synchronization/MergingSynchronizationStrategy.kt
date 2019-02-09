@@ -2,13 +2,17 @@ package info.maaskant.wmsnotes.client.synchronization
 
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.projection.NoteProjector
+import info.maaskant.wmsnotes.utilities.logger
 
 class MergingSynchronizationStrategy(
         private val mergeStrategy: MergeStrategy,
         private val noteProjector: NoteProjector
 ) : SynchronizationStrategy {
+    private val logger by logger()
+
     override fun resolve(noteId: String, localEvents: List<Event>, remoteEvents: List<Event>): SynchronizationStrategy.ResolutionResult {
-        return if (localEvents.isEmpty() || remoteEvents.isEmpty() || localEvents.lastOrNull()?.revision == 1) {
+        return if (localEvents.isEmpty() || remoteEvents.isEmpty()) {
+            logger.warn("Unexpected call to ${this.javaClass.name} with $localEvents and $remoteEvents")
             SynchronizationStrategy.ResolutionResult.NoSolution
         } else {
             val baseNote = noteProjector.project(noteId = noteId, revision = localEvents.first().revision - 1)
