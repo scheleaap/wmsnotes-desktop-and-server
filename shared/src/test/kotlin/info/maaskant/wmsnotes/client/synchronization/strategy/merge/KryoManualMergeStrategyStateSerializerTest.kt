@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.client.synchronization
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool

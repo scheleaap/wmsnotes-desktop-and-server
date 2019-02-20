@@ -1,5 +1,6 @@
-package info.maaskant.wmsnotes.client.synchronization
+package info.maaskant.wmsnotes.client.synchronization.strategy
 
+import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.model.Event
 
 class RemoteOnlySynchronizationStrategy : SynchronizationStrategy {

@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.client.synchronization
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.Registration
@@ -6,8 +6,8 @@ import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import com.esotericsoftware.kryo.util.Pool
-import info.maaskant.wmsnotes.client.synchronization.ManualMergeStrategy.ConflictData
-import info.maaskant.wmsnotes.client.synchronization.MergeStrategy.MergeResult.Solution
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.ManualMergeStrategy.ConflictData
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
 import info.maaskant.wmsnotes.utilities.serialization.KryoSerializer
 import info.maaskant.wmsnotes.utilities.serialization.readMapWithNullableValues
 import info.maaskant.wmsnotes.utilities.serialization.writeMapWithNullableValues

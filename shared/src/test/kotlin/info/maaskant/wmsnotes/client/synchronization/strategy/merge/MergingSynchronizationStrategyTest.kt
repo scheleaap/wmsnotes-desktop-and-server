@@ -1,7 +1,9 @@
-package info.maaskant.wmsnotes.client.synchronization
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
-import info.maaskant.wmsnotes.client.synchronization.MergeStrategy.MergeResult.NoSolution
-import info.maaskant.wmsnotes.client.synchronization.MergeStrategy.MergeResult.Solution
+import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.NoSolution
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.projection.Note

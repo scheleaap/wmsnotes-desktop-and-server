@@ -1,6 +1,6 @@
-package info.maaskant.wmsnotes.client.synchronization
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
-import info.maaskant.wmsnotes.client.synchronization.ExistenceDifference.ExistenceType.*
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.ExistenceDifference.ExistenceType.*
 import info.maaskant.wmsnotes.model.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled

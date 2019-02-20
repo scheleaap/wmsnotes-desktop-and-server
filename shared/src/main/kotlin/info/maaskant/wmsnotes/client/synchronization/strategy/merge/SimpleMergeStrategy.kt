@@ -1,9 +1,8 @@
-package info.maaskant.wmsnotes.client.synchronization
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
-import info.maaskant.wmsnotes.client.synchronization.MergeStrategy.MergeResult
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.projection.Note
-import io.reactivex.Observable
 import javax.inject.Inject
 
 class SimpleMergeStrategy @Inject constructor(

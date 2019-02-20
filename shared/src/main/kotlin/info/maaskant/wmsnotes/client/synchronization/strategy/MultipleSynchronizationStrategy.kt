@@ -1,6 +1,6 @@
-package info.maaskant.wmsnotes.client.synchronization
+package info.maaskant.wmsnotes.client.synchronization.strategy
 
-import info.maaskant.wmsnotes.client.synchronization.SynchronizationStrategy.ResolutionResult.NoSolution
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
 import info.maaskant.wmsnotes.model.Event
 
 class MultipleSynchronizationStrategy(vararg val strategies: SynchronizationStrategy) : SynchronizationStrategy {

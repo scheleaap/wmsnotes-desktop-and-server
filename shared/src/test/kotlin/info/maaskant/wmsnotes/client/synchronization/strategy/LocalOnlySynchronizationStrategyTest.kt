@@ -1,23 +1,24 @@
-package info.maaskant.wmsnotes.client.synchronization
+package info.maaskant.wmsnotes.client.synchronization.strategy
 
-import info.maaskant.wmsnotes.client.synchronization.SynchronizationStrategy.ResolutionResult.NoSolution
-import info.maaskant.wmsnotes.client.synchronization.SynchronizationStrategy.ResolutionResult.Solution
+import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
 import info.maaskant.wmsnotes.model.Event
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-internal class RemoteOnlySynchronizationStrategyTest {
+internal class LocalOnlySynchronizationStrategyTest {
     private val noteId = "note"
 
     @Test
-    fun `only remote events`() {
+    fun `only local events`() {
         // Given
         val event1: Event = mockk()
         val event2: Event = mockk()
-        val localEvents = emptyList<Event>()
-        val remoteEvents = listOf(event1, event2)
-        val strategy = RemoteOnlySynchronizationStrategy()
+        val localEvents = listOf(event1, event2)
+        val remoteEvents = emptyList<Event>()
+        val strategy = LocalOnlySynchronizationStrategy()
 
         // When
         val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
@@ -25,16 +26,16 @@ internal class RemoteOnlySynchronizationStrategyTest {
         // Then
         assertThat(result).isEqualTo(Solution(listOf(
                 CompensatingAction(
-                        compensatedLocalEvents = emptyList(),
-                        compensatedRemoteEvents = listOf(event1),
-                        newLocalEvents = listOf(event1),
-                        newRemoteEvents = emptyList()
+                        compensatedLocalEvents = listOf(event1),
+                        compensatedRemoteEvents = emptyList(),
+                        newLocalEvents = emptyList(),
+                        newRemoteEvents = listOf(event1)
                 ),
                 CompensatingAction(
-                        compensatedLocalEvents = emptyList(),
-                        compensatedRemoteEvents = listOf(event2),
-                        newLocalEvents = listOf(event2),
-                        newRemoteEvents = emptyList()
+                        compensatedLocalEvents = listOf(event2),
+                        compensatedRemoteEvents = emptyList(),
+                        newLocalEvents = emptyList(),
+                        newRemoteEvents = listOf(event2)
                 )
         )))
     }
@@ -45,9 +46,9 @@ internal class RemoteOnlySynchronizationStrategyTest {
         val event1: Event = mockk()
         val event2: Event = mockk()
         val event3: Event = mockk()
-        val localEvents = listOf(event1)
-        val remoteEvents = listOf(event2, event3)
-        val strategy = RemoteOnlySynchronizationStrategy()
+        val localEvents = listOf(event1, event2)
+        val remoteEvents = listOf(event3)
+        val strategy = LocalOnlySynchronizationStrategy()
 
         // When
         val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
@@ -61,7 +62,7 @@ internal class RemoteOnlySynchronizationStrategyTest {
         // Given
         val localEvents = emptyList<Event>()
         val remoteEvents = emptyList<Event>()
-        val strategy = RemoteOnlySynchronizationStrategy()
+        val strategy = LocalOnlySynchronizationStrategy()
 
         // When
         val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)

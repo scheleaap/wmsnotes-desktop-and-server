@@ -1,14 +1,11 @@
-package info.maaskant.wmsnotes.client.synchronization
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
-import info.maaskant.wmsnotes.client.synchronization.ManualMergeStrategy.ConflictResolutionChoice
-import info.maaskant.wmsnotes.client.synchronization.MergeStrategy.MergeResult.NoSolution
-import info.maaskant.wmsnotes.client.synchronization.MergeStrategy.MergeResult.Solution
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.NoSolution
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
 import info.maaskant.wmsnotes.model.projection.Note
 import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import info.maaskant.wmsnotes.client.synchronization.DifferenceCompensator.CompensatingEvents
 import info.maaskant.wmsnotes.model.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
