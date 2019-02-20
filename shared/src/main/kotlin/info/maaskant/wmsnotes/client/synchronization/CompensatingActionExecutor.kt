@@ -9,7 +9,7 @@ import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import io.grpc.Deadline
 import javax.inject.Inject
 
-
+@Deprecated("Replaced by CommandExecutor")
 class CompensatingActionExecutor @Inject constructor(
         private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
         private val grpcDeadline: Deadline?,
@@ -18,7 +18,15 @@ class CompensatingActionExecutor @Inject constructor(
         private val commandProcessor: CommandProcessor
 ) {
     fun execute(compensatingAction: CompensatingAction): ExecutionResult {
-        TODO()
+        for (inputEvent in compensatingAction.newLocalEvents) {
+            val command = eventToCommandMapper.map(inputEvent, inputEvent.revision)
+            val outputEvent = commandProcessor.blockingProcessCommand(command)
+        }
+        return ExecutionResult(
+                success = true,
+                newLocalEvents = compensatingAction.newLocalEvents.map { EventIdAndRevision(it.eventId, it.revision) },
+                newRemoteEvents = emptyList()
+        )
     }
 
     data class ExecutionResult(

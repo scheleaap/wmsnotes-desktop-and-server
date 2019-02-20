@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-@Disabled("Tests written while traveling, code to be implemented next")
 internal class CompensatingActionExecutorTest {
     private val commandProcessor: CommandProcessor = mockk()
     private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub = mockk()
@@ -28,11 +27,46 @@ internal class CompensatingActionExecutorTest {
         )
     }
 
+    @Disabled
     @Test
     fun test() {
         TODO("Investigate whether we can move lastKnown*Revisions from Synchronizer to CAE")
     }
 
+    @Test
+    fun `local events, successful`() {
+        // Given
+        val localInputEvent1 = modelEvent(eventId = 0, noteId = 1, revision = 0)
+        val localInputEvent2 = modelEvent(eventId = 0, noteId = 1, revision = 0)
+        val localOutputEvent1 = modelEvent(eventId = 11, noteId = 1, revision = 1)
+        val localOutputEvent2 = modelEvent(eventId = 12, noteId = 1, revision = 2)
+        val compensatingAction = CompensatingAction(
+                compensatedLocalEvents = emptyList(),
+                compensatedRemoteEvents = emptyList(),
+                newLocalEvents = listOf(localInputEvent1, localInputEvent2),
+                newRemoteEvents = emptyList()
+        )
+        val localCommand1 = givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localInputEvent1, null, localOutputEvent1)
+        val localCommand2 = givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localInputEvent2, localOutputEvent1.revision, localOutputEvent2)
+        val executor = createExecutor()
+
+        // When
+        val result = executor.execute(compensatingAction)
+
+        // Then
+        assertThat(result).isEqualTo(ExecutionResult(
+                success = true,
+                newLocalEvents = listOf(EventIdAndRevision(localOutputEvent1), EventIdAndRevision(localOutputEvent2)),
+                newRemoteEvents = emptyList()
+        ))
+        verifySequence {
+            remoteCommandService.postCommand(any()).wasNot(Called)
+            commandProcessor.blockingProcessCommand(localCommand1)
+            commandProcessor.blockingProcessCommand(localCommand2)
+        }
+    }
+
+    @Disabled
     @Test
     fun `local and remote events, successful`() {
         // Given
@@ -47,7 +81,7 @@ internal class CompensatingActionExecutorTest {
                 newRemoteEvents = listOf(remoteEvent1, remoteEvent2)
         )
         val localCommand1 = givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localEvent1, null, localEvent1)
-        val localCommand2 = givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localEvent2, localEvent1.eventId, localEvent2)
+        val localCommand2 = givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localEvent2, localEvent1.revision, localEvent2)
         val remoteRequest1 = givenARemoteResponseForAnEvent(remoteEvent1, null, remoteSuccess(remoteEvent1.eventId, remoteEvent1.revision))
         val remoteRequest2 = givenARemoteResponseForAnEvent(remoteEvent2, remoteEvent1.revision, remoteSuccess(remoteEvent2.eventId, remoteEvent2.revision))
         val executor = createExecutor()
@@ -69,6 +103,7 @@ internal class CompensatingActionExecutorTest {
         }
     }
 
+    @Disabled
     @Test
     fun `local and remote events, remote fails`() {
         // Given
@@ -83,7 +118,7 @@ internal class CompensatingActionExecutorTest {
                 newRemoteEvents = listOf(remoteEvent1, remoteEvent2)
         )
         givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localEvent1, null, localEvent1)
-        givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localEvent2, localEvent1.eventId, localEvent2)
+        givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localEvent2, localEvent1.revision, localEvent2)
         val remoteRequest1 = givenARemoteResponseForAnEvent(remoteEvent1, null, remoteError())
         val remoteRequest2 = givenARemoteResponseForAnEvent(remoteEvent2, remoteEvent1.revision, remoteSuccess(remoteEvent2.eventId, remoteEvent2.revision))
         val executor = createExecutor()
@@ -104,6 +139,7 @@ internal class CompensatingActionExecutorTest {
         }
     }
 
+    @Disabled
     @Test
     fun `local and remote events, local fails`() {
         // Given
@@ -118,7 +154,7 @@ internal class CompensatingActionExecutorTest {
                 newRemoteEvents = listOf(remoteEvent1, remoteEvent2)
         )
         val localCommand1 = givenProcessingOfARemoteEventFails(localEvent1)
-        val localCommand2 = givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localEvent2, localEvent1.eventId, localEvent2)
+        val localCommand2 = givenAnEventIsReturnedIfAnotherEventIsProcessedLocally(localEvent2, localEvent1.revision, localEvent2)
         val remoteRequest1 = givenARemoteResponseForAnEvent(remoteEvent1, null, remoteSuccess(remoteEvent1.eventId, remoteEvent1.revision))
         val remoteRequest2 = givenARemoteResponseForAnEvent(remoteEvent2, remoteEvent1.revision, remoteSuccess(remoteEvent2.eventId, remoteEvent2.revision))
         val executor = createExecutor()

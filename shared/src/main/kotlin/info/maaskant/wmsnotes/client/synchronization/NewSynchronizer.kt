@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.client.synchronization
 
+import info.maaskant.wmsnotes.client.synchronization.commandexecutor.CommandExecutor
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.utilities.logger
@@ -21,7 +22,9 @@ class NewSynchronizer @Inject constructor(
         private val localEvents: ModifiableEventRepository,
         private val remoteEvents: ModifiableEventRepository,
         private val synchronizationStrategy: SynchronizationStrategy,
-        private val compensatingActionExecutor: CompensatingActionExecutor,
+        private val eventToCommandMapper: EventToCommandMapper,
+        private val localCommandExecutor: CommandExecutor,
+        private val remoteCommandExecutor: CommandExecutor,
         initialState: SynchronizerState?
 ) : StateProducer<SynchronizerState> {
 
@@ -113,29 +116,44 @@ class NewSynchronizer @Inject constructor(
     }
 
     private fun executeCompensatingAction(compensatingAction: CompensatingAction, noteId: String): Boolean {
-        val executionResult = compensatingActionExecutor.execute(compensatingAction)
-        if (executionResult.success) {
-            updateState(state
-                    .run {
-                        executionResult.newLocalEvents.lastOrNull()?.let {
-                            this
-                                    .updateLastKnownLocalRevision(noteId, it.revision)
-                                    .updateLastSynchronizedLocalRevision(noteId, it.revision)
-                                    .ignoreLocalEvent(it.eventId)
-                        } ?: this
-                    }
-                    .run {
-                        executionResult.newRemoteEvents.lastOrNull()?.let {
-                            this
-                                    .updateLastKnownRemoteRevision(noteId, it.revision)
-                                    .ignoreRemoteEvent(it.eventId)
-                        } ?: this
-                    }
-            )
-            compensatingAction.compensatedRemoteEvents.forEach { remoteEvents.removeEvent(it) }
-            compensatingAction.compensatedLocalEvents.forEach { localEvents.removeEvent(it) }
+        for (remoteEvent in compensatingAction.newRemoteEvents) {
+            val command = eventToCommandMapper.map(remoteEvent, state.lastKnownRemoteRevisions[remoteEvent.noteId])
+            val executionResult = remoteCommandExecutor.execute(command)
+            when (executionResult) {
+                CommandExecutor.ExecutionResult.Failure -> return false
+                is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
+                    updateState(state
+                            .updateLastKnownRemoteRevision(executionResult.newEventMetadata.noteId, executionResult.newEventMetadata.revision)
+                            .ignoreRemoteEvent(executionResult.newEventMetadata.eventId)
+                    )
+                }
+            }
         }
-        return executionResult.success
+        for (localEvent in compensatingAction.newLocalEvents) {
+            val command = eventToCommandMapper.map(localEvent, state.lastKnownLocalRevisions[localEvent.noteId])
+            val executionResult = localCommandExecutor.execute(command)
+            when (executionResult) {
+                CommandExecutor.ExecutionResult.Failure -> return false
+                is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
+                    updateState(state
+                            .updateLastKnownLocalRevision(executionResult.newEventMetadata.noteId, executionResult.newEventMetadata.revision)
+                            .updateLastSynchronizedLocalRevision(executionResult.newEventMetadata.noteId, executionResult.newEventMetadata.revision)
+                            .ignoreLocalEvent(executionResult.newEventMetadata.eventId)
+                    )
+                }
+            }
+        }
+        compensatingAction.compensatedRemoteEvents.forEach { remoteEvents.removeEvent(it) }
+        compensatingAction.compensatedLocalEvents.forEach { localEvents.removeEvent(it) }
+        if (compensatingAction.compensatedLocalEvents.isNotEmpty()) {
+            val lastCompensatedLocalEventRevision = compensatingAction.compensatedLocalEvents.last().revision
+            if (state.lastSynchronizedLocalRevisions[noteId] == null || lastCompensatedLocalEventRevision > state.lastSynchronizedLocalRevisions.getValue(noteId)!!) {
+                updateState(state
+                        .updateLastSynchronizedLocalRevision(noteId, lastCompensatedLocalEventRevision)
+                )
+            }
+        }
+        return true
     }
 
     private fun groupLocalAndRemoteEventsByNote(localEvents: List<Event>, remoteEvents: List<Event>): SortedMap<String, LocalAndRemoteEvents> {
