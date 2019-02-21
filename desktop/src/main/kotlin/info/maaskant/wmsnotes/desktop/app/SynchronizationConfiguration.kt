@@ -5,9 +5,16 @@ import com.esotericsoftware.kryo.util.Pool
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.client.api.GrpcEventMapper
 import info.maaskant.wmsnotes.client.synchronization.*
+import info.maaskant.wmsnotes.client.synchronization.commandexecutor.LocalCommandExecutor
+import info.maaskant.wmsnotes.client.synchronization.commandexecutor.RemoteCommandExecutor
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
+import info.maaskant.wmsnotes.client.synchronization.strategy.LocalOnlySynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.MultipleSynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.RemoteOnlySynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.*
 import info.maaskant.wmsnotes.desktop.settings.Configuration.storeInMemory
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.Event
@@ -36,43 +43,41 @@ class SynchronizationConfiguration {
 
     @Bean
     @Singleton
-    @ServerHostname
-    fun serverHostname(@Value("\${server.hostname:localhost}") hostname: String): String = hostname
+    fun synchronizer(
+            @ForLocalEvents localEvents: ModifiableEventRepository,
+            @ForRemoteEvents remoteEvents: ModifiableEventRepository,
+            synchronizationStrategy: SynchronizationStrategy,
+            eventToCommandMapper: EventToCommandMapper,
+            localCommandExecutor: LocalCommandExecutor,
+            remoteCommandExecutor: RemoteCommandExecutor,
+            stateRepository: StateRepository<SynchronizerState>
+    ) = NewSynchronizer(
+            localEvents,
+            remoteEvents,
+            synchronizationStrategy,
+            eventToCommandMapper,
+            localCommandExecutor,
+            remoteCommandExecutor,
+            stateRepository.load()
+    ).apply {
+        stateRepository.connect(this)
+    }
 
     @Bean
     @Singleton
-    fun grpcDeadline() = Deadline.after(1, TimeUnit.SECONDS)
+    fun synchronizerStateRepository(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): StateRepository<SynchronizerState> =
+            FileStateRepository(
+                    serializer = KryoSynchronizerStateSerializer(kryoPool),
+                    file = appDirectory.resolve("synchronization").resolve("synchronizer.state"),
+                    scheduler = Schedulers.io(),
+                    timeout = 1,
+                    unit = TimeUnit.SECONDS
+            )
 
     @Bean
     @Singleton
-    fun grpcCommandService(managedChannel: ManagedChannel) =
-            CommandServiceGrpc.newBlockingStub(managedChannel)!!
-
-    @Bean
-    @Singleton
-    fun grpcEventService(managedChannel: ManagedChannel) =
-            EventServiceGrpc.newBlockingStub(managedChannel)!!
-
-    @Bean
-    @Singleton
-    fun managedChannel(@ServerHostname hostname: String): ManagedChannel =
-            ManagedChannelBuilder.forAddress(hostname, 6565)
-                    // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
-                    // needing certificates.
-                    .usePlaintext() // TODO enable SSL/TLS
-                    .build()
-
-    @Bean
-    @Singleton
-    fun grpcCommandMapper() = GrpcCommandMapper()
-
-    @Bean
-    @Singleton
-    fun grpcEventMapper() = GrpcEventMapper()
-
-    @Bean
-    @Singleton
-    fun eventToCommandMapper() = EventToCommandMapper()
+    fun synchronizationTask(localEventImporter: LocalEventImporter, remoteEventImporter: RemoteEventImporter, synchronizer: NewSynchronizer) =
+            SynchronizationTask(localEventImporter, remoteEventImporter, synchronizer)
 
     @Bean
     @Singleton
@@ -159,45 +164,84 @@ class SynchronizationConfiguration {
 
     @Bean
     @Singleton
-    fun synchronizerStateRepository(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): StateRepository<SynchronizerState> =
-            FileStateRepository(
-                    serializer = KryoSynchronizerStateSerializer(kryoPool),
-                    file = appDirectory.resolve("synchronization").resolve("synchronizer.state"),
-                    scheduler = Schedulers.io(),
-                    timeout = 1,
-                    unit = TimeUnit.SECONDS
+    fun synchronizationStrategy(mergeStrategy: MergeStrategy, noteProjector: NoteProjector) =
+            MultipleSynchronizationStrategy(
+                    LocalOnlySynchronizationStrategy(),
+                    RemoteOnlySynchronizationStrategy(),
+                    MergingSynchronizationStrategy(
+                            mergeStrategy = mergeStrategy,
+                            noteProjector = noteProjector
+                    )
+
             )
 
     @Bean
     @Singleton
-    fun synchronizer(
-            @ForLocalEvents localEvents: ModifiableEventRepository,
-            @ForRemoteEvents remoteEvents: ModifiableEventRepository,
-            remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
-            grpcDeadline: Deadline,
-            eventToCommandMapper: EventToCommandMapper,
-            grpcCommandMapper: GrpcCommandMapper,
-            commandProcessor: CommandProcessor,
-            noteProjector: NoteProjector,
-            stateRepository: StateRepository<SynchronizerState>
-    ) = Synchronizer(
-            localEvents,
-            remoteEvents,
-            remoteCommandService,
-            grpcDeadline,
-            eventToCommandMapper,
-            grpcCommandMapper,
-            commandProcessor,
-            noteProjector,
-            stateRepository.load()
-    ).apply {
-        stateRepository.connect(this)
-    }
+    fun mergeStrategy(differenceAnalyzer: DifferenceAnalyzer, differenceCompensator: DifferenceCompensator) =
+            KeepBothMergeStrategy(differenceAnalyzer, differenceCompensator)
 
     @Bean
     @Singleton
-    fun synchronizationTask(localEventImporter: LocalEventImporter, remoteEventImporter: RemoteEventImporter, synchronizer: Synchronizer) =
-            SynchronizationTask(localEventImporter, remoteEventImporter, synchronizer)
+    fun differenceAnalyzer() = DifferenceAnalyzer()
+
+    @Bean
+    @Singleton
+    fun differenceCompensator() = DifferenceCompensator()
+
+    @Bean
+    @Singleton
+    fun eventToCommandMapper() = EventToCommandMapper()
+
+    @Bean
+    @Singleton
+    fun localCommandExecutor(commandProcessor: CommandProcessor) =
+            LocalCommandExecutor(commandProcessor)
+
+    @Bean
+    @Singleton
+    fun remoteCommandExecutor(
+            grpcCommandMapper: GrpcCommandMapper,
+            grpcCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
+            grpcDeadline: Deadline
+    ) =
+            RemoteCommandExecutor(grpcCommandMapper, grpcCommandService, grpcDeadline)
+
+    @Bean
+    @Singleton
+    @ServerHostname
+    fun serverHostname(@Value("\${server.hostname:localhost}") hostname: String): String = hostname
+
+    @Bean
+    @Singleton
+    fun grpcDeadline() = Deadline.after(1, TimeUnit.SECONDS)
+
+    @Bean
+    @Singleton
+    fun grpcCommandService(managedChannel: ManagedChannel) =
+            CommandServiceGrpc.newBlockingStub(managedChannel)!!
+
+    @Bean
+    @Singleton
+    fun grpcEventService(managedChannel: ManagedChannel) =
+            EventServiceGrpc.newBlockingStub(managedChannel)!!
+
+    @Bean
+    @Singleton
+    fun managedChannel(@ServerHostname hostname: String): ManagedChannel =
+            ManagedChannelBuilder.forAddress(hostname, 6565)
+                    // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
+                    // needing certificates.
+                    .usePlaintext() // TODO enable SSL/TLS
+                    .build()
+
+    @Bean
+    @Singleton
+    fun grpcCommandMapper() = GrpcCommandMapper()
+
+    @Bean
+    @Singleton
+    fun grpcEventMapper() = GrpcEventMapper()
+
 
     @Qualifier
     @MustBeDocumented

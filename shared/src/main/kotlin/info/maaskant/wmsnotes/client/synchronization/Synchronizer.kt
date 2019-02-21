@@ -20,6 +20,7 @@ import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
+@Deprecated("To be replaced with NewSynchronizer")
 class Synchronizer @Inject constructor(
         private val localEvents: ModifiableEventRepository,
         private val remoteEvents: ModifiableEventRepository,
