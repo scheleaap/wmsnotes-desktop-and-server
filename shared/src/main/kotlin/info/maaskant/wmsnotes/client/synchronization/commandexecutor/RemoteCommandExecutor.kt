@@ -5,11 +5,13 @@ import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse
 import info.maaskant.wmsnotes.utilities.logger
+import io.grpc.Deadline
 import javax.inject.Inject
 
 class RemoteCommandExecutor @Inject constructor(
         private val grpcCommandMapper: GrpcCommandMapper,
-        private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub
+        private val grpcCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
+        private val grpcDeadline: Deadline?
 ) : CommandExecutor {
     private val logger by logger()
 
@@ -20,7 +22,11 @@ class RemoteCommandExecutor @Inject constructor(
                             logger.debug("Executing command remotely: $command")
                             grpcCommandMapper.toGrpcPostCommandRequest(it)
                         }
-                        .let { remoteCommandService.postCommand(it) }
+                        .let {
+                            grpcCommandService
+                                    .apply { if (grpcDeadline != null) this.withDeadline(grpcDeadline) }
+                                    .postCommand(it)
+                        }
                         .let { response ->
                             if (response.status == PostCommandResponse.Status.SUCCESS) {
                                 val result = if (response.newEventId != 0) {

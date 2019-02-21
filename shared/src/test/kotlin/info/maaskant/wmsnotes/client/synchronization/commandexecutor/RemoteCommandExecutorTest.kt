@@ -3,26 +3,26 @@ package info.maaskant.wmsnotes.client.synchronization.commandexecutor
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
+import io.grpc.Deadline
 import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeUnit
 
-// TODO:
-// - new event id, no note id
-// - new event id, no new revision
-// - apply deadline
 internal class RemoteCommandExecutorTest {
-    private val remoteCommandService: CommandServiceGrpc.CommandServiceBlockingStub = mockk()
+    private val grpcCommandService: CommandServiceGrpc.CommandServiceBlockingStub = mockk()
     private val grpcCommandMapper: GrpcCommandMapper = mockk()
+    private val grpcDeadline = Deadline.after(1, TimeUnit.SECONDS)
 
     @BeforeEach
     fun init() {
         clearMocks(
-                remoteCommandService,
+                grpcCommandService,
                 grpcCommandMapper
         )
+        every { grpcCommandService.withDeadline(any()) }.returns(grpcCommandService)
     }
 
     @Test
@@ -41,7 +41,8 @@ internal class RemoteCommandExecutorTest {
                 newEventMetadata = CommandExecutor.EventMetadata(event)
         ))
         verifySequence {
-            remoteCommandService.postCommand(remoteRequest)
+            grpcCommandService.withDeadline(grpcDeadline)
+            grpcCommandService.postCommand(remoteRequest)
         }
     }
 
@@ -60,7 +61,8 @@ internal class RemoteCommandExecutorTest {
                 newEventMetadata = null
         ))
         verifySequence {
-            remoteCommandService.postCommand(remoteRequest)
+            grpcCommandService.withDeadline(grpcDeadline)
+            grpcCommandService.postCommand(remoteRequest)
         }
     }
 
@@ -121,7 +123,8 @@ internal class RemoteCommandExecutorTest {
         // Then
         assertThat(result).isEqualTo(CommandExecutor.ExecutionResult.Failure)
         verifySequence {
-            remoteCommandService.postCommand(remoteRequest)
+            grpcCommandService.withDeadline(grpcDeadline)
+            grpcCommandService.postCommand(remoteRequest)
         }
     }
 
@@ -142,7 +145,8 @@ internal class RemoteCommandExecutorTest {
     private fun createExecutor() =
             RemoteCommandExecutor(
                     grpcCommandMapper,
-                    remoteCommandService
+                    grpcCommandService,
+                    grpcDeadline
             )
 
     private fun givenACommandFails(command: Command): info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest =
@@ -154,7 +158,7 @@ internal class RemoteCommandExecutorTest {
     private fun givenACommandResponse(command: Command, response: info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse): info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest {
         val remoteRequest: info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest = mockk()
         every { grpcCommandMapper.toGrpcPostCommandRequest(command) }.returns(remoteRequest)
-        every { remoteCommandService.postCommand(remoteRequest) }.returns(response)
+        every { grpcCommandService.postCommand(remoteRequest) }.returns(response)
         return remoteRequest
     }
 
