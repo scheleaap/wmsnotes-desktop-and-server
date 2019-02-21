@@ -1,10 +1,10 @@
 package info.maaskant.wmsnotes.client.synchronization
 
-import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
-import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
 import info.maaskant.wmsnotes.client.synchronization.commandexecutor.CommandExecutor
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
 import info.maaskant.wmsnotes.model.*
 import io.mockk.*
 import io.reactivex.Observable
@@ -59,19 +59,21 @@ internal class NewSynchronizerTest {
     @Test
     fun `nothing happens if synchronization strategy has no solution`() {
         // Given
-        val localOutboundEvent: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
-        val noteId = localOutboundEvent.noteId
-        every { localEvents.getEvents() }.returns(Observable.just(localOutboundEvent))
-        every { remoteEvents.getEvents() }.returns(Observable.empty())
+        val localEvent: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
+        val remoteEvent: Event = modelEvent(eventId = 1, noteId = 1, revision = 11)
+        val noteId = localEvent.noteId
+        every { localEvents.getEvents() }.returns(Observable.just(localEvent))
+        every { remoteEvents.getEvents() }.returns(Observable.just(remoteEvent))
         every { synchronizationStrategy.resolve(any(), any(), any()) }.returns(NoSolution)
         val s = createSynchronizer()
+        val stateObserver = s.getStateUpdates().test()
 
         // When
         s.synchronize()
 
         // Then
         verify {
-            synchronizationStrategy.resolve(noteId, listOf(localOutboundEvent), emptyList())
+            synchronizationStrategy.resolve(noteId, listOf(localEvent), listOf(remoteEvent))
         }
         verify(exactly = 0) {
             localCommandExecutor.execute(any())
@@ -79,6 +81,10 @@ internal class NewSynchronizerTest {
             localEvents.removeEvent(any())
             remoteEvents.removeEvent(any())
         }
+        val finalState = stateObserver.values().last()
+        assertThat(finalState.lastKnownLocalRevisions[noteId]).isEqualTo(localEvent.revision)
+        assertThat(finalState.lastKnownRemoteRevisions[noteId]).isEqualTo(remoteEvent.revision)
+        assertThat(finalState.lastSynchronizedLocalRevisions[noteId]).isNull()
     }
 
     @Test
@@ -136,6 +142,7 @@ internal class NewSynchronizerTest {
             localEvents.removeEvent(compensatedLocalEvent2)
         }
         val finalState = stateObserver.values().last()
+        assertThat(finalState.lastKnownLocalRevisions[noteId]).isEqualTo(compensatedLocalEvent2.revision)
         assertThat(finalState.lastKnownRemoteRevisions[noteId]).isEqualTo(newRemoteEventForLocalEvent2.revision)
         assertThat(finalState.lastSynchronizedLocalRevisions[noteId]).isEqualTo(compensatedLocalEvent2.revision)
     }
@@ -196,6 +203,7 @@ internal class NewSynchronizerTest {
         }
         val finalState = stateObserver.values().last()
         assertThat(finalState.lastKnownLocalRevisions[noteId]).isEqualTo(newLocalEventForRemoteEvent2.revision)
+        assertThat(finalState.lastKnownRemoteRevisions[noteId]).isEqualTo(compensatedRemoteEvent2.revision)
         assertThat(finalState.lastSynchronizedLocalRevisions[noteId]).isEqualTo(newLocalEventForRemoteEvent2.revision)
     }
 
@@ -216,8 +224,8 @@ internal class NewSynchronizerTest {
         val newLocalEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 1, revision = 4)
         val noteId = compensatedLocalEvent1.noteId
         initialState = initialState
-                .updateLastKnownLocalRevision(noteId, newLocalEventForRemoteEvent1.revision - 1)
-                .updateLastKnownRemoteRevision(noteId, newRemoteEventForLocalEvent1.revision - 1)
+                .updateLastKnownLocalRevision(noteId, compensatedLocalEvent2.revision)
+                .updateLastKnownRemoteRevision(noteId, compensatedRemoteEvent2.revision)
         givenLocalEvents(compensatedLocalEvent1, compensatedLocalEvent2)
         givenRemoteEvents(compensatedRemoteEvent1, compensatedRemoteEvent2)
         every {
@@ -298,8 +306,8 @@ internal class NewSynchronizerTest {
         val newLocalEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 1, revision = 4)
         val noteId = compensatedLocalEvent1.noteId
         initialState = initialState
-                .updateLastKnownLocalRevision(noteId, newLocalEventForRemoteEvent1.revision - 1)
-                .updateLastKnownRemoteRevision(noteId, newRemoteEventForLocalEvent1.revision - 1)
+                .updateLastKnownLocalRevision(noteId, compensatedLocalEvent2.revision)
+                .updateLastKnownRemoteRevision(noteId, compensatedRemoteEvent2.revision)
         givenLocalEvents(compensatedLocalEvent1, compensatedLocalEvent2)
         givenRemoteEvents(compensatedRemoteEvent1, compensatedRemoteEvent2)
         every {
@@ -388,8 +396,8 @@ internal class NewSynchronizerTest {
         val newLocalEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 1, revision = 4)
         val noteId = compensatedLocalEvent1.noteId
         initialState = initialState
-                .updateLastKnownLocalRevision(noteId, newLocalEventForRemoteEvent1.revision - 1)
-                .updateLastKnownRemoteRevision(noteId, newRemoteEventForLocalEvent1.revision - 1)
+                .updateLastKnownLocalRevision(noteId, compensatedLocalEvent2.revision)
+                .updateLastKnownRemoteRevision(noteId, compensatedRemoteEvent2.revision)
         givenLocalEvents(compensatedLocalEvent1, compensatedLocalEvent2)
         givenRemoteEvents(compensatedRemoteEvent1, compensatedRemoteEvent2)
         every {
@@ -427,8 +435,7 @@ internal class NewSynchronizerTest {
         val commandForRemoteEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForRemoteEvent1,
                 lastRevision = initialState.lastKnownLocalRevisions[noteId],
-                commandExecutor = localCommandExecutor,
-                newEvent = newLocalEventForRemoteEvent1
+                commandExecutor = localCommandExecutor
         )
         val commandForRemoteEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent2,
@@ -480,8 +487,8 @@ internal class NewSynchronizerTest {
         val newLocalEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 1, revision = 4)
         val noteId = compensatedLocalEvent1.noteId
         initialState = initialState
-                .updateLastKnownLocalRevision(noteId, newLocalEventForRemoteEvent1.revision - 1)
-                .updateLastKnownRemoteRevision(noteId, newRemoteEventForLocalEvent1.revision - 1)
+                .updateLastKnownLocalRevision(noteId, compensatedLocalEvent2.revision)
+                .updateLastKnownRemoteRevision(noteId, compensatedRemoteEvent2.revision)
         givenLocalEvents(compensatedLocalEvent1, compensatedLocalEvent2)
         givenRemoteEvents(compensatedRemoteEvent1, compensatedRemoteEvent2)
         every {
@@ -507,8 +514,7 @@ internal class NewSynchronizerTest {
         val commandForLocalEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[noteId],
-                commandExecutor = remoteCommandExecutor,
-                newEvent = newRemoteEventForLocalEvent1
+                commandExecutor = remoteCommandExecutor
         )
         val commandForLocalEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent2,
@@ -569,8 +575,8 @@ internal class NewSynchronizerTest {
         val newLocalEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 1, revision = 4)
         val noteId = compensatedLocalEvent1.noteId
         initialState = initialState
-                .updateLastKnownLocalRevision(noteId, newLocalEventForRemoteEvent1.revision - 1)
-                .updateLastKnownRemoteRevision(noteId, newRemoteEventForLocalEvent1.revision - 1)
+                .updateLastKnownLocalRevision(noteId, compensatedLocalEvent2.revision)
+                .updateLastKnownRemoteRevision(noteId, compensatedRemoteEvent2.revision)
         givenLocalEvents(compensatedLocalEvent1, compensatedLocalEvent2)
         givenRemoteEvents(compensatedRemoteEvent1, compensatedRemoteEvent2)
         every {
@@ -651,10 +657,10 @@ internal class NewSynchronizerTest {
         val noteId1 = compensatedLocalEvent1.noteId
         val noteId2 = compensatedLocalEvent2.noteId
         initialState = initialState
-                .updateLastKnownLocalRevision(noteId1, newLocalEventForRemoteEvent1.revision - 1)
-                .updateLastKnownLocalRevision(noteId2, newLocalEventForRemoteEvent2.revision - 1)
-                .updateLastKnownRemoteRevision(noteId1, newRemoteEventForLocalEvent1.revision - 1)
-                .updateLastKnownRemoteRevision(noteId2, newRemoteEventForLocalEvent2.revision - 1)
+                .updateLastKnownLocalRevision(noteId1, compensatedLocalEvent1.revision)
+                .updateLastKnownLocalRevision(noteId2, compensatedLocalEvent2.revision)
+                .updateLastKnownRemoteRevision(noteId1, compensatedRemoteEvent1.revision)
+                .updateLastKnownRemoteRevision(noteId2, compensatedRemoteEvent2.revision)
         givenLocalEvents(compensatedLocalEvent1, compensatedLocalEvent2)
         givenRemoteEvents(compensatedRemoteEvent1, compensatedRemoteEvent2)
         every {
@@ -750,15 +756,14 @@ internal class NewSynchronizerTest {
         val compensatingEventForRemoteEvent2 = modelEvent(eventId = -2, noteId = 2, revision = 0)
         val newRemoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 13)
         val newRemoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 2, revision = 14)
-        val newLocalEventForRemoteEvent1 = modelEvent(eventId = 13, noteId = 1, revision = 3)
         val newLocalEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 2, revision = 4)
         val noteId1 = compensatedLocalEvent1.noteId
         val noteId2 = compensatedLocalEvent2.noteId
         initialState = initialState
-                .updateLastKnownLocalRevision(noteId1, newLocalEventForRemoteEvent1.revision - 1)
-                .updateLastKnownLocalRevision(noteId2, newLocalEventForRemoteEvent2.revision - 1)
-                .updateLastKnownRemoteRevision(noteId1, newRemoteEventForLocalEvent1.revision - 1)
-                .updateLastKnownRemoteRevision(noteId2, newRemoteEventForLocalEvent2.revision - 1)
+                .updateLastKnownLocalRevision(noteId1, compensatedLocalEvent1.revision)
+                .updateLastKnownLocalRevision(noteId2, compensatedLocalEvent2.revision)
+                .updateLastKnownRemoteRevision(noteId1, compensatedRemoteEvent1.revision)
+                .updateLastKnownRemoteRevision(noteId2, compensatedRemoteEvent2.revision)
         givenLocalEvents(compensatedLocalEvent1, compensatedLocalEvent2)
         givenRemoteEvents(compensatedRemoteEvent1, compensatedRemoteEvent2)
         every {
@@ -804,8 +809,7 @@ internal class NewSynchronizerTest {
         val commandForRemoteEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForRemoteEvent1,
                 lastRevision = initialState.lastKnownLocalRevisions[noteId1],
-                commandExecutor = localCommandExecutor,
-                newEvent = newLocalEventForRemoteEvent1
+                commandExecutor = localCommandExecutor
         )
         val commandForRemoteEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent2,
@@ -854,17 +858,16 @@ internal class NewSynchronizerTest {
         val compensatingEventForLocalEvent2 = modelEvent(eventId = -2, noteId = 2, revision = 0)
         val compensatingEventForRemoteEvent1 = modelEvent(eventId = -1, noteId = 1, revision = 0)
         val compensatingEventForRemoteEvent2 = modelEvent(eventId = -2, noteId = 2, revision = 0)
-        val newRemoteEventForLocalEvent1 = modelEvent(eventId = 3, noteId = 1, revision = 13)
         val newRemoteEventForLocalEvent2 = modelEvent(eventId = 4, noteId = 2, revision = 14)
         val newLocalEventForRemoteEvent1 = modelEvent(eventId = 13, noteId = 1, revision = 3)
         val newLocalEventForRemoteEvent2 = modelEvent(eventId = 14, noteId = 2, revision = 4)
         val noteId1 = compensatedLocalEvent1.noteId
         val noteId2 = compensatedLocalEvent2.noteId
         initialState = initialState
-                .updateLastKnownLocalRevision(noteId1, newLocalEventForRemoteEvent1.revision - 1)
-                .updateLastKnownLocalRevision(noteId2, newLocalEventForRemoteEvent2.revision - 1)
-                .updateLastKnownRemoteRevision(noteId1, newRemoteEventForLocalEvent1.revision - 1)
-                .updateLastKnownRemoteRevision(noteId2, newRemoteEventForLocalEvent2.revision - 1)
+                .updateLastKnownLocalRevision(noteId1, compensatedLocalEvent1.revision)
+                .updateLastKnownLocalRevision(noteId2, compensatedLocalEvent2.revision)
+                .updateLastKnownRemoteRevision(noteId1, compensatedRemoteEvent1.revision)
+                .updateLastKnownRemoteRevision(noteId2, compensatedRemoteEvent2.revision)
         givenLocalEvents(compensatedLocalEvent1, compensatedLocalEvent2)
         givenRemoteEvents(compensatedRemoteEvent1, compensatedRemoteEvent2)
         every {
@@ -898,8 +901,7 @@ internal class NewSynchronizerTest {
         val commandForLocalEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[noteId1],
-                commandExecutor = remoteCommandExecutor,
-                newEvent = newRemoteEventForLocalEvent1
+                commandExecutor = remoteCommandExecutor
         )
         val commandForLocalEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent2,
@@ -960,8 +962,8 @@ internal class NewSynchronizerTest {
         val newLocalEventForRemoteEvent1 = modelEvent(eventId = 13, noteId = 1, revision = 3)
         val noteId1 = compensatedLocalEvent1.noteId
         initialState = initialState
-                .updateLastKnownLocalRevision(noteId1, newLocalEventForRemoteEvent1.revision - 1)
-                .updateLastKnownRemoteRevision(noteId1, newRemoteEventForLocalEvent1.revision - 1)
+                .updateLastKnownLocalRevision(noteId1, compensatedLocalEvent1.revision)
+                .updateLastKnownRemoteRevision(noteId1, compensatedRemoteEvent1.revision)
         givenLocalEvents(compensatedLocalEvent1)
         givenRemoteEvents(compensatedRemoteEvent1)
         every {
@@ -1044,7 +1046,7 @@ internal class NewSynchronizerTest {
         return command
     }
 
-    private fun givenTheFailedExecutionOfACompensatingEvent(compensatingEvent: Event, lastRevision: Int?, commandExecutor: CommandExecutor, newEvent: Event): Command {
+    private fun givenTheFailedExecutionOfACompensatingEvent(compensatingEvent: Event, lastRevision: Int?, commandExecutor: CommandExecutor): Command {
         val command = modelCommand(compensatingEvent.noteId, lastRevision)
         every { eventToCommandMapper.map(compensatingEvent, lastRevision) }.returns(command)
         every { commandExecutor.execute(command) }.returns(CommandExecutor.ExecutionResult.Failure)

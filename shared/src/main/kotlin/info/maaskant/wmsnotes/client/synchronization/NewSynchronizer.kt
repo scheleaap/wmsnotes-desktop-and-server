@@ -58,8 +58,21 @@ class NewSynchronizer @Inject constructor(
         val eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents> = groupLocalAndRemoteEventsByNote(localEventsToSynchronize, remoteEventsToSynchronize)
         val eventsToIgnore = LocalAndRemoteEvents(localEventsToIgnore, remoteEventsToIgnore)
 
+        updateLastRevisions(localEvents, remoteEvents)
         synchronizeEvents(eventsToSynchronize)
         removeEventsToIgnore(eventsToIgnore)
+    }
+
+    private fun updateLastRevisions(localEvents: Observable<Event>, remoteEvents: Observable<Event>) {
+        val state1 = localEvents.scan(state) { state, event -> state.updateLastKnownLocalRevision(event.noteId, event.revision) }
+                .last(state)
+                .blockingGet()
+        val state2 = remoteEvents.scan(state1) { state, event -> state.updateLastKnownRemoteRevision(event.noteId, event.revision) }
+                .last(state1)
+                .blockingGet()
+        if (state2 != state) {
+            updateState(state2)
+        }
     }
 
     private fun synchronizeEvents(eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents>) {
