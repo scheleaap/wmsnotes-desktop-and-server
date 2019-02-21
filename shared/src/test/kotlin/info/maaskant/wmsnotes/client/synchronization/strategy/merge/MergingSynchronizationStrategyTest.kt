@@ -30,36 +30,40 @@ internal class MergingSynchronizationStrategyTest {
     @Test
     fun solution() {
         // Given
-        val oldLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = 1)
-        val oldLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = 2)
-        val oldRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
-        val oldRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 2)
+        val baseRevision = 1
+        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = baseRevision + 1)
+        val compensatedLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = baseRevision + 2)
+        val compensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 11)
+        val compensatedRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 12)
+        val modifiedCompensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = baseRevision + 1)
+        val modifiedCompensatedRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = baseRevision + 2)
+        val compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2)
+        val compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
+        val modifiedCompensatedRemoteEvents = listOf(modifiedCompensatedRemoteEvent1, modifiedCompensatedRemoteEvent2)
         val newLocalEvent1: Event = mockk()
         val newLocalEvent2: Event = mockk()
         val newRemoteEvent1: Event = mockk()
         val newRemoteEvent2: Event = mockk()
-        val noteId = oldLocalEvent1.noteId
-        val localEvents = listOf(oldLocalEvent1, oldLocalEvent2)
-        val remoteEvents = listOf(oldRemoteEvent1, oldRemoteEvent2)
+        val noteId = compensatedLocalEvent1.noteId
         val baseNote: Note = mockk()
         val localNote: Note = mockk()
         val remoteNote: Note = mockk()
-        every { noteProjector.project(noteId, oldLocalEvent1.revision - 1) }.returns(baseNote)
-        givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1, oldLocalEvent2))
-        givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
-        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+        every { noteProjector.project(noteId, baseRevision) }.returns(baseNote)
+        givenAnEventApplicationResult(baseNote, compensatedLocalEvents, localNote)
+        givenAnEventApplicationResult(baseNote, modifiedCompensatedRemoteEvents, remoteNote)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
         ))
         val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
 
         // When
-        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(noteId = noteId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
 
         // Then
         assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.Solution(listOf(CompensatingAction(
-                compensatedLocalEvents = listOf(oldLocalEvent1, oldLocalEvent2),
-                compensatedRemoteEvents = listOf(oldRemoteEvent1, oldRemoteEvent2),
+                compensatedLocalEvents = compensatedLocalEvents,
+                compensatedRemoteEvents = compensatedRemoteEvents,
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
         ))))
@@ -68,24 +72,28 @@ internal class MergingSynchronizationStrategyTest {
     @Test
     fun `no solution`() {
         // Given
-        val oldLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = 1)
-        val oldLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = 1)
-        val oldRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
-        val oldRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 1)
-        val noteId = oldLocalEvent1.noteId
-        val localEvents = listOf(oldLocalEvent1, oldLocalEvent2)
-        val remoteEvents = listOf(oldRemoteEvent1, oldRemoteEvent2)
+        val baseRevision = 1
+        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = baseRevision+1)
+        val compensatedLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = baseRevision+2)
+        val compensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 11)
+        val compensatedRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 12)
+        val modifiedCompensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = baseRevision + 1)
+        val modifiedCompensatedRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = baseRevision + 2)
+        val compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2)
+        val compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
+        val modifiedCompensatedRemoteEvents = listOf(modifiedCompensatedRemoteEvent1, modifiedCompensatedRemoteEvent2)
+        val noteId = compensatedLocalEvent1.noteId
         val baseNote: Note = mockk()
         val localNote: Note = mockk()
         val remoteNote: Note = mockk()
-        every { noteProjector.project(noteId, oldLocalEvent1.revision - 1) }.returns(baseNote)
-        givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1, oldLocalEvent2))
-        givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
-        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(NoSolution)
+        every { noteProjector.project(noteId, baseRevision) }.returns(baseNote)
+        givenAnEventApplicationResult(baseNote, compensatedLocalEvents, localNote)
+        givenAnEventApplicationResult(baseNote, modifiedCompensatedRemoteEvents, remoteNote)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(NoSolution)
         val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
 
         // When
-        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(noteId = noteId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
 
         // Then
         assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.NoSolution)
@@ -94,27 +102,31 @@ internal class MergingSynchronizationStrategyTest {
     @Test
     fun `no local events`() {
         // Given
-        val oldRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
-        val oldRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 1)
+        val baseRevision = 1
+        val compensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 11)
+        val compensatedRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 12)
+        val modifiedCompensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = baseRevision + 1)
+        val modifiedCompensatedRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = baseRevision + 2)
+        val compensatedLocalEvents = emptyList<Event>()
+        val compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
+        val modifiedCompensatedRemoteEvents = listOf(modifiedCompensatedRemoteEvent1, modifiedCompensatedRemoteEvent2)
         val newLocalEvent1: Event = mockk()
         val newLocalEvent2: Event = mockk()
         val newRemoteEvent1: Event = mockk()
         val newRemoteEvent2: Event = mockk()
-        val noteId = oldRemoteEvent1.noteId
-        val localEvents = emptyList<Event>()
-        val remoteEvents = listOf(oldRemoteEvent1, oldRemoteEvent2)
+        val noteId = compensatedRemoteEvent1.noteId
         val baseNote: Note = mockk()
         val localNote: Note = mockk()
         val remoteNote: Note = mockk()
-        givenAnEventApplicationResult(baseNote, remoteNote, listOf(oldRemoteEvent1, oldRemoteEvent2))
-        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+        givenAnEventApplicationResult(baseNote, modifiedCompensatedRemoteEvents, remoteNote)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
         ))
         val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
 
         // When
-        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(noteId = noteId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
 
         // Then
         assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.NoSolution)
@@ -123,28 +135,29 @@ internal class MergingSynchronizationStrategyTest {
     @Test
     fun `no remote events`() {
         // Given
-        val oldLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = 1)
-        val oldLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = 1)
+        val baseRevision = 1
+        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = baseRevision + 1)
+        val compensatedLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = baseRevision + 2)
+        val compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2)
+        val compensatedRemoteEvents = emptyList<Event>()
         val newLocalEvent1: Event = mockk()
         val newLocalEvent2: Event = mockk()
         val newRemoteEvent1: Event = mockk()
         val newRemoteEvent2: Event = mockk()
-        val noteId = oldLocalEvent1.noteId
-        val localEvents = listOf(oldLocalEvent1, oldLocalEvent2)
-        val remoteEvents = emptyList<Event>()
+        val noteId = compensatedLocalEvent1.noteId
         val baseNote: Note = mockk()
         val localNote: Note = mockk()
         val remoteNote: Note = mockk()
-        every { noteProjector.project(noteId, oldLocalEvent1.revision - 1) }.returns(baseNote)
-        givenAnEventApplicationResult(baseNote, localNote, listOf(oldLocalEvent1, oldLocalEvent2))
-        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+        every { noteProjector.project(noteId, baseRevision) }.returns(baseNote)
+        givenAnEventApplicationResult(baseNote, compensatedLocalEvents, localNote)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
         ))
         val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
 
         // When
-        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(noteId = noteId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
 
         // Then
         assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.NoSolution)
@@ -157,32 +170,35 @@ internal class MergingSynchronizationStrategyTest {
         // synchronization, though.
 
         // Given
-        val oldLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = 1)
-        val oldRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 1)
+        val baseRevision = 0 // 0 instead of 1!
+        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = baseRevision + 1)
+        val compensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 11)
+        val modifiedCompensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = baseRevision + 1)
+        val compensatedLocalEvents = listOf(compensatedLocalEvent1)
+        val compensatedRemoteEvents = listOf(compensatedRemoteEvent1)
+        val modifiedCompensatedRemoteEvents = listOf(modifiedCompensatedRemoteEvent1)
         val newLocalEvent1: Event = mockk()
         val newRemoteEvent1: Event = mockk()
-        val noteId = oldLocalEvent1.noteId
-        val localEvents = listOf(oldLocalEvent1)
-        val remoteEvents = listOf(oldRemoteEvent1)
+        val noteId = compensatedLocalEvent1.noteId
         val baseNote: Note = mockk()
         val localNote: Note = mockk()
         val remoteNote: Note = mockk()
-        every { noteProjector.project(noteId, 0) }.returns(baseNote)
-        every { baseNote.apply(oldLocalEvent1) }.returns(Pair(localNote, oldLocalEvent1))
-        every { baseNote.apply(oldRemoteEvent1) }.returns(Pair(remoteNote, oldRemoteEvent1))
-        every { mergeStrategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+        every { noteProjector.project(noteId, baseRevision) }.returns(baseNote)
+        givenAnEventApplicationResult(baseNote, compensatedLocalEvents, localNote)
+        givenAnEventApplicationResult(baseNote, modifiedCompensatedRemoteEvents, remoteNote)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1),
                 newRemoteEvents = listOf(newRemoteEvent1)
         ))
         val strategy = MergingSynchronizationStrategy(mergeStrategy, noteProjector)
 
         // When
-        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(noteId = noteId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
 
         // Then
         assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.Solution(listOf(CompensatingAction(
-                compensatedLocalEvents = listOf(oldLocalEvent1),
-                compensatedRemoteEvents = listOf(oldRemoteEvent1),
+                compensatedLocalEvents = listOf(compensatedLocalEvent1),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
                 newLocalEvents = listOf(newLocalEvent1),
                 newRemoteEvents = listOf(newRemoteEvent1)
         ))))
@@ -190,8 +206,8 @@ internal class MergingSynchronizationStrategyTest {
 
     private fun givenAnEventApplicationResult(
             baseNote: Note,
-            resultNote: Note,
-            events: List<Event>) {
+            events: List<Event>,
+            resultNote: Note) {
         val last = events.last()
         val firsts = events - last
         var baseNoteTemp = baseNote

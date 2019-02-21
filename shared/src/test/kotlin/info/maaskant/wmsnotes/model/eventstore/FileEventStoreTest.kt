@@ -30,7 +30,7 @@ internal class FileEventStoreTest : EventStoreTest() {
     fun `appendEvent, check file`() {
         // Given
         val eventIn = NoteCreatedEvent(eventId = 0, noteId = "note", revision = 1, title = "Title")
-        val eventOut = eventIn.withEventId(eventId = 1)
+        val eventOut = eventIn.copy(eventId = 1)
         val r = createInstance()
 
         // When
@@ -49,7 +49,7 @@ internal class FileEventStoreTest : EventStoreTest() {
 
     override fun <T : Event> givenAnEvent(eventId: Int, event: T): T {
         val content = UUID.randomUUID().toString().toByteArray()
-        val event2 = event.withEventId(eventId)
+        val event2 = event.copy(eventId = eventId)
         every { eventSerializer.serialize(event2) }.returns(content)
         every { eventSerializer.deserialize(content) }.returns(event2)
         return event

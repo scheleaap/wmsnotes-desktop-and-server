@@ -156,4 +156,25 @@ internal class DifferenceAnalyzerTest {
         // Then
         assertThat(differences.size).isGreaterThan(1)
     }
+
+    @Test
+    fun `real-world case 1`() {
+        // Given
+        val left = Note()
+        val right = Note()
+                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+                .apply(ContentChangedEvent(eventId=2,noteId = noteId,revision = 2, content = "text")).first
+        val analyzer = DifferenceAnalyzer()
+
+        // When
+        val differences = analyzer.compare(left, right)
+
+        // Then
+        assertThat(differences).isEqualTo(setOf(
+                ExistenceDifference(NOT_YET_CREATED, EXISTS),
+                TitleDifference("", title),
+                ContentDifference("", "text")
+        ))
+    }
+
 }

@@ -3,7 +3,6 @@ package info.maaskant.wmsnotes.model.eventstore
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -31,9 +30,9 @@ internal abstract class EventStoreTest {
                 givenAnEvent(4, NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 2, title = "Title 1"))
         )
         val eventsOut = listOf(
-                eventsIn[1].withEventId(2),
-                eventsIn[2].withEventId(3),
-                eventsIn[3].withEventId(4)
+                eventsIn[1].copy(eventId = 2),
+                eventsIn[2].copy(eventId = 3),
+                eventsIn[3].copy(eventId = 4)
         )
         var r: EventStore = createInstance()
         eventsIn.forEach {
@@ -114,7 +113,7 @@ internal abstract class EventStoreTest {
                 givenAnEvent(4, NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 2, title = "Title 1"))
         )
         val eventsOut = listOf(
-                eventsIn[2].withEventId(3)
+                eventsIn[2].copy(eventId = 3)
         )
         var r: EventStore = createInstance()
         eventsIn.subList(0, 3).forEach {
@@ -143,7 +142,7 @@ internal abstract class EventStoreTest {
                 givenAnEvent(5, NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 3, title = "Title 1"))
         )
         val eventsOut = listOf(
-                eventsIn[3].withEventId(4)
+                eventsIn[3].copy(eventId = 4)
         )
         var r: EventStore = createInstance()
         eventsIn.subList(0, 4).forEach {
@@ -172,8 +171,8 @@ internal abstract class EventStoreTest {
                 givenAnEvent(4, NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 2, title = "Title 1"))
         )
         val eventsOut = listOf(
-                eventsIn[2].withEventId(3),
-                eventsIn[3].withEventId(4)
+                eventsIn[2].copy(eventId = 3),
+                eventsIn[3].copy(eventId = 4)
         )
         var r: EventStore = createInstance()
         eventsIn.subList(0, 3).forEach {
@@ -203,8 +202,8 @@ internal abstract class EventStoreTest {
                 givenAnEvent(5, NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 3, title = "Title 1"))
         )
         val eventsOut = listOf(
-                eventsIn[3].withEventId(4),
-                eventsIn[4].withEventId(5)
+                eventsIn[3].copy(eventId = 4),
+                eventsIn[4].copy(eventId = 5)
         )
         var r: EventStore = createInstance()
         eventsIn.subList(0, 4).forEach {

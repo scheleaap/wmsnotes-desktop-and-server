@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 
 internal class KeepBothMergeStrategyTest {
     private val noteId = "note"
+    private val newNoteId = "new-note"
 
     private val differenceAnalyzer: DifferenceAnalyzer = mockk()
     private val differenceCompensator: DifferenceCompensator = mockk()
@@ -48,9 +49,9 @@ internal class KeepBothMergeStrategyTest {
         val differences1: Set<Difference> = givenDifferences(Note(), localNote)
         every {
             differenceCompensator.compensate(
-                    noteId = neq(noteId),
-                    differences = eq(differences1),
-                    target = eq(DifferenceCompensator.Target.RIGHT)
+                    noteId = newNoteId,
+                    differences = differences1,
+                    target = DifferenceCompensator.Target.RIGHT
             )
         }.returns(CompensatingEvents(
                 leftEvents = listOf(compensatingEvent3, compensatingEvent4),
@@ -63,12 +64,12 @@ internal class KeepBothMergeStrategyTest {
 
         // Then
         assertThat(mergeResult).isEqualTo(Solution(
-                newLocalEvents = /*localEvents +*/ listOf(compensatingEvent1, compensatingEvent2, compensatingEvent3, compensatingEvent4),
-                newRemoteEvents = /*remoteEvents +*/ listOf(compensatingEvent3, compensatingEvent4)
+                newLocalEvents = listOf(compensatingEvent1, compensatingEvent2, compensatingEvent3, compensatingEvent4),
+                newRemoteEvents = listOf(compensatingEvent3, compensatingEvent4)
         ))
     }
 
-    private fun createStrategy() = KeepBothMergeStrategy(differenceAnalyzer, differenceCompensator)
+    private fun createStrategy() = KeepBothMergeStrategy(differenceAnalyzer, differenceCompensator) { newNoteId }
 
     private fun givenCompensatingEvents(noteId: String, differences: Set<Difference>, target: DifferenceCompensator.Target, compensatingEvents: CompensatingEvents): CompensatingEvents {
         every { differenceCompensator.compensate(noteId, differences, target = target) }.returns(compensatingEvents)

@@ -29,7 +29,10 @@ internal class NewSynchronizerTest {
         clearMocks(
                 localEvents,
                 remoteEvents,
-                synchronizationStrategy
+                synchronizationStrategy,
+                eventToCommandMapper,
+                localCommandExecutor,
+                remoteCommandExecutor
         )
         every { localCommandExecutor.execute(any()) }.returns(CommandExecutor.ExecutionResult.Failure)
         every { remoteCommandExecutor.execute(any()) }.returns(CommandExecutor.ExecutionResult.Failure)

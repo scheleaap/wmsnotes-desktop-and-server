@@ -88,7 +88,7 @@ class FileEventStore @Inject constructor(
     @Synchronized
     override fun appendEvent(event: Event): Event {
         if (event.eventId != 0) throw IllegalArgumentException("Expected id of event $event to be 0")
-        val eventWithId = event.withEventId(++lastEventId)
+        val eventWithId = event.copy(eventId = ++lastEventId)
 
         val eventFilePath = eventFilePath(eventWithId)
         if (eventWithId.revision != 1) {

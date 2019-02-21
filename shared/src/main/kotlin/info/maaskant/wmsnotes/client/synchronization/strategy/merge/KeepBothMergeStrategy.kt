@@ -8,7 +8,8 @@ import javax.inject.Inject
 
 class KeepBothMergeStrategy @Inject constructor(
         private val differenceAnalyzer: DifferenceAnalyzer,
-        private val differenceCompensator: DifferenceCompensator
+        private val differenceCompensator: DifferenceCompensator,
+        private val noteIdGenerator: () -> String
 ) : MergeStrategy {
     override fun merge(
             localEvents: List<Event>,
@@ -22,15 +23,15 @@ class KeepBothMergeStrategy @Inject constructor(
                 differences = differenceAnalyzer.compare(left = localNote, right = remoteNote),
                 target = DifferenceCompensator.Target.RIGHT
         )
-        val newNoteId = UUID.randomUUID().toString()
+        val newNoteId = noteIdGenerator()
         val (eventsForNewNote, _) = differenceCompensator.compensate(
                 noteId = newNoteId,
                 differences = differenceAnalyzer.compare(left = Note(), right = localNote),
                 target = DifferenceCompensator.Target.RIGHT
         )
         return MergeResult.Solution(
-                newLocalEvents = /*localEvents +*/ compensatingLocalEvents + eventsForNewNote,
-                newRemoteEvents = /*remoteEvents +*/ eventsForNewNote
+                newLocalEvents = compensatingLocalEvents + eventsForNewNote,
+                newRemoteEvents = eventsForNewNote
         )
     }
 }

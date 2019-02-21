@@ -6,16 +6,21 @@ import au.com.console.kassava.kotlinToString
 import java.util.*
 
 sealed class Event(val eventId: Int, val noteId: String, val revision: Int) : SupportsMixedTypeEquality {
-    abstract fun withEventId(eventId: Int): Event
+    abstract fun copy(eventId: Int = this.eventId, revision: Int = this.revision): Event
 
     override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Event::eventId, Event::noteId, Event::revision))
     override fun hashCode() = Objects.hash(eventId, noteId, revision)
 }
 
 class NoteCreatedEvent(eventId: Int, noteId: String, revision: Int, val title: String) : Event(eventId, noteId, revision) {
-    override fun withEventId(eventId: Int): NoteCreatedEvent {
+    override fun copy(eventId: Int, revision: Int): NoteCreatedEvent {
         return NoteCreatedEvent(eventId = eventId, noteId = noteId, revision = revision, title = title)
     }
+
+//    override fun copy(eventId: Int?, revision: Int?): NoteCreatedEvent {
+//        return NoteCreatedEvent(eventId = eventId ?: this.eventId, noteId = noteId, revision = revision
+//                ?: this.revision, title = title)
+//    }
 
     override fun toString() = kotlinToString(properties = arrayOf(NoteCreatedEvent::eventId, NoteCreatedEvent::noteId, NoteCreatedEvent::revision, NoteCreatedEvent::title))
 
@@ -31,7 +36,7 @@ class NoteCreatedEvent(eventId: Int, noteId: String, revision: Int, val title: S
 }
 
 class NoteDeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(eventId, noteId, revision) {
-    override fun withEventId(eventId: Int): NoteDeletedEvent {
+    override fun copy(eventId: Int , revision: Int ): NoteDeletedEvent {
         return NoteDeletedEvent(eventId = eventId, noteId = noteId, revision = revision)
     }
 
@@ -41,7 +46,7 @@ class NoteDeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(even
 }
 
 class NoteUndeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(eventId, noteId, revision) {
-    override fun withEventId(eventId: Int): NoteUndeletedEvent {
+    override fun copy(eventId: Int , revision: Int ): NoteUndeletedEvent {
         return NoteUndeletedEvent(eventId = eventId, noteId = noteId, revision = revision)
     }
 
@@ -53,7 +58,7 @@ class NoteUndeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(ev
 class AttachmentAddedEvent(eventId: Int, noteId: String, revision: Int, val name: String, val content: ByteArray) : Event(eventId, noteId, revision) {
     private val contentLength = content.size
 
-    override fun withEventId(eventId: Int): AttachmentAddedEvent {
+    override fun copy(eventId: Int , revision: Int ): AttachmentAddedEvent {
         return AttachmentAddedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name, content = content)
     }
 
@@ -83,7 +88,7 @@ class AttachmentAddedEvent(eventId: Int, noteId: String, revision: Int, val name
 }
 
 class AttachmentDeletedEvent(eventId: Int, noteId: String, revision: Int, val name: String) : Event(eventId, noteId, revision) {
-    override fun withEventId(eventId: Int): AttachmentDeletedEvent {
+    override fun copy(eventId: Int , revision: Int ): AttachmentDeletedEvent {
         return AttachmentDeletedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name)
     }
 
@@ -103,7 +108,7 @@ class AttachmentDeletedEvent(eventId: Int, noteId: String, revision: Int, val na
 class ContentChangedEvent(eventId: Int, noteId: String, revision: Int, val content: String) : Event(eventId, noteId, revision) {
     private val contentLength = content.length
 
-    override fun withEventId(eventId: Int): ContentChangedEvent {
+    override fun copy(eventId: Int , revision: Int ): ContentChangedEvent {
         return ContentChangedEvent(eventId = eventId, noteId = noteId, revision = revision, content = content)
     }
 
@@ -121,7 +126,7 @@ class ContentChangedEvent(eventId: Int, noteId: String, revision: Int, val conte
 }
 
 class TitleChangedEvent(eventId: Int, noteId: String, revision: Int, val title: String) : Event(eventId, noteId, revision) {
-    override fun withEventId(eventId: Int): TitleChangedEvent {
+    override fun copy(eventId: Int , revision: Int ): TitleChangedEvent {
         return TitleChangedEvent(eventId = eventId, noteId = noteId, revision = revision, title = title)
     }
 

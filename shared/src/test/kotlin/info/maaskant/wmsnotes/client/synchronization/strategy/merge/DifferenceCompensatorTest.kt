@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.ExistenceDifference.ExistenceType.*
 import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.projection.Note
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
@@ -228,6 +229,27 @@ internal class DifferenceCompensatorTest {
         assertThat(eventClasses).isEqualTo(listOf(
                 NoteUndeletedEvent::class,
                 TitleChangedEvent::class
+        ))
+    }
+
+    @Test
+    fun `real-world case 1`() {
+        // Given
+        val differences = setOf(
+                ExistenceDifference(NOT_YET_CREATED, EXISTS),
+                ContentDifference("", "text"),
+                TitleDifference("", "title")
+        )
+        val compensator = DifferenceCompensator()
+
+        // When
+        val events = compensator.compensate(noteId = noteId, differences = differences, target = DifferenceCompensator.Target.RIGHT)
+
+        // Then
+        assertThat(events.leftEvents).isEqualTo(listOf(
+                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId),
+                ContentChangedEvent(eventId = 0, noteId = noteId, revision = 0, content = "text"),
+                TitleChangedEvent(eventId = 0, noteId = noteId, revision = 0, title = "title")
         ))
     }
 }

@@ -5,6 +5,7 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStr
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.utilities.logger
+import io.reactivex.rxkotlin.toObservable
 
 class MergingSynchronizationStrategy(
         private val mergeStrategy: MergeStrategy,
@@ -17,9 +18,13 @@ class MergingSynchronizationStrategy(
             logger.warn("Unexpected call to ${this.javaClass.name} with $localEvents and $remoteEvents")
             SynchronizationStrategy.ResolutionResult.NoSolution
         } else {
-            val baseNote = noteProjector.project(noteId = noteId, revision = localEvents.first().revision - 1)
+            val baseRevision = localEvents.first().revision - 1
+            val modifiedRemoteEvents = remoteEvents
+                    .zip((baseRevision + 1)..(baseRevision + remoteEvents.size))
+                    .map { (event, revision) -> event.copy(revision = revision) }
+            val baseNote = noteProjector.project(noteId = noteId, revision = baseRevision)
             val localNote = NoteProjector.project(baseNote, localEvents)
-            val remoteNote = NoteProjector.project(baseNote, remoteEvents)
+            val remoteNote = NoteProjector.project(baseNote, modifiedRemoteEvents)
             val mergeResult = mergeStrategy.merge(
                     localEvents = localEvents,
                     remoteEvents = remoteEvents,
