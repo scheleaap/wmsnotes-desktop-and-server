@@ -29,8 +29,8 @@ class KeepBothMergeStrategy @Inject constructor(
                 target = DifferenceCompensator.Target.RIGHT
         )
         return MergeResult.Solution(
-                newLocalEvents = localEvents + compensatingLocalEvents + eventsForNewNote,
-                newRemoteEvents = remoteEvents + eventsForNewNote
+                newLocalEvents = /*localEvents +*/ compensatingLocalEvents + eventsForNewNote,
+                newRemoteEvents = /*remoteEvents +*/ eventsForNewNote
         )
     }
 }

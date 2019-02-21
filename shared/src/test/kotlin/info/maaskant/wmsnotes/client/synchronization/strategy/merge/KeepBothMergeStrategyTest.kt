@@ -63,8 +63,8 @@ internal class KeepBothMergeStrategyTest {
 
         // Then
         assertThat(mergeResult).isEqualTo(Solution(
-                newLocalEvents = localEvents + listOf(compensatingEvent1, compensatingEvent2, compensatingEvent3, compensatingEvent4),
-                newRemoteEvents = remoteEvents + listOf(compensatingEvent3, compensatingEvent4)
+                newLocalEvents = /*localEvents +*/ listOf(compensatingEvent1, compensatingEvent2, compensatingEvent3, compensatingEvent4),
+                newRemoteEvents = /*remoteEvents +*/ listOf(compensatingEvent3, compensatingEvent4)
         ))
     }
 
