@@ -76,7 +76,6 @@ class Note private constructor(
     }
 
     private fun applyAttachmentAdded(event: AttachmentAddedEvent): Pair<Note, Event?> {
-        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
         if (event.name.isEmpty()) throw IllegalArgumentException("An attachment name must not be empty ($event)")
         val sanitizedName = event.name.replace(nameReplacementPattern, "_")
         return if (sanitizedName in attachments) {
@@ -92,7 +91,6 @@ class Note private constructor(
     }
 
     private fun applyAttachmentDeleted(event: AttachmentDeletedEvent): Pair<Note, Event?> {
-        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
         return if (event.name in attachments) {
             copy(
                     revision = event.revision,
@@ -105,7 +103,6 @@ class Note private constructor(
     }
 
     private fun applyContentChanged(event: ContentChangedEvent): Pair<Note, Event?> {
-        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
         return if (content == event.content) noChanges() else copy(
                 revision = event.revision,
                 content = event.content
@@ -135,7 +132,6 @@ class Note private constructor(
     }
 
     private fun applyTitleChanged(event: TitleChangedEvent): Pair<Note, Event?> {
-        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
         return if (title == event.title) noChanges() else copy(
                 revision = event.revision,
                 title = event.title

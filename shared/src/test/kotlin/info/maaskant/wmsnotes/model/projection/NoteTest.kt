@@ -81,26 +81,28 @@ internal class NoteTest {
         }
     }
 
-    // Does it make sense to disallow these events, when viewed in light of synchronization?
     @TestFactory
-    fun `events that are not allowed if the note does not exist`(): List<DynamicTest> {
+    fun `events that are allowed if the note has been deleted`(): List<DynamicTest> {
         return listOf(
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file"),
                 ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "data"),
                 TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, title = "Title")
                 // Add more classes here
-        ).map { event ->
-            DynamicTest.dynamicTest(event::class.simpleName) {
+        ).map { eventIn ->
+            DynamicTest.dynamicTest(eventIn::class.simpleName) {
                 // Given
-                val note = noteWithEvents(
+                assertThat(eventIn.revision).isEqualTo(3)
+                val noteBefore = noteWithEvents(
                         NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title"),
                         NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
                 )
 
-                // When / Then
-                assertThat(event.revision).isEqualTo(3)
-                assertThrows<IllegalStateException> { note.apply(event) }
+                // When
+                noteBefore.apply(eventIn)
+
+                // Then
+                // no exception thrown
             }
         }
     }
@@ -247,7 +249,7 @@ internal class NoteTest {
         // Given
         val noteBefore = noteWithEvents(
                 NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, title = "Title")
-                )
+        )
         val eventIn = NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
 
         // When

@@ -3,13 +3,10 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.ExistenceDifference.ExistenceType.*
 import info.maaskant.wmsnotes.model.*
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-import java.util.*
 
-@Disabled("Tests written while traveling, code to be implemented next")
 internal class DifferenceCompensatorTest {
     private val noteId = "note"
     private val attachmentName = "att"
@@ -18,7 +15,7 @@ internal class DifferenceCompensatorTest {
 
     @TestFactory
     fun existence(): List<DynamicTest> {
-        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = UUID.randomUUID().toString() /* TODO: should be random */, revision = 0, title = noteId)
+        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId)
         val noteDeletedEvent = NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
         val noteUndeletedEvent = NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0)
         val items = listOf(
@@ -43,9 +40,19 @@ internal class DifferenceCompensatorTest {
                         listOf(noteUndeletedEvent)
                 ),
                 Triple(
+                        ExistenceDifference(EXISTS, NOT_YET_CREATED),
+                        DifferenceCompensator.Target.LEFT,
+                        listOf(noteCreatedEvent)
+                ),
+                Triple(
+                        ExistenceDifference(DELETED, NOT_YET_CREATED),
+                        DifferenceCompensator.Target.LEFT,
+                        listOf(noteCreatedEvent, noteDeletedEvent)
+                ),
+                Triple(
                         ExistenceDifference(NOT_YET_CREATED, EXISTS),
                         DifferenceCompensator.Target.RIGHT,
-                        listOf(noteCreatedEvent) // TODO: This noteId should be random
+                        listOf(noteCreatedEvent)
                 ),
                 Triple(
                         ExistenceDifference(NOT_YET_CREATED, DELETED),
@@ -180,6 +187,47 @@ internal class DifferenceCompensatorTest {
         assertThat(eventClasses).isEqualTo(listOf(
                 AttachmentDeletedEvent::class,
                 AttachmentAddedEvent::class
+        ))
+    }
+
+    @Test
+    fun `existence and other events order, 1`() {
+        // Given
+        val differences = setOf(
+                ExistenceDifference(DELETED, NOT_YET_CREATED),
+                TitleDifference("left", "right")
+        )
+        val compensator = DifferenceCompensator()
+
+        // When
+        val events = compensator.compensate(noteId = noteId, differences = differences, target = DifferenceCompensator.Target.LEFT)
+
+        // Then
+        val eventClasses = events.rightEvents.map { it::class }
+        assertThat(eventClasses).isEqualTo(listOf(
+                NoteCreatedEvent::class,
+                TitleChangedEvent::class,
+                NoteDeletedEvent::class
+        ))
+    }
+
+    @Test
+    fun `existence and other events order, 2`() {
+        // Given
+        val differences = setOf(
+                ExistenceDifference(EXISTS, DELETED),
+                TitleDifference("left", "right")
+        )
+        val compensator = DifferenceCompensator()
+
+        // When
+        val events = compensator.compensate(noteId = noteId, differences = differences, target = DifferenceCompensator.Target.LEFT)
+
+        // Then
+        val eventClasses = events.rightEvents.map { it::class }
+        assertThat(eventClasses).isEqualTo(listOf(
+                NoteUndeletedEvent::class,
+                TitleChangedEvent::class
         ))
     }
 }
