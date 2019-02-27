@@ -51,6 +51,7 @@ class KryoNoteSerializer(kryoPool: Pool<Kryo>) : KryoSerializer<Note>(
                     revision = revision,
                     exists = exists,
                     noteId = noteId,
+                    path = TODO(),
                     title = title,
                     content = content,
                     attachments = attachments,

@@ -18,7 +18,7 @@ class GrpcEventMapper @Inject constructor() {
 
         @Suppress("UNUSED_VARIABLE")
         val a: Any = when (event) { // Assign to variable to force a compilation error if 'when' expression is not exhaustive.
-            is info.maaskant.wmsnotes.model.NoteCreatedEvent -> builder.apply {
+            is NoteCreatedEvent -> builder.apply {
                 noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder().apply {
                     title = event.title
                 }.build()
@@ -50,6 +50,7 @@ class GrpcEventMapper @Inject constructor() {
                     title = event.title
                 }.build()
             }
+            is MovedEvent -> TODO()
         }
         return builder.build()
     }

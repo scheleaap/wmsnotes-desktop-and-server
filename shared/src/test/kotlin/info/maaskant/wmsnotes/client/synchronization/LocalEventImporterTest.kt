@@ -74,5 +74,5 @@ internal class LocalEventImporterTest {
 }
 
 private fun modelEvent(i: Int): NoteCreatedEvent {
-    return NoteCreatedEvent(eventId = i, noteId = "note-$i", revision = i, title = "Title $i")
+    return NoteCreatedEvent(eventId = i, noteId = "note-$i", revision = i, path = TODO(), title = "Title $i", content = TODO())
 }

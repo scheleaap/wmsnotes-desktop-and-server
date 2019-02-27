@@ -44,13 +44,13 @@ class DifferenceCompensator {
                 when (difference.left) {
                     NOT_YET_CREATED -> throw IllegalArgumentException()
                     EXISTS -> when (difference.right) {
-                        NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId))
+                        NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = TODO(), title = noteId, content = TODO()))
                         EXISTS -> throw IllegalArgumentException()
                         DELETED -> listOf(NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0))
                     }
                     DELETED -> when (difference.right) {
                         NOT_YET_CREATED -> listOf(
-                                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId),
+                                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = TODO(), title = noteId, content = TODO()),
                                 NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
                         )
                         EXISTS -> listOf(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0))
@@ -60,13 +60,13 @@ class DifferenceCompensator {
             Target.RIGHT -> when (difference.right) {
                 NOT_YET_CREATED -> throw IllegalArgumentException()
                 EXISTS -> when (difference.left) {
-                    NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId))
+                    NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = TODO(), title = noteId, content = TODO()))
                     EXISTS -> throw IllegalArgumentException()
                     DELETED -> listOf(NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0))
                 }
                 DELETED -> when (difference.left) {
                     NOT_YET_CREATED -> listOf(
-                            NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId),
+                            NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = TODO(), title = noteId, content = TODO()),
                             NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
                     )
                     EXISTS -> listOf(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0))

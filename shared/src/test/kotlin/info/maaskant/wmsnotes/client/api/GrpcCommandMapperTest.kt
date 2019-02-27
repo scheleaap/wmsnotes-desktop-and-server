@@ -22,7 +22,7 @@ internal class GrpcCommandMapperTest {
     @TestFactory
     fun test(): List<DynamicTest> {
         val items = mapOf(
-                CreateNoteCommand(noteId = "note", title = "Title") to Command.PostCommandRequest.newBuilder().apply {
+                CreateNoteCommand(noteId = "note", path = TODO(), title = "Title",content = TODO()) to Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
                         title = "Title"

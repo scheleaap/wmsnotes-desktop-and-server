@@ -31,7 +31,7 @@ class KryoEventSerializer(kryoPool: Pool<Kryo>) : KryoSerializer<Event>(
             val noteId = input.readString()
             val revision = input.readInt(true)
             val title = input.readString()
-            return NoteCreatedEvent(eventId = eventId, noteId = noteId, revision = revision, title = title)
+            return NoteCreatedEvent(eventId = eventId, noteId = noteId, revision = revision, path = TODO(),title = title,content = TODO())
         }
     }
 

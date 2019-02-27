@@ -63,7 +63,7 @@ internal class SimpleMergeStrategyTest {
                 val remoteEvent2: Event = mockk()
                 val remoteEvents = listOf(remoteEvent1, remoteEvent2)
                 val baseNote: Note = Note()
-                        .apply(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "")).first
+                        .apply(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path = TODO(), title = "", content = TODO())).first
                 val strategy = createStrategy()
 
                 // When / then

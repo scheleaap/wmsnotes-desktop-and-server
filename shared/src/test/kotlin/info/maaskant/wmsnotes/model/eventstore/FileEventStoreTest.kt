@@ -29,7 +29,7 @@ internal class FileEventStoreTest : EventStoreTest() {
     @Test
     fun `appendEvent, check file`() {
         // Given
-        val eventIn = NoteCreatedEvent(eventId = 0, noteId = "note", revision = 1, title = "Title")
+        val eventIn = NoteCreatedEvent(eventId = 0, noteId = "note", revision = 1, path = TODO(), title = "Title", content = "Text")
         val eventOut = eventIn.copy(eventId = 1)
         val r = createInstance()
 

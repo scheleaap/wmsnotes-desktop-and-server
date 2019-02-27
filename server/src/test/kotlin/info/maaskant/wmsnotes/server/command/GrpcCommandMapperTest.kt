@@ -68,7 +68,7 @@ internal class GrpcCommandMapperTest {
                     createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
                         title = "Title"
                     }.build()
-                }.build() to CreateNoteCommand(noteId = "note", title = "Title"),
+                }.build() to CreateNoteCommand(noteId = "note", path = TODO(), title = "Title", content = TODO()),
                 Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     lastRevision = 1

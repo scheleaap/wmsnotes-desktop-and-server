@@ -10,7 +10,7 @@ class CommandToEventMapper @Inject constructor() {
         return when (command) {
             is CreateNoteCommand -> {
                 val noteId = command.noteId ?: UUID.randomUUID().toString()
-                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = command.title)
+                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path=TODO(),title = command.title,content = TODO())
             }
             is DeleteNoteCommand -> NoteDeletedEvent(eventId = 0, noteId = command.noteId, revision = command.lastRevision + 1)
             is UndeleteNoteCommand -> NoteUndeletedEvent(eventId = 0, noteId = command.noteId, revision = command.lastRevision + 1)
@@ -18,6 +18,7 @@ class CommandToEventMapper @Inject constructor() {
             is DeleteAttachmentCommand -> AttachmentDeletedEvent(eventId = 0, noteId = command.noteId, revision = command.lastRevision + 1, name = command.name)
             is ChangeContentCommand -> ContentChangedEvent(eventId = 0, noteId = command.noteId, revision = command.lastRevision + 1, content = command.content)
             is ChangeTitleCommand -> TitleChangedEvent(eventId = 0, noteId = command.noteId, revision = command.lastRevision + 1, title = command.title)
+            is MoveCommand -> TODO()
         }
     }
 }

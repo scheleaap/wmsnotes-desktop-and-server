@@ -8,9 +8,9 @@ import org.junit.jupiter.api.assertThrows
 internal abstract class ModifiableEventRepositoryTest {
 
     protected val events = listOf(
-            NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1") to "DATA1",
-            NoteCreatedEvent(eventId = 2, noteId = "note-2", revision = 2, title = "Title 2") to "DATA2",
-            NoteCreatedEvent(eventId = 3, noteId = "note-3", revision = 3, title = "Title 3") to "DATA3"
+            NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = TODO(), title = "Title 1", content = TODO()) to "DATA1",
+            NoteCreatedEvent(eventId = 2, noteId = "note-2", revision = 2, path = TODO(), title = "Title 2", content = TODO()) to "DATA2",
+            NoteCreatedEvent(eventId = 3, noteId = "note-3", revision = 3, path = TODO(), title = "Title 3", content = TODO()) to "DATA3"
     )
 
     @Test

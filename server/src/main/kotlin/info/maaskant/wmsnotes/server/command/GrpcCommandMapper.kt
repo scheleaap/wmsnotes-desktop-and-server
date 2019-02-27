@@ -14,7 +14,9 @@ class GrpcCommandMapper {
             Command.PostCommandRequest.CommandCase.COMMAND_NOT_SET -> throw BadRequestException("Field 'command' not set")
             Command.PostCommandRequest.CommandCase.CREATE_NOTE -> CreateNoteCommand(
                     noteId = request.noteId,
-                    title = request.createNote.title
+                    path = TODO(),
+                    title = request.createNote.title,
+                    content = TODO()
             )
             Command.PostCommandRequest.CommandCase.DELETE_NOTE -> DeleteNoteCommand(
                     noteId = request.noteId,
@@ -46,6 +48,7 @@ class GrpcCommandMapper {
                     lastRevision = request.lastRevision,
                     title = request.changeTitle.title
             )
+            Command.PostCommandRequest.CommandCase.MOVE -> TODO()
         }
     }
 }

@@ -142,11 +142,11 @@ internal class PreviewAttachmentStorageTest {
 
     private fun createNote(noteId: String): Optional<Note> =
             Optional(Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).component1()
+                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).component1()
             )
 
     private fun createNote(noteId: String, attachmentName: String, attachmentContent: String): Optional<Note> =
             Optional(Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).component1()
+                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).component1()
                     .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = attachmentName, content = attachmentContent.toByteArray())).component1())
 }

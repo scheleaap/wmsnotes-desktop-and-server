@@ -25,7 +25,7 @@ internal class EditingViewModelTest {
     private val note1Notification1 = Note(
             NavigationViewModel.Selection.NoteSelection(note1Id, title),
             info.maaskant.wmsnotes.model.projection.Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = note1Id, revision = 1, title = title)).component1()
+                    .apply(NoteCreatedEvent(eventId = 1, noteId = note1Id, revision = 1, path = TODO(), title = title, content = "")).component1()
                     .apply(ContentChangedEvent(eventId = 2, noteId = note1Id, revision = 2, content = text)).component1()
     )
     private val note1Notification2 = Note(
@@ -36,7 +36,7 @@ internal class EditingViewModelTest {
     private val note2Notification = Note(
             NavigationViewModel.Selection.NoteSelection(note1Id, title),
             info.maaskant.wmsnotes.model.projection.Note()
-                    .apply(NoteCreatedEvent(eventId = 4, noteId = note2Id, revision = 1, title = title)).component1()
+                    .apply(NoteCreatedEvent(eventId = 4, noteId = note2Id, revision = 1, path = TODO(), title = title, content = "")).component1()
                     .apply(ContentChangedEvent(eventId = 5, noteId = note2Id, revision = 2, content = text)).component1()
     )
 

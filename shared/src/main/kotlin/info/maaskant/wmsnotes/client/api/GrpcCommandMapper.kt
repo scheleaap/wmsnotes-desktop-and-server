@@ -55,7 +55,7 @@ class GrpcCommandMapper @Inject constructor() {
                     title = command.title
                 }.build()
             }
-
+            is MoveCommand -> TODO()
         }
         return builder.build()
     }

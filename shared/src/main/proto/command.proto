@@ -21,6 +21,7 @@ message PostCommandRequest {
         DeleteAttachmentCommand delete_attachment = 14;
         ChangeContentCommand change_content = 15;
         ChangeTitleCommand change_title = 16;
+        MoveCommand move = 17;
     }
 
     message CreateNoteCommand {
@@ -48,6 +49,10 @@ message PostCommandRequest {
 
     message ChangeTitleCommand {
         string title = 1;
+    }
+
+    message MoveCommand {
+        string path = 1;
     }
 }
 

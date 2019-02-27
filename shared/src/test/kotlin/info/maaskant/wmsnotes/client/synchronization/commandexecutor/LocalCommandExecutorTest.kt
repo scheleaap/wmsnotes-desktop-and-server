@@ -89,14 +89,14 @@ internal class LocalCommandExecutorTest {
     companion object {
         internal fun modelCommand(noteId: Int, lastRevision: Int? = null): Command {
             return if (lastRevision == null) {
-                CreateNoteCommand("note-$noteId", "Title $noteId")
+                CreateNoteCommand("note-$noteId", path = TODO(), title = "Title $noteId", content = TODO())
             } else {
                 DeleteNoteCommand("note-$noteId", lastRevision)
             }
         }
 
         internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, title = "Title $noteId")
+            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = TODO(), title = "Title $noteId", content = TODO())
         }
     }
 }

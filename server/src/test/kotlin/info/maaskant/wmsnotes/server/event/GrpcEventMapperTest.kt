@@ -22,7 +22,7 @@ internal class GrpcEventMapperTest {
     @TestFactory
     fun test(): List<DynamicTest> {
         val items = mapOf(
-                NoteCreatedEvent(eventId = 1, noteId = "note", revision = 1, title = "Title")
+                NoteCreatedEvent(eventId = 1, noteId = "note", revision = 1, path = TODO(), title = "Title", content = TODO())
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"

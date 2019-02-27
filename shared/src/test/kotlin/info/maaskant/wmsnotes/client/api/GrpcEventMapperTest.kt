@@ -29,7 +29,7 @@ internal class GrpcEventMapperTest {
                     noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder().apply {
                         title = "Title"
                     }.build()
-                }.build() to NoteCreatedEvent(eventId = 1, noteId = "note", revision = 1, title = "Title"),
+                }.build() to NoteCreatedEvent(eventId = 1, noteId = "note", revision = 1, path = TODO(), title = "Title", content = TODO()),
                 Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"

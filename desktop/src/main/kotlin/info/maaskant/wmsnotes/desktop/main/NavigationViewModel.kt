@@ -31,7 +31,7 @@ class NavigationViewModel @Inject constructor(
 
     final val allEventsWithUpdates: ConnectableObservable<Event> = noteIndex.getNotes()
             .subscribeOn(Schedulers.io())
-            .map { NoteCreatedEvent(0, it.noteId, 0, it.title) as Event }
+            .map { NoteCreatedEvent(eventId = 0, noteId = it.noteId, revision = 0, path = TODO(), title = it.title, content = TODO()) as Event }
             .mergeWith(eventStore.getEventUpdates())
             .publish()
 
@@ -47,7 +47,7 @@ class NavigationViewModel @Inject constructor(
     init {
         Observables.combineLatest(selectionRequest, isNavigationAllowed)
                 .observeOn(Schedulers.io())
-                .filter { (_, isNavigationAllowed) -> isNavigationAllowed  }
+                .filter { (_, isNavigationAllowed) -> isNavigationAllowed }
                 .map { (selectionRequest, _) -> selectionRequest }
                 .distinctUntilChanged()
                 .switchMap(::loadRequestedSelection)

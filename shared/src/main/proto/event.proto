@@ -27,6 +27,7 @@ message GetEventsResponse {
         AttachmentDeletedEvent attachment_deleted = 14;
         ContentChangedEvent content_changed = 15;
         TitleChangedEvent title_changed = 16;
+        MovedEvent moved = 17;
     }
 
     message NoteCreatedEvent {
@@ -54,5 +55,9 @@ message GetEventsResponse {
 
     message TitleChangedEvent {
         string title = 1;
+    }
+
+    message MovedEvent {
+        string path = 1;
     }
 }

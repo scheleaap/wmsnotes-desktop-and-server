@@ -13,7 +13,7 @@ import java.time.ZonedDateTime
 @Disabled("Tests written while traveling, code to be implemented next")
 internal class MarkdownFilesImporterTest {
     private val noteId = "note"
-    private val clock: Clock = Clock.fixed(ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 7, ZoneId.of("UTC")).toInstant())
+    private val clock: Clock = Clock.fixed(ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 7, ZoneId.of("UTC")).toInstant(), ZoneId.of("UTC"))
     private val importFolderName: String = "Import of 2001-02-03 04:05:06"
 
     private lateinit var tempDir: File
@@ -112,20 +112,21 @@ internal class MarkdownFilesImporterTest {
 
     @Test
     fun `folders`() {
-        // Given
-        createMd(path = "el1/el2", filename = "Title.md")
-        val importer = createInstance()
-
-        // When
-        importer.import(tempDir)
-
-        // Then
-        verifySequence {
-            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = importFolderName, path = Path(importFolderName), title = importFolderName)),
-            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = "$importFolderName/el1", path = Path(importFolderName, "el1"), title = "el1")),
-            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = "$importFolderName/el1/el2", path = Path(importFolderName, "el1", "el2"), title = "el2")),
-            commandProcessor.commands.onNext(CreateNoteCommand(noteId = null, path = Path(importFolderName, "el1", "el2"), title = any(), content = any()))
-        }
+        TODO()
+//        // Given
+//        createMd(path = "el1/el2", filename = "Title.md")
+//        val importer = createInstance()
+//
+//        // When
+//        importer.import(tempDir)
+//
+//        // Then
+//        verifySequence {
+//            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = importFolderName, path = Path(importFolderName), title = importFolderName)),
+//            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = "$importFolderName/el1", path = Path(importFolderName, "el1"), title = "el1")),
+//            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = "$importFolderName/el1/el2", path = Path(importFolderName, "el1", "el2"), title = "el2")),
+//            commandProcessor.commands.onNext(CreateNoteCommand(noteId = null, path = Path(importFolderName, "el1", "el2"), title = any(), content = any()))
+//        }
     }
 
     private fun createMd(filename: String, content: String = "", path: String = "") {

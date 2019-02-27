@@ -76,6 +76,7 @@ class Note private constructor(
             is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
             is ContentChangedEvent -> applyContentChanged(event)
             is TitleChangedEvent -> applyTitleChanged(event)
+            is MovedEvent -> TODO()
         }
     }
 
@@ -169,6 +170,7 @@ class Note private constructor(
                 revision: Int,
                 exists: Boolean,
                 noteId: String,
+                path: Path,
                 title: String,
                 content: String,
                 attachments: Map<String, ByteArray>,

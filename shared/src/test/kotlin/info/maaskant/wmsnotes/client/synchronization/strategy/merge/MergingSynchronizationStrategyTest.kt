@@ -73,8 +73,8 @@ internal class MergingSynchronizationStrategyTest {
     fun `no solution`() {
         // Given
         val baseRevision = 1
-        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = baseRevision+1)
-        val compensatedLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = baseRevision+2)
+        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, noteId = 1, revision = baseRevision + 1)
+        val compensatedLocalEvent2: Event = modelEvent(eventId = 2, noteId = 1, revision = baseRevision + 2)
         val compensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = 11)
         val compensatedRemoteEvent2: Event = modelEvent(eventId = 12, noteId = 1, revision = 12)
         val modifiedCompensatedRemoteEvent1: Event = modelEvent(eventId = 11, noteId = 1, revision = baseRevision + 1)
@@ -221,7 +221,7 @@ internal class MergingSynchronizationStrategyTest {
 
     companion object {
         internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, title = "Title $noteId")
+            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = TODO(), title = "Title $noteId", content = TODO())
         }
     }
 }

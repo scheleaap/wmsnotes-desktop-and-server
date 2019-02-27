@@ -9,11 +9,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 
 internal class DifferenceAnalyzerTest {
-    private val noteId = "note"
-    private val title = "title"
-    private val text = "text"
-    private val attachmentContent = "data".toByteArray()
-
     @Test
     fun `same empty notes`() {
         // Given
@@ -31,7 +26,7 @@ internal class DifferenceAnalyzerTest {
     @TestFactory
     fun existence(): List<DynamicTest> {
         val newNote = Note()
-        val createdNote = newNote.apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+        val createdNote = newNote.apply(noteCreatedEvent()).first
         val items = listOf(
                 Triple(
                         newNote,
@@ -82,8 +77,8 @@ internal class DifferenceAnalyzerTest {
     @Test
     fun title() {
         // Given
-        val left = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
-        val right = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = "different")).first
+        val left = Note().apply(noteCreatedEvent(title = title)).first
+        val right = Note().apply(noteCreatedEvent(title = "different")).first
         val analyzer = DifferenceAnalyzer()
 
         // When
@@ -98,7 +93,7 @@ internal class DifferenceAnalyzerTest {
     @Test
     fun content() {
         // Given
-        val left = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+        val left = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).first
         val right = left.apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = "different")).first
         val analyzer = DifferenceAnalyzer()
 
@@ -115,7 +110,7 @@ internal class DifferenceAnalyzerTest {
     fun `attachment present`() {
         // Given
         val attachmentName = "att"
-        val left = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+        val left = Note().apply(noteCreatedEvent()).first
         val right = left.apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = attachmentName, content = attachmentContent)).first
         val analyzer = DifferenceAnalyzer()
 
@@ -132,7 +127,7 @@ internal class DifferenceAnalyzerTest {
     fun `attachment not present`() {
         // Given
         val left = Note()
-                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+                .apply(noteCreatedEvent()).first
                 .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = "att", content = attachmentContent)).first
         val right = left.apply(AttachmentDeletedEvent(eventId = 3, noteId = noteId, revision = 3, name = "att")).first
         val analyzer = DifferenceAnalyzer()
@@ -151,7 +146,7 @@ internal class DifferenceAnalyzerTest {
         // Given
         val differentContent = "different".toByteArray()
         val left = Note()
-                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+                .apply(noteCreatedEvent()).first
                 .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = "att", content = attachmentContent)).first
         val right = left
                 .apply(AttachmentDeletedEvent(eventId = 3, noteId = noteId, revision = 3, name = "att")).first
@@ -172,7 +167,7 @@ internal class DifferenceAnalyzerTest {
         // Given
         val left = Note()
         val right = left
-                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+                .apply(noteCreatedEvent()).first
                 .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = "att", content = attachmentContent)).first
         val analyzer = DifferenceAnalyzer()
 
@@ -188,8 +183,8 @@ internal class DifferenceAnalyzerTest {
         // Given
         val left = Note()
         val right = Note()
-                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
-                .apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = text)).first
+                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).first
+                .apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = content)).first
         val analyzer = DifferenceAnalyzer()
 
         // When
@@ -199,7 +194,7 @@ internal class DifferenceAnalyzerTest {
         assertThat(differences).isEqualTo(setOf(
                 ExistenceDifference(NOT_YET_CREATED, EXISTS),
                 TitleDifference("", title),
-                ContentDifference("", text)
+                ContentDifference("", content)
         ))
     }
 
@@ -208,8 +203,8 @@ internal class DifferenceAnalyzerTest {
         // Given
         val left = Note()
         val right = Note()
-                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
-                .apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = text)).first
+                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).first
+                .apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = content)).first
                 .apply(NoteDeletedEvent(eventId = 3, noteId = noteId, revision = 3)).first
         val analyzer = DifferenceAnalyzer()
 
@@ -220,7 +215,31 @@ internal class DifferenceAnalyzerTest {
         assertThat(differences).isEqualTo(setOf(
                 ExistenceDifference(NOT_YET_CREATED, DELETED),
                 TitleDifference("", title),
-                ContentDifference("", text)
+                ContentDifference("", content)
         ))
+    }
+
+    companion object {
+        private const val noteId = "note"
+        private const val title = "title"
+        private const val content = "content"
+        private val attachmentContent = "data".toByteArray()
+
+        fun noteCreatedEvent(
+                eventId: Int = 1,
+                noteId: String = DifferenceAnalyzerTest.noteId,
+                revision: Int = 1,
+                path: Path = TODO(),
+                title: String = DifferenceAnalyzerTest.title,
+                content: String = TODO()
+        ): NoteCreatedEvent =
+                NoteCreatedEvent(
+                        eventId = eventId,
+                        noteId = noteId,
+                        revision = revision,
+                        path = TODO(),
+                        title = title,
+                        content = TODO()
+                )
     }
 }

@@ -69,12 +69,12 @@ internal class SynchronizationIT {
     @Test
     fun `scenario 1`() {
         // Given
-        val oldLocalEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = "Note")
+        val oldLocalEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path = TODO(), title = "Note", content = "Start typing here...")
         val compensatedLocalEvent1 = ContentChangedEvent(eventId = 0, noteId = noteId, revision = 2, content = "Text 1")
         val compensatedRemoteEvent1 = ContentChangedEvent(eventId = 0, noteId = noteId, revision = 5 /* The remote revision can be different from the local one, for example due to previous conflicts */, content = "Text 2")
         val localChangeCommand = ChangeContentCommand(noteId = noteId, lastRevision = 2, content = "Text 2")
         val localChangeEvent = CommandExecutor.EventMetadata(eventId = 0, noteId = noteId, revision = 3)
-        val newNoteCommand1 = CreateNoteCommand(noteId = newNoteId, title = newNoteId)
+        val newNoteCommand1 = CreateNoteCommand(noteId = newNoteId, path = TODO(), title = newNoteId, content = "Start typing here...")
         val newNoteCommand2 = ChangeTitleCommand(noteId = newNoteId, lastRevision = 1, title = "Note")
         val newNoteCommand3 = ChangeContentCommand(noteId = newNoteId, lastRevision = 2, content = "Text 1")
         val newNoteEvent1 = CommandExecutor.EventMetadata(eventId = 0, noteId = newNoteId, revision = 1)
@@ -155,7 +155,7 @@ internal class SynchronizationIT {
 
     companion object {
         internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, title = "Title $noteId")
+            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = TODO(), title = "Title $noteId", content = TODO())
         }
     }
 }

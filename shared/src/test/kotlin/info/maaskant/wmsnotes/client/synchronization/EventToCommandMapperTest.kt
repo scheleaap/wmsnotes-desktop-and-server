@@ -13,7 +13,7 @@ internal class EventToCommandMapperTest {
         val eventRevision = lastRevision + 1
 
         val pairs = listOf(
-                NoteCreatedEvent(eventId = 1, noteId = noteId, revision = eventRevision, title = "Title 1") to CreateNoteCommand(noteId = noteId, title = "Title 1"),
+                NoteCreatedEvent(eventId = 1, noteId = noteId, revision = eventRevision, path = TODO(), title = "Title 1", content = TODO()) to CreateNoteCommand(noteId = noteId, path = TODO(), title = "Title 1", content = TODO()),
                 NoteDeletedEvent(eventId = 1, noteId = noteId, revision = eventRevision) to DeleteNoteCommand(noteId = noteId, lastRevision = lastRevision),
                 NoteUndeletedEvent(eventId = 1, noteId = noteId, revision = eventRevision) to UndeleteNoteCommand(noteId = noteId, lastRevision = lastRevision),
                 AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1", content = "data".toByteArray()) to AddAttachmentCommand(noteId = noteId, lastRevision = lastRevision, name = "att-1", content = "data".toByteArray()),

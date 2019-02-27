@@ -16,7 +16,7 @@ internal class DifferenceCompensatorTest {
 
     @TestFactory
     fun existence(): List<DynamicTest> {
-        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId)
+        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = Path(), title = noteId, content = noteId)
         val noteDeletedEvent = NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
         val noteUndeletedEvent = NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0)
         val items = listOf(
@@ -247,7 +247,7 @@ internal class DifferenceCompensatorTest {
 
         // Then
         assertThat(events.leftEvents).isEqualTo(listOf(
-                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId),
+                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = Path(), title = noteId, content = ""),
                 ContentChangedEvent(eventId = 0, noteId = noteId, revision = 0, content = "text"),
                 TitleChangedEvent(eventId = 0, noteId = noteId, revision = 0, title = "title")
         ))

@@ -36,7 +36,7 @@ class ApplicationController @Inject constructor(
         selectNote.subscribe(navigationViewModel.selectionRequest)
         createNote
                 .subscribeOn(Schedulers.computation())
-                .map { CreateNoteCommand(null, "New Note ${i++}") }
+                .map { CreateNoteCommand(null, path = TODO(), title = "New Note ${i++}", content = TODO()) }
                 .subscribe(commandProcessor.commands)
         deleteCurrentNote
                 .subscribeOn(Schedulers.computation())

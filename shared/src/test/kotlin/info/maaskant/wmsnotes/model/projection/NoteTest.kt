@@ -531,17 +531,19 @@ internal class NoteTest {
         val revision = 0
         val exists = false
         val noteId = ""
+        val path = TODO()
         val title = ""
         val content = "Text"
         val attachments = emptyMap<String, ByteArray>()
         val attachmentHashes = emptyMap<String, String>()
         return listOf(
-                "revision" to Note.deserialize(revision = 1, exists = exists, noteId = noteId, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
-                "exists" to Note.deserialize(revision = revision, exists = true, noteId = noteId, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
-                "noteId" to Note.deserialize(revision = revision, exists = exists, noteId = "different", title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
-                "title" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, title = "different", content = content, attachments = attachments, attachmentHashes = attachmentHashes),
-                "content" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, title = title, content = "different", attachments = attachments, attachmentHashes = attachmentHashes),
-                "attachmentHashes" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, title = title, content = content, attachments = attachments, attachmentHashes = mapOf("different" to "different"))
+                "revision" to Note.deserialize(revision = 1, exists = exists, noteId = noteId, path = path, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                "exists" to Note.deserialize(revision = revision, exists = true, noteId = noteId, path = path, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                "noteId" to Note.deserialize(revision = revision, exists = exists, noteId = "different", path = path, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                "path" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, path = Path("different"), title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                "title" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, path = path, title = "different", content = content, attachments = attachments, attachmentHashes = attachmentHashes),
+                "content" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, path = path, title = title, content = "different", attachments = attachments, attachmentHashes = attachmentHashes),
+                "attachmentHashes" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, path = path, title = title, content = content, attachments = attachments, attachmentHashes = mapOf("different" to "different"))
                 // "" to Note.deserialize(revision = revision, exists = exists, noteId = noteId, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
                 // Add more fields here
         ).map {
