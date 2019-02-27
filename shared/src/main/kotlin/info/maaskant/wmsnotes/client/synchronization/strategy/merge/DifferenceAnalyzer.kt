@@ -34,14 +34,15 @@ class DifferenceAnalyzer {
                 emptySet()
             }
 
-    private fun compareExistence(left: Note, right: Note): Set<Difference> =
-            if (left.exists != right.exists) {
-                val leftStatus = getExistenceType(left)
-                val rightStatus = getExistenceType(right)
-                setOf(ExistenceDifference(leftStatus, rightStatus))
-            } else {
-                emptySet()
-            }
+    private fun compareExistence(left: Note, right: Note): Set<Difference> {
+        val leftStatus = getExistenceType(left)
+        val rightStatus = getExistenceType(right)
+        return if (leftStatus != rightStatus) {
+            setOf(ExistenceDifference(leftStatus, rightStatus))
+        } else {
+            emptySet()
+        }
+    }
 
     private fun compareTitle(left: Note, right: Note): Set<Difference> =
             if (left.title != right.title) {

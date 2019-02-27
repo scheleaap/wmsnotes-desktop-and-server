@@ -4,7 +4,9 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.merge.ExistenceDif
 import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.projection.Note
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 
 internal class DifferenceAnalyzerTest {
     private val noteId = "note"
@@ -26,33 +28,56 @@ internal class DifferenceAnalyzerTest {
         assertThat(differences).isEmpty()
     }
 
-    @Test
-    fun `existence 1`() {
-        // Given
-        val left = Note()
-        val right = left.apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
-        val analyzer = DifferenceAnalyzer()
+    @TestFactory
+    fun existence(): List<DynamicTest> {
+        val newNote = Note()
+        val createdNote = newNote.apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+        val items = listOf(
+                Triple(
+                        newNote,
+                        createdNote,
+                        ExistenceDifference(NOT_YET_CREATED, EXISTS)
+                ),
+                Triple(
+                        createdNote,
+                        newNote,
+                        ExistenceDifference(EXISTS, NOT_YET_CREATED)
+                ),
+                Triple(
+                        createdNote,
+                        createdNote.apply(NoteDeletedEvent(eventId = 2, noteId = noteId, revision = 2)).first,
+                        ExistenceDifference(EXISTS, DELETED)
+                ),
+                Triple(
+                        createdNote.apply(NoteDeletedEvent(eventId = 2, noteId = noteId, revision = 2)).first,
+                        createdNote,
+                        ExistenceDifference(DELETED, EXISTS)
+                ),
+                Triple(
+                        newNote,
+                        createdNote.apply(NoteDeletedEvent(eventId = 2, noteId = noteId, revision = 2)).first,
+                        ExistenceDifference(NOT_YET_CREATED, DELETED)
+                ),
+                Triple(
+                        createdNote.apply(NoteDeletedEvent(eventId = 2, noteId = noteId, revision = 2)).first,
+                        newNote,
+                        ExistenceDifference(DELETED, NOT_YET_CREATED)
+                )
+        )
+        return items.map { (left, right, difference) ->
+            DynamicTest.dynamicTest(difference.toString()) {
+                // Given
+                val analyzer = DifferenceAnalyzer()
 
-        // When
-        val differences = analyzer.compare(left, right)
+                // When
+                val differences = analyzer.compare(left, right)
 
-        // Then
-        assertThat(differences).contains(ExistenceDifference(NOT_YET_CREATED, EXISTS))
+                // Then
+                assertThat(differences).contains(difference)
+            }
+        }
     }
 
-    @Test
-    fun `existence 2`() {
-        // Given
-        val left = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
-        val right = left.apply(NoteDeletedEvent(eventId = 2, noteId = noteId, revision = 2)).first
-        val analyzer = DifferenceAnalyzer()
-
-        // When
-        val differences = analyzer.compare(left, right)
-
-        // Then
-        assertThat(differences).contains(ExistenceDifference(EXISTS, DELETED))
-    }
 
     @Test
     fun title() {
@@ -178,4 +203,24 @@ internal class DifferenceAnalyzerTest {
         ))
     }
 
+    @Test
+    fun `real-world case 2`() {
+        // Given
+        val left = Note()
+        val right = Note()
+                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
+                .apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = text)).first
+                .apply(NoteDeletedEvent(eventId = 3, noteId = noteId, revision = 3)).first
+        val analyzer = DifferenceAnalyzer()
+
+        // When
+        val differences = analyzer.compare(left, right)
+
+        // Then
+        assertThat(differences).isEqualTo(setOf(
+                ExistenceDifference(NOT_YET_CREATED, DELETED),
+                TitleDifference("", title),
+                ContentDifference("", text)
+        ))
+    }
 }
