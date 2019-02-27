@@ -92,8 +92,14 @@ class NewSynchronizer @Inject constructor(
     }
 
     private fun removeEventsToIgnore(eventsToIgnore: LocalAndRemoteEvents) {
-        eventsToIgnore.remoteEvents.forEach { remoteEvents.removeEvent(it) }
-        eventsToIgnore.localEvents.forEach { localEvents.removeEvent(it) }
+        eventsToIgnore.remoteEvents.forEach {
+            remoteEvents.removeEvent(it)
+            updateState(state.removeRemoteEventToIgnore(it.eventId))
+        }
+        eventsToIgnore.localEvents.forEach {
+            localEvents.removeEvent(it)
+            updateState(state.removeLocalEventToIgnore(it.eventId))
+        }
     }
 
     private fun areCompensatingActionsValid(

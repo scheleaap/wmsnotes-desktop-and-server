@@ -996,6 +996,7 @@ internal class NewSynchronizerTest {
                 newEvent = newLocalEventForRemoteEvent1
         )
         val s = createSynchronizer()
+        val stateObserver = s.getStateUpdates().test()
         s.synchronize()
         givenLocalEvents(newLocalEventForRemoteEvent1)
         givenRemoteEvents(newRemoteEventForLocalEvent1)
@@ -1016,6 +1017,9 @@ internal class NewSynchronizerTest {
             remoteEvents.removeEvent(newRemoteEventForLocalEvent1)
             localEvents.removeEvent(newLocalEventForRemoteEvent1)
         }
+        val finalState = stateObserver.values().last()
+        assertThat(finalState.localEventIdsToIgnore).doesNotContain(newLocalEventForRemoteEvent1.eventId)
+        assertThat(finalState.remoteEventIdsToIgnore).doesNotContain(newRemoteEventForLocalEvent1.eventId)
     }
 
     private fun createSynchronizer(
