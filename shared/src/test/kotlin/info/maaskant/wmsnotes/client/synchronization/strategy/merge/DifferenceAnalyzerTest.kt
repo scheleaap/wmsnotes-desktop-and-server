@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 internal class DifferenceAnalyzerTest {
     private val noteId = "note"
     private val title = "title"
+    private val text = "text"
     private val attachmentContent = "data".toByteArray()
 
     @Test
@@ -163,7 +164,7 @@ internal class DifferenceAnalyzerTest {
         val left = Note()
         val right = Note()
                 .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, title = title)).first
-                .apply(ContentChangedEvent(eventId=2,noteId = noteId,revision = 2, content = "text")).first
+                .apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = text)).first
         val analyzer = DifferenceAnalyzer()
 
         // When
@@ -173,7 +174,7 @@ internal class DifferenceAnalyzerTest {
         assertThat(differences).isEqualTo(setOf(
                 ExistenceDifference(NOT_YET_CREATED, EXISTS),
                 TitleDifference("", title),
-                ContentDifference("", "text")
+                ContentDifference("", text)
         ))
     }
 

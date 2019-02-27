@@ -31,50 +31,52 @@ class DifferenceCompensator {
 
     private fun createEventsForDifference(noteId: String, target: Target, difference: Difference): List<Event> {
         return when (difference) {
-            is ExistenceDifference -> {
-                when (target) {
-                    Target.LEFT ->
-                        when (difference.left) {
-                            NOT_YET_CREATED -> throw IllegalArgumentException()
-                            EXISTS -> when (difference.right) {
-                                NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId))
-                                EXISTS -> throw IllegalArgumentException()
-                                DELETED -> listOf(NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0))
-                            }
-                            DELETED -> when (difference.right) {
-                                NOT_YET_CREATED -> listOf(
-                                        NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId),
-                                        NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
-                                )
-                                EXISTS -> listOf(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0))
-                                DELETED -> throw IllegalArgumentException()
-                            }
-                        }
-                    Target.RIGHT -> when (difference.right) {
-                        NOT_YET_CREATED -> throw IllegalArgumentException()
-                        EXISTS -> when (difference.left) {
-                            NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId))
-                            EXISTS -> throw IllegalArgumentException()
-                            DELETED -> listOf(NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0))
-                        }
-                        DELETED -> when (difference.left) {
-                            NOT_YET_CREATED -> listOf(
-                                    NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId),
-                                    NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
-                            )
-                            EXISTS -> listOf(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0))
-                            DELETED -> throw IllegalArgumentException()
-                        }
-                    }
-                }
-            }
-            is TitleDifference -> eventsForTitleDifference(noteId, target, difference)
-            is ContentDifference -> eventsForContentDifference(noteId, target, difference)
-            is AttachmentDifference -> eventsForAttachmentDifference(target, difference, noteId)
+            is ExistenceDifference -> eventsForExistenceDifference(noteId, difference, target)
+            is TitleDifference -> eventsForTitleDifference(noteId, difference, target)
+            is ContentDifference -> eventsForContentDifference(noteId, difference, target)
+            is AttachmentDifference -> eventsForAttachmentDifference(noteId, difference, target)
         }
     }
 
-    private fun eventsForAttachmentDifference(target: Target, difference: AttachmentDifference, noteId: String): List<Event> =
+    private fun eventsForExistenceDifference(noteId: String, difference: ExistenceDifference, target: Target): List<Event> {
+        return when (target) {
+            Target.LEFT ->
+                when (difference.left) {
+                    NOT_YET_CREATED -> throw IllegalArgumentException()
+                    EXISTS -> when (difference.right) {
+                        NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId))
+                        EXISTS -> throw IllegalArgumentException()
+                        DELETED -> listOf(NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0))
+                    }
+                    DELETED -> when (difference.right) {
+                        NOT_YET_CREATED -> listOf(
+                                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId),
+                                NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
+                        )
+                        EXISTS -> listOf(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0))
+                        DELETED -> throw IllegalArgumentException()
+                    }
+                }
+            Target.RIGHT -> when (difference.right) {
+                NOT_YET_CREATED -> throw IllegalArgumentException()
+                EXISTS -> when (difference.left) {
+                    NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId))
+                    EXISTS -> throw IllegalArgumentException()
+                    DELETED -> listOf(NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0))
+                }
+                DELETED -> when (difference.left) {
+                    NOT_YET_CREATED -> listOf(
+                            NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId),
+                            NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
+                    )
+                    EXISTS -> listOf(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0))
+                    DELETED -> throw IllegalArgumentException()
+                }
+            }
+        }
+    }
+
+    private fun eventsForAttachmentDifference(noteId: String, difference: AttachmentDifference, target: Target): List<Event> =
             if (target == Target.LEFT && difference.left != null) {
                 if (difference.right != null) {
                     listOf(AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = difference.name))
@@ -91,13 +93,13 @@ class DifferenceCompensator {
                 listOf(AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = difference.name))
             }
 
-    private fun eventsForContentDifference(noteId: String, target: Target, difference: ContentDifference): List<ContentChangedEvent> =
+    private fun eventsForContentDifference(noteId: String, difference: ContentDifference, target: Target): List<ContentChangedEvent> =
             listOf(ContentChangedEvent(eventId = 0, noteId = noteId, revision = 0, content = when (target) {
                 Target.LEFT -> difference.left
                 Target.RIGHT -> difference.right
             }))
 
-    private fun eventsForTitleDifference(noteId: String, target: Target, difference: TitleDifference): List<TitleChangedEvent> =
+    private fun eventsForTitleDifference(noteId: String, difference: TitleDifference, target: Target): List<TitleChangedEvent> =
             listOf(TitleChangedEvent(eventId = 0, noteId = noteId, revision = 0, title = when (target) {
                 Target.LEFT -> difference.left
                 Target.RIGHT -> difference.right
