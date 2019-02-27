@@ -1,11 +1,9 @@
 package info.maaskant.wmsnotes.desktop.main
 
-import com.github.thomasnield.rxkotlinfx.actionEvents
 import com.github.thomasnield.rxkotlinfx.toObservable
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView
 import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
-import info.maaskant.wmsnotes.desktop.conflicts.ConflictResolutionChooser
 import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.settings.ApplicationViewState
 import info.maaskant.wmsnotes.desktop.util.*
@@ -150,23 +148,23 @@ class MenuAndToolbarView : View() {
                         progress = -1.0
                         setPrefSize(16.0, 16.0)
                     }
-                    button {
-                        text = "TEST"
-                        // TODO: WAIT UNTIL NOTE IS NOT DIRTY
-                        actionEvents()
-                                .map {
-                                    val chooser: ConflictResolutionChooser = find<ConflictResolutionChooser>(
-                                            scope = scope,
-                                            params = mapOf(ConflictResolutionChooser::noteId to "53507bde-be93-406f-9609-4d4406bddedb")
-                                    ).apply {
-                                        openModal(block = true)
-                                    }
-                                    chooser.choice.firstElement().blockingGet()
-                                }
-                                .subscribe {
-                                    println("CONFLICT RESOLVING RESULT: " + it)
-                                }
-                    }
+//                    button {
+//                        text = "Resolve conflict"
+//                        // TODO: WAIT UNTIL NOTE IS NOT DIRTY
+//                        actionEvents()
+//                                .map {
+//                                    val chooser: ConflictResolutionChooser = find<ConflictResolutionChooser>(
+//                                            scope = scope,
+//                                            params = mapOf(ConflictResolutionChooser::noteId to "53507bde-be93-406f-9609-4d4406bddedb")
+//                                    ).apply {
+//                                        openModal(block = true)
+//                                    }
+//                                    chooser.choice.firstElement().blockingGet()
+//                                }
+//                                .subscribe {
+//                                    println("CONFLICT RESOLVING RESULT: " + it)
+//                                }
+//                    }
                 }
             }
 }

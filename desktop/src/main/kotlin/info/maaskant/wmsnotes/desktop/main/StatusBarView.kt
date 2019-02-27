@@ -1,7 +1,5 @@
 package info.maaskant.wmsnotes.desktop.main
 
-import com.github.thomasnield.rxkotlinfx.observeOnFx
-import info.maaskant.wmsnotes.client.synchronization.Synchronizer
 import javafx.scene.layout.Priority
 import tornadofx.*
 import tornadofx.controlsfx.statusbar
