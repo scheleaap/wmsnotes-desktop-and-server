@@ -2,10 +2,7 @@ package info.maaskant.wmsnotes.desktop.main
 
 import com.github.thomasnield.rxkotlinfx.events
 import com.github.thomasnield.rxkotlinfx.observeOnFx
-import info.maaskant.wmsnotes.model.CommandProcessor
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.NoteDeletedEvent
-import info.maaskant.wmsnotes.model.NoteUndeletedEvent
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.utilities.logger
 import javafx.scene.control.TreeItem
 import javafx.scene.input.KeyCode
@@ -49,6 +46,7 @@ class TreeView : View() {
                         is NoteCreatedEvent -> addNote(noteId = it.noteId, title = it.title)
                         is NoteDeletedEvent -> removeNote(it)
                         is NoteUndeletedEvent -> addNote(noteId = it.noteId, title = "TODO")
+                        is TitleChangedEvent -> changeTitle(it)
                         else -> {
                         }
                     }
@@ -56,11 +54,17 @@ class TreeView : View() {
     }
 
     private fun addNote(noteId: String, title: String) {
-        logger.debug("Adding note ${noteId}")
+        logger.debug("Adding note $noteId")
         val node = NotebookNode(noteId = noteId, title = title)
         val treeItem = TreeItem(node)
         treeItemReferences[noteId] = treeItem
         rootNode += treeItem
+    }
+
+    private fun changeTitle(e: TitleChangedEvent) {
+        logger.debug("Changing title of note ${e.noteId}")
+        val treeItem: TreeItem<NotebookNode> = treeItemReferences[e.noteId]!!
+        treeItem.value = NotebookNode(e.noteId, e.title)
     }
 
     private fun removeNote(e: NoteDeletedEvent) {
