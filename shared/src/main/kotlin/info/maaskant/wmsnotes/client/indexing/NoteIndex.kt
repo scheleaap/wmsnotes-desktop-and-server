@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.client.indexing
 
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.model.NoteUndeletedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
@@ -40,11 +41,15 @@ class NoteIndex @Inject constructor(
                     when (it) {
                         is NoteCreatedEvent -> {
                             logger.debug("Adding note ${it.noteId} to index")
-                            updateState(state.addNote(NoteMetadata(it.noteId, it.title)))
+                            updateState(state.addNote(it.noteId, it.title))
                         }
                         is NoteDeletedEvent -> {
-                            logger.debug("Removing note ${it.noteId} from index")
-                            updateState(state.removeNote(it.noteId))
+                            logger.debug("Hiding note ${it.noteId}")
+                            updateState(state.hideNote(it.noteId))
+                        }
+                        is NoteUndeletedEvent -> {
+                            logger.debug("Showing note ${it.noteId}")
+                            updateState(state.showNote(it.noteId))
                         }
                         else -> {
                         }
@@ -54,6 +59,7 @@ class NoteIndex @Inject constructor(
 
     fun getNotes(): Observable<NoteMetadata> {
         return Observable.fromIterable(state.notes.values)
+                .filter { !it.hidden }
     }
 
     private fun updateState(state: NoteIndexState) {

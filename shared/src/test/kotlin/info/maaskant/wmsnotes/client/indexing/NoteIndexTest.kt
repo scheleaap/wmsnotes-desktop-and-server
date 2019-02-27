@@ -3,6 +3,7 @@ package info.maaskant.wmsnotes.client.indexing
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.model.NoteUndeletedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.mockk.clearMocks
 import io.mockk.every
@@ -72,6 +73,24 @@ internal class NoteIndexTest {
         observer.assertComplete()
         observer.assertNoErrors()
         assertThat(observer.values().toSet()).isEqualTo(emptySet<NoteMetadata>())
+    }
+
+    @Test
+    fun `note undeleted`() {
+        // Given
+        val index = NoteIndex(eventStore, noteIndexState, scheduler)
+        eventUpdatesSubject.onNext(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, title = title))
+        eventUpdatesSubject.onNext(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 1))
+
+        // When
+        eventUpdatesSubject.onNext(NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 1))
+        val observer = index.getNotes().test()
+
+        // Then
+        observer.await()
+        observer.assertComplete()
+        observer.assertNoErrors()
+        assertThat(observer.values().toSet()).isEqualTo(setOf(NoteMetadata(noteId, title)))
     }
 
     @Test

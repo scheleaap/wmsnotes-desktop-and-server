@@ -5,6 +5,7 @@ import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.NoteDeletedEvent
+import info.maaskant.wmsnotes.model.NoteUndeletedEvent
 import info.maaskant.wmsnotes.utilities.logger
 import javafx.scene.control.TreeItem
 import javafx.scene.input.KeyCode
@@ -45,23 +46,24 @@ class TreeView : View() {
                 .observeOnFx()
                 .subscribe({
                     when (it) {
-                        is NoteCreatedEvent -> noteCreated(it)
-                        is NoteDeletedEvent -> noteDeleted(it)
+                        is NoteCreatedEvent -> addNote(noteId = it.noteId, title = it.title)
+                        is NoteDeletedEvent -> removeNote(it)
+                        is NoteUndeletedEvent -> addNote(noteId = it.noteId, title = "TODO")
                         else -> {
                         }
                     }
                 }, { logger.warn("Error", it) })
     }
 
-    private fun noteCreated(e: NoteCreatedEvent) {
-        logger.debug("Adding note ${e.noteId}")
-        val node = NotebookNode(noteId = e.noteId, title = e.title)
+    private fun addNote(noteId: String, title: String) {
+        logger.debug("Adding note ${noteId}")
+        val node = NotebookNode(noteId = noteId, title = title)
         val treeItem = TreeItem(node)
-        treeItemReferences[e.noteId] = treeItem
+        treeItemReferences[noteId] = treeItem
         rootNode += treeItem
     }
 
-    private fun noteDeleted(e: NoteDeletedEvent) {
+    private fun removeNote(e: NoteDeletedEvent) {
         logger.debug("Removing note ${e.noteId}")
         val treeItem = treeItemReferences.remove(e.noteId)
         rootNode.children.remove(treeItem)
