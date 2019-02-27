@@ -3,12 +3,14 @@ package info.maaskant.wmsnotes.desktop.imprt
 import info.maaskant.wmsnotes.model.*
 import io.mockk.*
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.Clock
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
+@Disabled("Tests written while traveling, code to be implemented next")
 internal class MarkdownFilesImporterTest {
     private val noteId = "note"
     private val clock: Clock = Clock.fixed(ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 7, ZoneId.of("UTC")).toInstant())

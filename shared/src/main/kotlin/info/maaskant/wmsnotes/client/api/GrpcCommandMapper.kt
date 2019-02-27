@@ -21,6 +21,11 @@ class GrpcCommandMapper @Inject constructor() {
                 lastRevision = command.lastRevision
                 deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
             }
+            is UndeleteNoteCommand -> builder.apply {
+                noteId = command.noteId
+                lastRevision = command.lastRevision
+                undeleteNote = Command.PostCommandRequest.UndeleteNoteCommand.newBuilder().build()
+            }
             is AddAttachmentCommand -> builder.apply {
                 noteId = command.noteId
                 lastRevision = command.lastRevision
@@ -43,6 +48,14 @@ class GrpcCommandMapper @Inject constructor() {
                     content = command.content
                 }.build()
             }
+            is ChangeTitleCommand -> builder.apply {
+                noteId = command.noteId
+                lastRevision = command.lastRevision
+                changeTitle = Command.PostCommandRequest.ChangeTitleCommand.newBuilder().apply {
+                    title = command.title
+                }.build()
+            }
+
         }
         return builder.build()
     }

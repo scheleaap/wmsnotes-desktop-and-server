@@ -71,14 +71,15 @@ class Note private constructor(
         return when (event) {
             is NoteCreatedEvent -> applyCreated(event)
             is NoteDeletedEvent -> applyDeleted(event)
+            is NoteUndeletedEvent -> applyUndeleted(event)
             is AttachmentAddedEvent -> applyAttachmentAdded(event)
             is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
             is ContentChangedEvent -> applyContentChanged(event)
+            is TitleChangedEvent -> applyTitleChanged(event)
         }
     }
 
     private fun applyAttachmentAdded(event: AttachmentAddedEvent): Pair<Note, Event?> {
-        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
         if (event.name.isEmpty()) throw IllegalArgumentException("An attachment name must not be empty ($event)")
         val sanitizedName = event.name.replace(nameReplacementPattern, "_")
         return if (sanitizedName in attachments) {
@@ -94,8 +95,6 @@ class Note private constructor(
     }
 
     private fun applyAttachmentDeleted(event: AttachmentDeletedEvent): Pair<Note, Event?> {
-        // TODO: Implement test to enable this
-        // if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
         return if (event.name in attachments) {
             copy(
                     revision = event.revision,
@@ -108,7 +107,6 @@ class Note private constructor(
     }
 
     private fun applyContentChanged(event: ContentChangedEvent): Pair<Note, Event?> {
-        if (!exists) throw IllegalStateException("Not possible if note does not exist ($event)")
         return if (content == event.content) noChanges() else copy(
                 revision = event.revision,
                 content = event.content
@@ -130,6 +128,24 @@ class Note private constructor(
         return if (exists) {
             copy(
                     exists = false,
+                    revision = event.revision
+            ) to event
+        } else {
+            noChanges()
+        }
+    }
+
+    private fun applyTitleChanged(event: TitleChangedEvent): Pair<Note, Event?> {
+        return if (title == event.title) noChanges() else copy(
+                revision = event.revision,
+                title = event.title
+        ) to event
+    }
+
+    private fun applyUndeleted(event: NoteUndeletedEvent): Pair<Note, Event?> {
+        return if (!exists) {
+            copy(
+                    exists = true,
                     revision = event.revision
             ) to event
         } else {

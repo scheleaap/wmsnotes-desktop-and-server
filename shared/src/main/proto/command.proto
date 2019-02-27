@@ -16,9 +16,11 @@ message PostCommandRequest {
     oneof command {
         CreateNoteCommand create_note = 10;
         DeleteNoteCommand delete_note = 11;
-        AddAttachmentCommand add_attachment = 12;
-        DeleteAttachmentCommand delete_attachment = 13;
-        ChangeContentCommand change_content = 14;
+        UndeleteNoteCommand undelete_note = 12;
+        AddAttachmentCommand add_attachment = 13;
+        DeleteAttachmentCommand delete_attachment = 14;
+        ChangeContentCommand change_content = 15;
+        ChangeTitleCommand change_title = 16;
     }
 
     message CreateNoteCommand {
@@ -26,6 +28,9 @@ message PostCommandRequest {
     }
 
     message DeleteNoteCommand {
+    }
+
+    message UndeleteNoteCommand {
     }
 
     message AddAttachmentCommand {
@@ -40,6 +45,10 @@ message PostCommandRequest {
     message ChangeContentCommand {
         string content = 1;
     }
+
+    message ChangeTitleCommand {
+        string title = 1;
+    }
 }
 
 
@@ -51,6 +60,10 @@ message PostCommandResponse {
     }
     Status status = 1;
     string errorDescription = 2;
+    // The id of the new event, if one was generated
     int32 new_event_id = 3;
-    int32 new_revision = 4;
+    // The id of the note, for which the new event was produced. Required if new_event_id is not null.
+    string note_id = 4;
+    // The revision of the note, produced by the new event. Required if new_event_id is not null.
+    int32 new_revision = 5;
 }

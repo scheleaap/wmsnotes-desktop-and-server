@@ -1,9 +1,11 @@
 package info.maaskant.wmsnotes.model
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import java.util.*
 
 internal class EventsTest {
     @Test
@@ -24,7 +26,7 @@ internal class EventsTest {
     }
 
     @TestFactory
-    fun `withEventId for all event types`(): List<DynamicTest> {
+    fun `copy with eventId for all event types`(): List<DynamicTest> {
         return listOf(
                 NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Title 1", content = "Text"),
                 NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
@@ -37,11 +39,33 @@ internal class EventsTest {
                 // Add more classes here
         ).map {
             DynamicTest.dynamicTest(it::class.simpleName) {
-                val copy = it.withEventId(eventId = 1)
+                val copy = it.copy(eventId = 1)
 
                 assertThat(copy.eventId).isEqualTo(1)
                 assertThat(copy).isInstanceOf(it::class.java)
-                assertThat(copy.withEventId(0)).isEqualTo(it)
+                assertThat(copy.copy(eventId = 0)).isEqualTo(it)
+            }
+        }
+    }
+
+    @TestFactory
+    fun `copy with revision for all event types`(): List<DynamicTest> {
+        return listOf(
+                NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1"),
+                NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
+                NoteUndeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
+                AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
+                AttachmentDeletedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1"),
+                ContentChangedEvent(eventId = 0, noteId = "note-1", revision = 1, content = "data"),
+                TitleChangedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1")
+                // Add more classes here
+        ).map {
+            DynamicTest.dynamicTest(it::class.simpleName) {
+                val copy = it.copy(revision = 2)
+
+                assertThat(copy.revision).isEqualTo(2)
+                assertThat(copy).isInstanceOf(it::class.java)
+                assertThat(copy.copy(revision = 1)).isEqualTo(it)
             }
         }
     }
@@ -109,6 +133,18 @@ internal class EventsTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `equals for NoteDeletedEvent and NoteUndeletedEvent`() {
+        // These two classes are identical with regards to their fields, but they still must never be equal.
+
+        // Given
+        val e1 = NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1)
+        val e2 = NoteUndeletedEvent(eventId = 0, noteId = "note-1", revision = 1)
+
+        // When / then
+        assertThat(e1).isNotEqualTo(e2)
     }
 }
 

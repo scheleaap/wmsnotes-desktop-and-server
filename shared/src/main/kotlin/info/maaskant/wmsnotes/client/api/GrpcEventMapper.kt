@@ -23,6 +23,11 @@ class GrpcEventMapper @Inject constructor() {
                         revision = revision,
                         noteId = noteId
                 )
+                Event.GetEventsResponse.EventCase.NOTE_UNDELETED -> NoteUndeletedEvent(
+                        eventId = eventId,
+                        revision = revision,
+                        noteId = noteId
+                )
                 Event.GetEventsResponse.EventCase.ATTACHMENT_ADDED -> AttachmentAddedEvent(
                         eventId = eventId,
                         revision = revision,
@@ -41,6 +46,12 @@ class GrpcEventMapper @Inject constructor() {
                         revision = revision,
                         noteId = noteId,
                         content = contentChanged.content
+                )
+                Event.GetEventsResponse.EventCase.TITLE_CHANGED -> TitleChangedEvent(
+                        eventId = eventId,
+                        revision = revision,
+                        noteId = noteId,
+                        title = titleChanged.title
                 )
             }
         }

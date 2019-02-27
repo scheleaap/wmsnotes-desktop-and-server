@@ -43,7 +43,7 @@ class InMemoryEventStore : EventStore {
         } else if (lastRevisionOfNote != null && event.revision != lastRevisionOfNote + 1) {
             throw IllegalArgumentException()
         }
-        val eventWithId = event.withEventId(++lastEventId)
+        val eventWithId = event.copy(eventId = ++lastEventId)
         events[eventWithId.eventId] = eventWithId
         newEventSubject.onNext(eventWithId)
         return eventWithId

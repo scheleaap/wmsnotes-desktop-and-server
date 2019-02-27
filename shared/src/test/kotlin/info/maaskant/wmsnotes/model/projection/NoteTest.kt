@@ -85,7 +85,7 @@ internal class NoteTest {
     }
 
     @TestFactory
-    fun `events that are not allowed if the note does not exist`(): List<DynamicTest> {
+    fun `events that are allowed if the note has been deleted`(): List<DynamicTest> {
         return listOf(
                 AttachmentAddedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file", content = "data".toByteArray()),
                 AttachmentDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 3, name = "file"),
@@ -93,17 +93,20 @@ internal class NoteTest {
                 TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, title = "Title"),
                 MovedEvent(eventId = 0, noteId = randomNoteId, revision = 3, path = Path("el1", "el2"))
                 // Add more classes here
-        ).map { event ->
-            DynamicTest.dynamicTest(event::class.simpleName) {
+        ).map { eventIn ->
+            DynamicTest.dynamicTest(eventIn::class.simpleName) {
                 // Given
-                val note = noteWithEvents(
+                assertThat(eventIn.revision).isEqualTo(3)
+                val noteBefore = noteWithEvents(
                         NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text"),
                         NoteDeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
                 )
 
-                // When / Then
-                assertThat(event.revision).isEqualTo(3)
-                assertThrows<IllegalStateException> { note.apply(event) }
+                // When
+                noteBefore.apply(eventIn)
+
+                // Then
+                // no exception thrown
             }
         }
     }
@@ -250,7 +253,9 @@ internal class NoteTest {
     @Test
     fun `undelete, ignore after create`() {
         // Given
-        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text"))
+        val noteBefore = noteWithEvents(
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text")
+        )
         val eventIn = NoteUndeletedEvent(eventId = 0, noteId = randomNoteId, revision = 2)
 
         // When
@@ -435,7 +440,7 @@ internal class NoteTest {
         // Then
         assertThat(eventOut).isEqualTo(eventIn)
         assertThat(noteBefore.revision).isEqualTo(1)
-        assertThat(noteBefore.title).isEqualTo("")
+        assertThat(noteBefore.title).isEqualTo("Title 1")
         assertThat(noteAfter.revision).isEqualTo(2)
         assertThat(noteAfter.title).isEqualTo("Title 2")
     }
@@ -444,7 +449,7 @@ internal class NoteTest {
     fun `title changed, idempotence 1`() {
         // Given
         val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text"))
-        val eventIn = TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, title = "Title")
+        val eventIn = TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, title = "Title")
 
         // When
         val (noteAfter, eventOut) = noteBefore.apply(eventIn)
