@@ -1,6 +1,6 @@
 package info.maaskant.wmsnotes.desktop.main
 
-import info.maaskant.wmsnotes.client.indexing.NoteIndex
+import info.maaskant.wmsnotes.desktop.client.indexing.NoteIndex
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore

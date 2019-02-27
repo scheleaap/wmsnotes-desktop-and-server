@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.client.indexing
+package info.maaskant.wmsnotes.desktop.client.indexing
 
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent

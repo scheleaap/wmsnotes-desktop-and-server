@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.client.indexing
+package info.maaskant.wmsnotes.desktop.client.indexing
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.Registration
