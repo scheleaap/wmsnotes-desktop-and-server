@@ -6,6 +6,8 @@ import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse
 import info.maaskant.wmsnotes.utilities.logger
 import io.grpc.Deadline
+import io.grpc.Status
+import io.grpc.StatusRuntimeException
 import javax.inject.Inject
 
 class RemoteCommandExecutor @Inject constructor(
@@ -50,6 +52,17 @@ class RemoteCommandExecutor @Inject constructor(
                                 CommandExecutor.ExecutionResult.Failure
                             }
                         }
+            } catch (e: StatusRuntimeException) {
+                when (e.status.code) {
+                    Status.Code.UNAVAILABLE -> {
+                        logger.debug("Could not send command $command to server: server not available")
+                    }
+                    Status.Code.DEADLINE_EXCEEDED -> {
+                        logger.debug("Could not send command $command to server: server is taking too long to respond")
+                    }
+                    else -> logger.warn("Error sending command $command to server: ${e.status.code}, ${e.status.description}")
+                }
+                CommandExecutor.ExecutionResult.Failure
             } catch (t: Throwable) {
                 logger.debug("Executing command $command remotely failed due to a local error", t)
                 CommandExecutor.ExecutionResult.Failure
