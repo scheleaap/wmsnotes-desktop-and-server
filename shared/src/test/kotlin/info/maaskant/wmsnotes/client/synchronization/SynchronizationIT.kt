@@ -127,7 +127,7 @@ internal class SynchronizationIT {
             localEvents: ModifiableEventRepository = this.localEvents,
             remoteEvents: ModifiableEventRepository = this.remoteEvents
     ) =
-            NewSynchronizer(
+            Synchronizer(
                     localEvents,
                     remoteEvents,
                     synchronizationStrategy,

@@ -52,7 +52,7 @@ class SynchronizationConfiguration {
             localCommandExecutor: LocalCommandExecutor,
             remoteCommandExecutor: RemoteCommandExecutor,
             stateRepository: StateRepository<SynchronizerState>
-    ) = NewSynchronizer(
+    ) = Synchronizer(
             localEvents,
             remoteEvents,
             synchronizationStrategy,
@@ -77,7 +77,7 @@ class SynchronizationConfiguration {
 
     @Bean
     @Singleton
-    fun synchronizationTask(localEventImporter: LocalEventImporter, remoteEventImporter: RemoteEventImporter, synchronizer: NewSynchronizer) =
+    fun synchronizationTask(localEventImporter: LocalEventImporter, remoteEventImporter: RemoteEventImporter, synchronizer: Synchronizer) =
             SynchronizationTask(localEventImporter, remoteEventImporter, synchronizer)
 
     @Bean

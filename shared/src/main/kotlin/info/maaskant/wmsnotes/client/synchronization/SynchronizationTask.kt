@@ -12,7 +12,7 @@ import javax.inject.Inject
 class SynchronizationTask @Inject constructor(
         private val localEventImporter: LocalEventImporter,
         private val remoteEventImporter: RemoteEventImporter,
-        private val synchronizer: NewSynchronizer
+        private val synchronizer: Synchronizer
 ) {
 
     private val logger by logger()

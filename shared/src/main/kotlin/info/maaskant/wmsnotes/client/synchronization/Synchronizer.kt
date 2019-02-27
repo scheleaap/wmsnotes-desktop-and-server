@@ -19,7 +19,7 @@ data class CompensatingAction(
         val newRemoteEvents: List<Event>
 )
 
-class NewSynchronizer @Inject constructor(
+class Synchronizer @Inject constructor(
         private val localEvents: ModifiableEventRepository,
         private val remoteEvents: ModifiableEventRepository,
         private val synchronizationStrategy: SynchronizationStrategy,

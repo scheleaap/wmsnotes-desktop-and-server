@@ -14,7 +14,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-internal class NewSynchronizerTest {
+internal class SynchronizerTest {
 
     private val localEvents: ModifiableEventRepository = mockk()
     private val remoteEvents: ModifiableEventRepository = mockk()
@@ -1026,7 +1026,7 @@ internal class NewSynchronizerTest {
             localEvents: ModifiableEventRepository = this.localEvents,
             remoteEvents: ModifiableEventRepository = this.remoteEvents
     ) =
-            NewSynchronizer(
+            Synchronizer(
                     localEvents,
                     remoteEvents,
                     synchronizationStrategy,
