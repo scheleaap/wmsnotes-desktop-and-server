@@ -16,7 +16,7 @@ internal class DifferenceCompensatorTest {
 
     @TestFactory
     fun existence(): List<DynamicTest> {
-        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = Path(), title = noteId, content = noteId)
+        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = Path(), title = noteId, content = "")
         val noteDeletedEvent = NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
         val noteUndeletedEvent = NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0)
         val items = listOf(
@@ -83,6 +83,16 @@ internal class DifferenceCompensatorTest {
         val attachmentAddedEvent = AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = attachmentContent1)
         val attachmentDeletedEvent = AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName)
         val items = listOf(
+                Triple(
+                        PathDifference(Path("left"), Path("right")),
+                        DifferenceCompensator.Target.LEFT,
+                        listOf(MovedEvent(eventId = 0, noteId = noteId, revision = 0, path = Path("left")))
+                ),
+                Triple(
+                        PathDifference(Path("left"), Path("right")),
+                        DifferenceCompensator.Target.RIGHT,
+                        listOf(MovedEvent(eventId = 0, noteId = noteId, revision = 0, path = Path("right")))
+                ),
                 Triple(
                         ContentDifference("left", "right"),
                         DifferenceCompensator.Target.LEFT,

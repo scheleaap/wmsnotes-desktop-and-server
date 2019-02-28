@@ -4,6 +4,9 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.merge.ExistenceDif
 import info.maaskant.wmsnotes.model.*
 
 class DifferenceCompensator {
+    private val defaultPath = Path()
+    private val defaultContent = ""
+
     fun compensate(noteId: String, differences: Set<Difference>, target: Target): CompensatingEvents {
         return differences
                 .flatMap { createEventsForDifference(noteId, target, it) }
@@ -32,6 +35,7 @@ class DifferenceCompensator {
     private fun createEventsForDifference(noteId: String, target: Target, difference: Difference): List<Event> {
         return when (difference) {
             is ExistenceDifference -> eventsForExistenceDifference(noteId, difference, target)
+            is PathDifference -> eventsForPathDifference(noteId, difference, target)
             is TitleDifference -> eventsForTitleDifference(noteId, difference, target)
             is ContentDifference -> eventsForContentDifference(noteId, difference, target)
             is AttachmentDifference -> eventsForAttachmentDifference(noteId, difference, target)
@@ -44,13 +48,13 @@ class DifferenceCompensator {
                 when (difference.left) {
                     NOT_YET_CREATED -> throw IllegalArgumentException()
                     EXISTS -> when (difference.right) {
-                        NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = TODO(), title = noteId, content = TODO()))
+                        NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = defaultPath, title = noteId, content = defaultContent))
                         EXISTS -> throw IllegalArgumentException()
                         DELETED -> listOf(NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0))
                     }
                     DELETED -> when (difference.right) {
                         NOT_YET_CREATED -> listOf(
-                                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = TODO(), title = noteId, content = TODO()),
+                                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = defaultPath, title = noteId, content = defaultContent),
                                 NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
                         )
                         EXISTS -> listOf(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0))
@@ -60,13 +64,13 @@ class DifferenceCompensator {
             Target.RIGHT -> when (difference.right) {
                 NOT_YET_CREATED -> throw IllegalArgumentException()
                 EXISTS -> when (difference.left) {
-                    NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = TODO(), title = noteId, content = TODO()))
+                    NOT_YET_CREATED -> listOf(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = defaultPath, title = noteId, content = defaultContent))
                     EXISTS -> throw IllegalArgumentException()
                     DELETED -> listOf(NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0))
                 }
                 DELETED -> when (difference.left) {
                     NOT_YET_CREATED -> listOf(
-                            NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = TODO(), title = noteId, content = TODO()),
+                            NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, path = defaultPath, title = noteId, content = defaultContent),
                             NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
                     )
                     EXISTS -> listOf(NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0))
@@ -95,6 +99,12 @@ class DifferenceCompensator {
 
     private fun eventsForContentDifference(noteId: String, difference: ContentDifference, target: Target): List<ContentChangedEvent> =
             listOf(ContentChangedEvent(eventId = 0, noteId = noteId, revision = 0, content = when (target) {
+                Target.LEFT -> difference.left
+                Target.RIGHT -> difference.right
+            }))
+
+    private fun eventsForPathDifference(noteId: String, difference: PathDifference, target: Target): List<MovedEvent> =
+            listOf(MovedEvent(eventId = 0, noteId = noteId, revision = 0, path = when (target) {
                 Target.LEFT -> difference.left
                 Target.RIGHT -> difference.right
             }))

@@ -73,6 +73,21 @@ internal class DifferenceAnalyzerTest {
         }
     }
 
+    @Test
+    fun path() {
+        // Given
+        val left = Note().apply(noteCreatedEvent(path = path)).first
+        val right = left.apply(MovedEvent(eventId = 2, noteId = noteId, revision = 2, path = Path("different"))).first
+        val analyzer = DifferenceAnalyzer()
+
+        // When
+        val differences = analyzer.compare(left, right)
+
+        // Then
+        assertThat(differences).isEqualTo(setOf(
+                PathDifference(path, Path("different"))
+        ))
+    }
 
     @Test
     fun title() {
@@ -93,7 +108,7 @@ internal class DifferenceAnalyzerTest {
     @Test
     fun content() {
         // Given
-        val left = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).first
+        val left = Note().apply(noteCreatedEvent(content = content)).first
         val right = left.apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = "different")).first
         val analyzer = DifferenceAnalyzer()
 
@@ -102,7 +117,7 @@ internal class DifferenceAnalyzerTest {
 
         // Then
         assertThat(differences).isEqualTo(setOf(
-                ContentDifference("", "different")
+                ContentDifference(content, "different")
         ))
     }
 
@@ -183,7 +198,7 @@ internal class DifferenceAnalyzerTest {
         // Given
         val left = Note()
         val right = Note()
-                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).first
+                .apply(noteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = Path(), title = title, content = "")).first
                 .apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = content)).first
         val analyzer = DifferenceAnalyzer()
 
@@ -203,7 +218,7 @@ internal class DifferenceAnalyzerTest {
         // Given
         val left = Note()
         val right = Note()
-                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).first
+                .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = Path(), title = title, content = "")).first
                 .apply(ContentChangedEvent(eventId = 2, noteId = noteId, revision = 2, content = content)).first
                 .apply(NoteDeletedEvent(eventId = 3, noteId = noteId, revision = 3)).first
         val analyzer = DifferenceAnalyzer()
@@ -221,6 +236,7 @@ internal class DifferenceAnalyzerTest {
 
     companion object {
         private const val noteId = "note"
+        private val path = Path("path")
         private const val title = "title"
         private const val content = "content"
         private val attachmentContent = "data".toByteArray()
@@ -229,17 +245,17 @@ internal class DifferenceAnalyzerTest {
                 eventId: Int = 1,
                 noteId: String = DifferenceAnalyzerTest.noteId,
                 revision: Int = 1,
-                path: Path = TODO(),
+                path: Path = DifferenceAnalyzerTest.path,
                 title: String = DifferenceAnalyzerTest.title,
-                content: String = TODO()
+                content: String = DifferenceAnalyzerTest.content
         ): NoteCreatedEvent =
                 NoteCreatedEvent(
                         eventId = eventId,
                         noteId = noteId,
                         revision = revision,
-                        path = TODO(),
+                        path = path,
                         title = title,
-                        content = TODO()
+                        content = content
                 )
     }
 }
