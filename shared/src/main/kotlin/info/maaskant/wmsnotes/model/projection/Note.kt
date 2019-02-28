@@ -33,9 +33,9 @@ class Note private constructor(
             attachmentHashes = emptyMap()
     )
 
-    override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::title, Note::content, Note::attachmentHashes))
-    override fun hashCode() = Objects.hash(revision, exists, noteId, title, content, attachmentHashes)
-    override fun toString() = kotlinToString(properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::title, Note::contentLength, Note::attachmentHashes))
+    override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::path, Note::title, Note::content, Note::attachmentHashes))
+    override fun hashCode() = Objects.hash(revision, exists, noteId, path, title, content, attachmentHashes)
+    override fun toString() = kotlinToString(properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::path, Note::title, Note::contentLength, Note::attachmentHashes))
 
     private fun copy(
             revision: Int = this.revision,
@@ -58,7 +58,6 @@ class Note private constructor(
                 attachmentHashes = attachmentHashes
         )
     }
-
 
     fun apply(event: Event): Pair<Note, Event?> {
         if (revision == 0) {

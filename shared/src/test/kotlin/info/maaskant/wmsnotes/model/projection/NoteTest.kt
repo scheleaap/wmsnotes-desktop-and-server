@@ -531,11 +531,12 @@ internal class NoteTest {
         val revision = 0
         val exists = false
         val noteId = ""
-        val path = Path("el")
-        val title = ""
+        val path = Path("path")
+        val title = "Title"
         val content = "Text"
         val attachments = emptyMap<String, ByteArray>()
         val attachmentHashes = emptyMap<String, String>()
+        val original = Note.deserialize(revision = revision, exists = exists, noteId = noteId, path = path, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes)
         return listOf(
                 "revision" to Note.deserialize(revision = 1, exists = exists, noteId = noteId, path = path, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
                 "exists" to Note.deserialize(revision = revision, exists = true, noteId = noteId, path = path, title = title, content = content, attachments = attachments, attachmentHashes = attachmentHashes),
@@ -549,7 +550,6 @@ internal class NoteTest {
         ).map {
             DynamicTest.dynamicTest(it.first) {
                 // Given
-                val original = Note()
                 val modified = it.second
 
                 // Then
