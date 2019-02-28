@@ -4,16 +4,24 @@ data class Path(val elements: List<String>) {
     constructor(vararg elements: String) : this(elements.toList())
 
     init {
-        if (elements.isEmpty()) throw IllegalArgumentException("Empty path")
-        elements
-                .firstOrNull { it.isBlank() || it.contains('/') }
-                ?.let {
-                    throw IllegalArgumentException("Invalid path ($elements)")
-                }
+        if (!elements.isEmpty()) {
+            elements
+                    .firstOrNull { it.isBlank() || it.contains('/') }
+                    ?.let {
+                        throw IllegalArgumentException("Invalid path ($elements)")
+                    }
+        }
     }
+
+    override fun toString(): String =
+            elements.joinToString(separator = "/")
 
     companion object {
         fun from(path: String): Path =
-                Path(path.split('/'))
+                if (path.isEmpty()) {
+                    Path()
+                } else {
+                    Path(path.split('/'))
+                }
     }
 }

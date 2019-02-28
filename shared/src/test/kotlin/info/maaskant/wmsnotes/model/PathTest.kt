@@ -6,7 +6,7 @@ import org.junit.jupiter.api.assertThrows
 
 internal class PathTest {
     @Test
-    fun `create with varargs`() {
+    fun `create with varargs, normal`() {
         // When
         val path = Path("el1", "el2", "el3")
 
@@ -43,18 +43,29 @@ internal class PathTest {
 
     @Test
     fun `create with varargs, no elements`() {
-        assertThrows<IllegalArgumentException> {
-            Path()
-        }
+        // When
+        val path = Path()
+
+        // Then
+        assertThat(path.elements).isEqualTo(emptyList<String>())
     }
 
     @Test
-    fun `create from string`() {
+    fun `create from string, normal`() {
         // When
         val path = Path.from("el1/el2/el3")
 
         // Then
-        assertThat(path.elements).isEqualTo(listOf("el1", "el2", "el3"))
+        assertThat(path).isEqualTo(Path("el1", "el2", "el3"))
+    }
+
+    @Test
+    fun `create from string, empty`() {
+        // When
+        val path = Path.from("")
+
+        // Then
+        assertThat(path).isEqualTo(Path())
     }
 
     @Test
@@ -78,5 +89,21 @@ internal class PathTest {
         }
     }
 
+    @Test
+    fun `to string, normal`() {
+        // When
+        val path = Path("el1", "el2", "el3")
 
+        // Then
+        assertThat(path.toString()).isEqualTo("el1/el2/el3")
+    }
+
+    @Test
+    fun `to string, no elements`() {
+        // When
+        val path = Path()
+
+        // Then
+        assertThat(path.toString()).isEqualTo("")
+    }
 }
