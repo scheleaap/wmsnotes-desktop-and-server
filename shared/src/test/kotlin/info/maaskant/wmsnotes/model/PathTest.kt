@@ -15,6 +15,40 @@ internal class PathTest {
     }
 
     @Test
+    fun `create with varargs, illegal character`() {
+        assertThrows<IllegalArgumentException> {
+            Path("el/1", "el2", "el3")
+        }
+        assertThrows<IllegalArgumentException> {
+            Path("el1", "el/2", "el3")
+        }
+        assertThrows<IllegalArgumentException> {
+            Path("el1", "el2", "el/3")
+        }
+    }
+
+    @Test
+    fun `create with varargs, empty element`() {
+        assertThrows<IllegalArgumentException> {
+            Path("el1", "", "el3")
+        }
+    }
+
+    @Test
+    fun `create with varargs, blank element`() {
+        assertThrows<IllegalArgumentException> {
+            Path("el1", " ", "el3")
+        }
+    }
+
+    @Test
+    fun `create with varargs, no elements`() {
+        assertThrows<IllegalArgumentException> {
+            Path()
+        }
+    }
+
+    @Test
     fun `create from string`() {
         // When
         val path = Path.fromString("el1/el2/el3")
@@ -24,23 +58,25 @@ internal class PathTest {
     }
 
     @Test
-    fun `empty path`() {
+    fun `create from string, blank`() {
         assertThrows<IllegalArgumentException> {
-            Path()
+            Path.fromString(" ")
         }
     }
 
     @Test
-    fun `empty element`() {
+    fun `create from string, slash problem 1`() {
         assertThrows<IllegalArgumentException> {
-            Path("el1", "", "el3")
+            Path.fromString("/")
         }
     }
 
     @Test
-    fun `blank element`() {
+    fun `create from string, slash problem 2`() {
         assertThrows<IllegalArgumentException> {
-            Path("el1", " ", "el3")
+            Path.fromString("a//b")
         }
     }
+
+
 }
