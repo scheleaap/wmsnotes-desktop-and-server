@@ -1,10 +1,7 @@
 package info.maaskant.wmsnotes.desktop.main.editing.preview
 
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
-import info.maaskant.wmsnotes.model.AttachmentAddedEvent
-import info.maaskant.wmsnotes.model.AttachmentDeletedEvent
-import info.maaskant.wmsnotes.model.ContentChangedEvent
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.utilities.Optional
 import io.mockk.clearMocks
@@ -21,7 +18,9 @@ import java.io.File
 internal class PreviewAttachmentStorageTest {
     private val note1Id = "note-1"
     private val note2Id = "note-2"
+    private val path = Path("path")
     private val title = "Title"
+    private val content = "Text"
 
     private lateinit var tempDir: File
     private val editingViewModel: EditingViewModel = mockk()
@@ -142,11 +141,11 @@ internal class PreviewAttachmentStorageTest {
 
     private fun createNote(noteId: String): Optional<Note> =
             Optional(Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).component1()
+                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = path, title = title, content = content)).component1()
             )
 
     private fun createNote(noteId: String, attachmentName: String, attachmentContent: String): Optional<Note> =
             Optional(Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())).component1()
+                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = path, title = title, content = content)).component1()
                     .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = attachmentName, content = attachmentContent.toByteArray())).component1())
 }

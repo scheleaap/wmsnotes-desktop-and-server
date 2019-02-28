@@ -6,6 +6,7 @@ import info.maaskant.wmsnotes.desktop.main.NavigationViewModel.SelectionSwitchin
 import info.maaskant.wmsnotes.desktop.main.editing.preview.Renderer
 import info.maaskant.wmsnotes.model.ContentChangedEvent
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.utilities.Optional
 import io.mockk.*
 import io.reactivex.Observable
@@ -20,13 +21,14 @@ import org.junit.jupiter.api.assertThrows
 internal class EditingViewModelTest {
     private val note1Id = "note-1"
     private val note2Id = "note-2"
+    private val path = Path("path")
     private val title = "Title"
-    private val text = "Text"
+    private val content = "Text"
     private val note1Notification1 = Note(
             NavigationViewModel.Selection.NoteSelection(note1Id, title),
             info.maaskant.wmsnotes.model.projection.Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = note1Id, revision = 1, path = TODO(), title = title, content = "")).component1()
-                    .apply(ContentChangedEvent(eventId = 2, noteId = note1Id, revision = 2, content = text)).component1()
+                    .apply(NoteCreatedEvent(eventId = 1, noteId = note1Id, revision = 1, path = path, title = title, content = "")).component1()
+                    .apply(ContentChangedEvent(eventId = 2, noteId = note1Id, revision = 2, content = content)).component1()
     )
     private val note1Notification2 = Note(
             NavigationViewModel.Selection.NoteSelection(note1Id, title),
@@ -36,8 +38,8 @@ internal class EditingViewModelTest {
     private val note2Notification = Note(
             NavigationViewModel.Selection.NoteSelection(note1Id, title),
             info.maaskant.wmsnotes.model.projection.Note()
-                    .apply(NoteCreatedEvent(eventId = 4, noteId = note2Id, revision = 1, path = TODO(), title = title, content = "")).component1()
-                    .apply(ContentChangedEvent(eventId = 5, noteId = note2Id, revision = 2, content = text)).component1()
+                    .apply(NoteCreatedEvent(eventId = 4, noteId = note2Id, revision = 1, path = path, title = title, content = "")).component1()
+                    .apply(ContentChangedEvent(eventId = 5, noteId = note2Id, revision = 2, content = content)).component1()
     )
 
     private val navigationViewModel: NavigationViewModel = mockk()

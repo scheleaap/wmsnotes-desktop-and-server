@@ -69,17 +69,19 @@ internal class SynchronizationIT {
     @Test
     fun `scenario 1`() {
         // Given
-        val oldLocalEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path = TODO(), title = "Note", content = "Start typing here...")
+        val oldLocalEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path = Path("path"), title = "Note", content = "Some old text")
         val compensatedLocalEvent1 = ContentChangedEvent(eventId = 0, noteId = noteId, revision = 2, content = "Text 1")
         val compensatedRemoteEvent1 = ContentChangedEvent(eventId = 0, noteId = noteId, revision = 5 /* The remote revision can be different from the local one, for example due to previous conflicts */, content = "Text 2")
         val localChangeCommand = ChangeContentCommand(noteId = noteId, lastRevision = 2, content = "Text 2")
         val localChangeEvent = CommandExecutor.EventMetadata(eventId = 0, noteId = noteId, revision = 3)
-        val newNoteCommand1 = CreateNoteCommand(noteId = newNoteId, path = TODO(), title = newNoteId, content = "Start typing here...")
-        val newNoteCommand2 = ChangeTitleCommand(noteId = newNoteId, lastRevision = 1, title = "Note")
-        val newNoteCommand3 = ChangeContentCommand(noteId = newNoteId, lastRevision = 2, content = "Text 1")
+        val newNoteCommand1 = CreateNoteCommand(noteId = newNoteId, path = Path(), title = newNoteId, content = "")
+        val newNoteCommand2 = MoveCommand(noteId = newNoteId, lastRevision = 1, path = Path("path"))
+        val newNoteCommand3 = ChangeTitleCommand(noteId = newNoteId, lastRevision = 2, title = "Note")
+        val newNoteCommand4 = ChangeContentCommand(noteId = newNoteId, lastRevision = 3, content = "Text 1")
         val newNoteEvent1 = CommandExecutor.EventMetadata(eventId = 0, noteId = newNoteId, revision = 1)
         val newNoteEvent2 = CommandExecutor.EventMetadata(eventId = 0, noteId = newNoteId, revision = 2)
         val newNoteEvent3 = CommandExecutor.EventMetadata(eventId = 0, noteId = newNoteId, revision = 3)
+        val newNoteEvent4 = CommandExecutor.EventMetadata(eventId = 0, noteId = newNoteId, revision = 4)
         val noteId = compensatedLocalEvent1.noteId
         initialState = initialState
                 .updateLastKnownLocalRevision(noteId, oldLocalEvent.revision)
@@ -91,9 +93,11 @@ internal class SynchronizationIT {
         givenALocalCommandCanBeExecutedSuccessfully(newNoteCommand1, newNoteEvent1)
         givenALocalCommandCanBeExecutedSuccessfully(newNoteCommand2, newNoteEvent2)
         givenALocalCommandCanBeExecutedSuccessfully(newNoteCommand3, newNoteEvent3)
+        givenALocalCommandCanBeExecutedSuccessfully(newNoteCommand4, newNoteEvent4)
         givenARemoteCommandCanBeExecutedSuccessfully(newNoteCommand1, newNoteEvent1)
         givenARemoteCommandCanBeExecutedSuccessfully(newNoteCommand2, newNoteEvent2)
         givenARemoteCommandCanBeExecutedSuccessfully(newNoteCommand3, newNoteEvent3)
+        givenARemoteCommandCanBeExecutedSuccessfully(newNoteCommand4, newNoteEvent4)
         val s = createSynchronizer()
 
         // When
@@ -104,10 +108,12 @@ internal class SynchronizationIT {
             remoteCommandExecutor.execute(newNoteCommand1)
             remoteCommandExecutor.execute(newNoteCommand2)
             remoteCommandExecutor.execute(newNoteCommand3)
+            remoteCommandExecutor.execute(newNoteCommand4)
             localCommandExecutor.execute(localChangeCommand)
             localCommandExecutor.execute(newNoteCommand1)
             localCommandExecutor.execute(newNoteCommand2)
             localCommandExecutor.execute(newNoteCommand3)
+            localCommandExecutor.execute(newNoteCommand4)
         }
     }
 
