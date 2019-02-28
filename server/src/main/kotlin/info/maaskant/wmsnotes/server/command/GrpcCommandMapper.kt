@@ -14,9 +14,9 @@ class GrpcCommandMapper {
             Command.PostCommandRequest.CommandCase.COMMAND_NOT_SET -> throw BadRequestException("Field 'command' not set")
             Command.PostCommandRequest.CommandCase.CREATE_NOTE -> CreateNoteCommand(
                     noteId = request.noteId,
-                    path = TODO(),
+                    path = Path.from(request.createNote.path),
                     title = request.createNote.title,
-                    content = TODO()
+                    content = request.createNote.content
             )
             Command.PostCommandRequest.CommandCase.DELETE_NOTE -> DeleteNoteCommand(
                     noteId = request.noteId,
@@ -29,13 +29,13 @@ class GrpcCommandMapper {
             Command.PostCommandRequest.CommandCase.ADD_ATTACHMENT -> AddAttachmentCommand(
                     noteId = request.noteId,
                     lastRevision = request.lastRevision,
-                    name = request.addAttachment.name,
+                    name = request.addAttachment.name.also { if (it.isEmpty()) throw BadRequestException("Field 'name' not set") },
                     content = request.addAttachment.content.toByteArray()
             )
             Command.PostCommandRequest.CommandCase.DELETE_ATTACHMENT -> DeleteAttachmentCommand(
                     noteId = request.noteId,
                     lastRevision = request.lastRevision,
-                    name = request.deleteAttachment.name
+                    name = request.deleteAttachment.name.also { if (it.isEmpty()) throw BadRequestException("Field 'name' not set") }
             )
 
             Command.PostCommandRequest.CommandCase.CHANGE_CONTENT -> ChangeContentCommand(
@@ -48,7 +48,12 @@ class GrpcCommandMapper {
                     lastRevision = request.lastRevision,
                     title = request.changeTitle.title
             )
-            Command.PostCommandRequest.CommandCase.MOVE -> TODO()
+            Command.PostCommandRequest.CommandCase.MOVE -> MoveCommand(
+                    noteId = request.noteId,
+                    lastRevision = request.lastRevision,
+                    path = Path.from(request.move.path)
+            )
+
         }
     }
 }

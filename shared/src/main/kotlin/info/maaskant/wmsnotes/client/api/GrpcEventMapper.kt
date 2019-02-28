@@ -16,9 +16,9 @@ class GrpcEventMapper @Inject constructor() {
                         eventId = eventId,
                         noteId = noteId,
                         revision = revision,
-                        path = TODO(),
+                        path = Path.from(noteCreated.path),
                         title = noteCreated.title,
-                        content = TODO()
+                        content = noteCreated.content
                 )
                 Event.GetEventsResponse.EventCase.NOTE_DELETED -> NoteDeletedEvent(
                         eventId = eventId,
@@ -55,7 +55,13 @@ class GrpcEventMapper @Inject constructor() {
                         noteId = noteId,
                         title = titleChanged.title
                 )
-                Event.GetEventsResponse.EventCase.MOVED -> TODO()
+                Event.GetEventsResponse.EventCase.MOVED -> MovedEvent(
+                        eventId = eventId,
+                        revision = revision,
+                        noteId = noteId,
+                        path = Path.from(moved.path)
+                )
+
             }
         }
     }

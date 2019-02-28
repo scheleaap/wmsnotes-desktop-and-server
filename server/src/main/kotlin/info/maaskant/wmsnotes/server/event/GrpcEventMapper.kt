@@ -20,7 +20,9 @@ class GrpcEventMapper @Inject constructor() {
         val a: Any = when (event) { // Assign to variable to force a compilation error if 'when' expression is not exhaustive.
             is NoteCreatedEvent -> builder.apply {
                 noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder().apply {
+                    path = event.path.toString()
                     title = event.title
+                    content = event.content
                 }.build()
             }
             is NoteDeletedEvent -> builder.apply {
@@ -50,7 +52,11 @@ class GrpcEventMapper @Inject constructor() {
                     title = event.title
                 }.build()
             }
-            is MovedEvent -> TODO()
+            is MovedEvent -> builder.apply {
+                moved = Event.GetEventsResponse.MovedEvent.newBuilder().apply {
+                    path = event.path.toString()
+                }.build()
+            }
         }
         return builder.build()
     }

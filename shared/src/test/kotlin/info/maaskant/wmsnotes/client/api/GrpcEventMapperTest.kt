@@ -27,9 +27,11 @@ internal class GrpcEventMapperTest {
                     noteId = "note"
                     revision = 1
                     noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder().apply {
+                        path = Path("el1", "el2").toString()
                         title = "Title"
+                        content = "Text"
                     }.build()
-                }.build() to NoteCreatedEvent(eventId = 1, noteId = "note", revision = 1, path = TODO(), title = "Title", content = TODO()),
+                }.build() to NoteCreatedEvent(eventId = 1, noteId = "note", revision = 1, path = Path("el1", "el2"), title = "Title", content = "Text"),
                 Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
                     noteId = "note"
@@ -81,7 +83,7 @@ internal class GrpcEventMapperTest {
                     noteId = "note"
                     revision = 1
                     moved = Event.GetEventsResponse.MovedEvent.newBuilder().apply {
-                        path = TODO()
+                        path = Path("el1", "el2").toString()
                     }.build()
                 }.build() to MovedEvent(eventId = 1, noteId = "note", revision = 1, path = Path("el1", "el2"))
                 // Add more classes here

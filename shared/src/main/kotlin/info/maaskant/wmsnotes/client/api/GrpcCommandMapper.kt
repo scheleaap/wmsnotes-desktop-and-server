@@ -13,7 +13,9 @@ class GrpcCommandMapper @Inject constructor() {
             is CreateNoteCommand -> builder.apply {
                 noteId = command.noteId
                 createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
+                    path = command.path.toString()
                     title = command.title
+                    content = command.content
                 }.build()
             }
             is DeleteNoteCommand -> builder.apply {
@@ -55,7 +57,14 @@ class GrpcCommandMapper @Inject constructor() {
                     title = command.title
                 }.build()
             }
-            is MoveCommand -> TODO()
+            is MoveCommand -> builder.apply {
+                noteId = command.noteId
+                lastRevision = command.lastRevision
+                move = Command.PostCommandRequest.MoveCommand.newBuilder().apply {
+                    path = command.path.toString()
+                }.build()
+            }
+
         }
         return builder.build()
     }

@@ -45,7 +45,8 @@ internal class GrpcCommandMapperTest {
                     // noteId
                     lastRevision = 1
                     deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
-                }.build()                // There's no need to add a check for every command.
+                }.build()
+                // There's no need to add a check for every command.
         )
         return requests.map { request ->
             DynamicTest.dynamicTest(request.commandCase.name) {
@@ -66,9 +67,11 @@ internal class GrpcCommandMapperTest {
                 Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
+                        path = Path("el1", "el2").toString()
                         title = "Title"
+                        content = "Text"
                     }.build()
-                }.build() to CreateNoteCommand(noteId = "note", path = TODO(), title = "Title", content = TODO()),
+                }.build() to CreateNoteCommand(noteId = "note", path = Path("el1", "el2"), title = "Title", content = "Text"),
                 Command.PostCommandRequest.newBuilder().apply {
                     noteId = "note"
                     lastRevision = 1
@@ -112,7 +115,7 @@ internal class GrpcCommandMapperTest {
                     noteId = "note"
                     lastRevision = 1
                     move = Command.PostCommandRequest.MoveCommand.newBuilder().apply {
-                        path = TODO()
+                        path = Path("el1", "el2").toString()
                     }.build()
                 }.build() to MoveCommand(noteId = "note", lastRevision = 1, path = Path("el1", "el2"))
                 // Add more classes here
@@ -124,6 +127,38 @@ internal class GrpcCommandMapperTest {
 
                 // Then
                 assertThat(actualCommand).isEqualTo(expectedCommand)
+            }
+        }
+    }
+
+    @TestFactory
+    fun `other missing fields`(): List<DynamicTest> {
+        val requests = listOf(
+                Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
+                    addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
+                        // name
+                        content = ByteString.copyFrom("data".toByteArray())
+                    }.build()
+                }.build(),
+                Command.PostCommandRequest.newBuilder().apply {
+                    noteId = "note"
+                    lastRevision = 1
+                    deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
+                        // name
+                    }.build()
+                }.build()
+        )
+        return requests.map { request ->
+            DynamicTest.dynamicTest(request.commandCase.name) {
+                // Given
+
+                // When
+                val thrown = catchThrowable { mapper.toModelCommand(request) }
+
+                // Then
+                assertThat(thrown).isInstanceOf(BadRequestException::class.java)
             }
         }
     }
