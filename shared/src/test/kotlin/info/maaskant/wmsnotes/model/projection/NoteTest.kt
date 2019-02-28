@@ -119,6 +119,9 @@ internal class NoteTest {
         // Then
         assertThat(note.revision).isEqualTo(0)
         assertThat(note.exists).isEqualTo(false)
+        assertThat(note.path).isEqualTo(Path())
+        assertThat(note.title).isEmpty()
+        assertThat(note.content).isEmpty()
     }
 
     @Test

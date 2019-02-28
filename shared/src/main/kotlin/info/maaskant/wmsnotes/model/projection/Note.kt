@@ -27,7 +27,7 @@ class Note private constructor(
             exists = false,
             noteId = "",
             title = "",
-            path = Path("undefined"),
+            path = Path(),
             content = "",
             attachments = emptyMap(),
             attachmentHashes = emptyMap()

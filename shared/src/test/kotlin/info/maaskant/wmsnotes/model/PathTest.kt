@@ -106,4 +106,15 @@ internal class PathTest {
         // Then
         assertThat(path.toString()).isEqualTo("")
     }
+
+    @Test
+    fun equals() {
+        // When
+        val path1 = Path("el1", "el2")
+        val path2 = Path("el3")
+
+        // Then
+        assertThat(path1).isEqualTo(path1)
+        assertThat(path1).isNotEqualTo(path2)
+    }
 }
