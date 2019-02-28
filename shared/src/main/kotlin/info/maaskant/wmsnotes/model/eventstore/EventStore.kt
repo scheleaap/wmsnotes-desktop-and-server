@@ -19,22 +19,22 @@ interface EventStore {
     /**
      * Returns a completing observable that streams all events applicable to a given note. Updates are not included.
      *
-     * @param noteId The note id.
+     * @param aggId The aggregate id.
      * @param afterRevision If specified, only events with a revision higher than the parameter will be returned.
      */
-    fun getEventsOfNote(noteId: String, afterRevision: Int? = null): Observable<Event>
+    fun getEventsOfNote(aggId: String, afterRevision: Int? = null): Observable<Event>
 
     /**
      * Returns a non-completing observable that streams all events applicable to a given note, including new events as they are added to the store.
      *
-     * @param noteId The note id.
+     * @param aggId The aggregate id.
      * @param afterRevision If specified, only events with a revision higher than the parameter will be returned.
      */
-    fun getEventsOfNoteWithUpdates(noteId: String, afterRevision: Int? = null): Observable<Event> {
+    fun getEventsOfNoteWithUpdates(aggId: String, afterRevision: Int? = null): Observable<Event> {
         return Observable.concat(
-                getEventsOfNote(noteId, afterRevision),
+                getEventsOfNote(aggId, afterRevision),
                 getEventUpdates()
-                        .filter { it.noteId == noteId }
+                        .filter { it.aggId == aggId }
                         .filter { afterRevision == null || it.revision > afterRevision }
         )
     }

@@ -3,7 +3,7 @@ package info.maaskant.wmsnotes.desktop.main.editing
 import com.vladsch.flexmark.ast.Node
 import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
 import info.maaskant.wmsnotes.desktop.main.editing.preview.Renderer
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.utilities.Optional
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
@@ -96,10 +96,10 @@ class EditingViewModel @Inject constructor(
 
     @Synchronized
     private fun setNote(note: Optional<Note>) {
-        if (noteValue?.noteId == note.value?.noteId || !isDirtyValue) {
+        if (noteValue?.aggId == note.value?.aggId || !isDirtyValue) {
             if (!isDirtyValue) {
                 setText(note, true)
-            } else if (noteValue != null && noteValue?.noteId == note.value?.noteId && textValue == note.value?.content) {
+            } else if (noteValue != null && noteValue?.aggId == note.value?.aggId && textValue == note.value?.content) {
                 setDirty(false)
                 setText(note, false)
             }

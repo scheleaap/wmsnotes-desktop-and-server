@@ -1,6 +1,5 @@
 package info.maaskant.wmsnotes.desktop.design
 
-import javafx.scene.layout.BorderStrokeStyle
 import javafx.scene.paint.Color
 import tornadofx.*
 

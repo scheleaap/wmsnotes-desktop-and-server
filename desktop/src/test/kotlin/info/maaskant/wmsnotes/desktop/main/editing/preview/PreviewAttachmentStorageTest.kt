@@ -1,8 +1,11 @@
 package info.maaskant.wmsnotes.desktop.main.editing.preview
 
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
-import info.maaskant.wmsnotes.model.*
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.AttachmentAddedEvent
+import info.maaskant.wmsnotes.model.note.ContentChangedEvent
+import info.maaskant.wmsnotes.model.note.Note
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.utilities.Optional
 import io.mockk.clearMocks
 import io.mockk.every
@@ -89,7 +92,7 @@ internal class PreviewAttachmentStorageTest {
         // Given
         val note1v1 = createNote(note1Id, "att", "data")
         val note1v2 = Optional(note1v1.value!!
-                .apply(ContentChangedEvent(eventId = 3, noteId = note1Id, revision = 3, content = "text")).component1()
+                .apply(ContentChangedEvent(eventId = 3, aggId = note1Id, revision = 3, content = "text")).component1()
         )
         val storage = PreviewAttachmentStorage(tempDir, editingViewModel, initialState = state, scheduler = scheduler)
         note.onNext(note1v1)
@@ -139,13 +142,13 @@ internal class PreviewAttachmentStorageTest {
         assertThat(file.exists()).isFalse()
     }
 
-    private fun createNote(noteId: String): Optional<Note> =
+    private fun createNote(aggId: String): Optional<Note> =
             Optional(Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = path, title = title, content = content)).component1()
+                    .apply(NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = path, title = title, content = content)).component1()
             )
 
-    private fun createNote(noteId: String, attachmentName: String, attachmentContent: String): Optional<Note> =
+    private fun createNote(aggId: String, attachmentName: String, attachmentContent: String): Optional<Note> =
             Optional(Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = path, title = title, content = content)).component1()
-                    .apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = attachmentName, content = attachmentContent.toByteArray())).component1())
+                    .apply(NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = path, title = title, content = content)).component1()
+                    .apply(AttachmentAddedEvent(eventId = 2, aggId = aggId, revision = 2, name = attachmentName, content = attachmentContent.toByteArray())).component1())
 }

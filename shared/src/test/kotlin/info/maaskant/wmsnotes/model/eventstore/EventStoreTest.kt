@@ -1,7 +1,7 @@
 package info.maaskant.wmsnotes.model.eventstore
 
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.Path
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -12,7 +12,7 @@ internal abstract class EventStoreTest {
     @Test
     fun `appendEvent, non-zero event id`() {
         // Given
-        val event = modelEvent(eventId = 1, noteId = 1, revision = 1)
+        val event = modelEvent(eventId = 1, aggId = 1, revision = 1)
         val r = createInstance()
 
         // When / Then
@@ -25,10 +25,10 @@ internal abstract class EventStoreTest {
     fun `appendEvent and getEvents`() {
         // Given
         val eventsIn = listOf(
-                givenAnEvent(1, modelEvent(eventId = 0, noteId = 3, revision = 1)),
-                givenAnEvent(2, modelEvent(eventId = 0, noteId = 2, revision = 1)),
-                givenAnEvent(3, modelEvent(eventId = 0, noteId = 1, revision = 1)),
-                givenAnEvent(4, modelEvent(eventId = 0, noteId = 1, revision = 2))
+                givenAnEvent(1, modelEvent(eventId = 0, aggId = 3, revision = 1)),
+                givenAnEvent(2, modelEvent(eventId = 0, aggId = 2, revision = 1)),
+                givenAnEvent(3, modelEvent(eventId = 0, aggId = 1, revision = 1)),
+                givenAnEvent(4, modelEvent(eventId = 0, aggId = 1, revision = 2))
         )
         val eventsOut = listOf(
                 eventsIn[1].copy(eventId = 2),
@@ -53,8 +53,8 @@ internal abstract class EventStoreTest {
     @Test
     fun `appendEvent, revision already exists`() {
         // Given
-        val event1 = givenAnEvent(1, modelEvent(eventId = 0, noteId = 1, revision = 1))
-        val event2 = givenAnEvent(2, modelEvent(eventId = 0, noteId = 1, revision = 1))
+        val event1 = givenAnEvent(1, modelEvent(eventId = 0, aggId = 1, revision = 1))
+        val event2 = givenAnEvent(2, modelEvent(eventId = 0, aggId = 1, revision = 1))
         var r = createInstance()
         r.appendEvent(event1)
         r = createInstance()
@@ -68,8 +68,8 @@ internal abstract class EventStoreTest {
     @Test
     fun `appendEvent, revision not sequential`() {
         // Given
-        val event1 = givenAnEvent(1, modelEvent(eventId = 0, noteId = 1, revision = 1))
-        val event2 = givenAnEvent(2, modelEvent(eventId = 0, noteId = 1, revision = 3))
+        val event1 = givenAnEvent(1, modelEvent(eventId = 0, aggId = 1, revision = 1))
+        val event2 = givenAnEvent(2, modelEvent(eventId = 0, aggId = 1, revision = 3))
         var r = createInstance()
         r.appendEvent(event1)
         r = createInstance()
@@ -83,7 +83,7 @@ internal abstract class EventStoreTest {
     @Test
     fun `appendEvent, first revision not 1`() {
         // Given
-        val event = modelEvent(eventId = 0, noteId = 1, revision = 2)
+        val event = modelEvent(eventId = 0, aggId = 1, revision = 2)
         val r = createInstance()
 
         // When / Then
@@ -95,7 +95,7 @@ internal abstract class EventStoreTest {
     @Test
     fun `appendEvent, first revision negative`() {
         // Given
-        val event = modelEvent(eventId = 0, noteId = 1, revision = -1)
+        val event = modelEvent(eventId = 0, aggId = 1, revision = -1)
         val r = createInstance()
 
         // When / Then
@@ -108,10 +108,10 @@ internal abstract class EventStoreTest {
     fun `get note events, without updates, no filtering`() {
         // Given
         val eventsIn = listOf(
-                givenAnEvent(1, modelEvent(eventId = 0, noteId = 3, revision = 1)),
-                givenAnEvent(2, modelEvent(eventId = 0, noteId = 2, revision = 1)),
-                givenAnEvent(3, modelEvent(eventId = 0, noteId = 1, revision = 1)),
-                givenAnEvent(4, modelEvent(eventId = 0, noteId = 1, revision = 2))
+                givenAnEvent(1, modelEvent(eventId = 0, aggId = 3, revision = 1)),
+                givenAnEvent(2, modelEvent(eventId = 0, aggId = 2, revision = 1)),
+                givenAnEvent(3, modelEvent(eventId = 0, aggId = 1, revision = 1)),
+                givenAnEvent(4, modelEvent(eventId = 0, aggId = 1, revision = 2))
         )
         val eventsOut = listOf(
                 eventsIn[2].copy(eventId = 3)
@@ -136,11 +136,11 @@ internal abstract class EventStoreTest {
     fun `get note events, without updates, filter by revision`() {
         // Given
         val eventsIn = listOf(
-                givenAnEvent(1, modelEvent(eventId = 0, noteId = 3, revision = 1)),
-                givenAnEvent(2, modelEvent(eventId = 0, noteId = 2, revision = 1)),
-                givenAnEvent(3, modelEvent(eventId = 0, noteId = 1, revision = 1)),
-                givenAnEvent(4, modelEvent(eventId = 0, noteId = 1, revision = 2)),
-                givenAnEvent(5, modelEvent(eventId = 0, noteId = 1, revision = 3))
+                givenAnEvent(1, modelEvent(eventId = 0, aggId = 3, revision = 1)),
+                givenAnEvent(2, modelEvent(eventId = 0, aggId = 2, revision = 1)),
+                givenAnEvent(3, modelEvent(eventId = 0, aggId = 1, revision = 1)),
+                givenAnEvent(4, modelEvent(eventId = 0, aggId = 1, revision = 2)),
+                givenAnEvent(5, modelEvent(eventId = 0, aggId = 1, revision = 3))
         )
         val eventsOut = listOf(
                 eventsIn[3].copy(eventId = 4)
@@ -166,10 +166,10 @@ internal abstract class EventStoreTest {
     fun `get note events, with updates, no filtering`() {
         // Given
         val eventsIn = listOf(
-                givenAnEvent(1, modelEvent(eventId = 0, noteId = 3, revision = 1)),
-                givenAnEvent(2, modelEvent(eventId = 0, noteId = 2, revision = 1)),
-                givenAnEvent(3, modelEvent(eventId = 0, noteId = 1, revision = 1)),
-                givenAnEvent(4, modelEvent(eventId = 0, noteId = 1, revision = 2))
+                givenAnEvent(1, modelEvent(eventId = 0, aggId = 3, revision = 1)),
+                givenAnEvent(2, modelEvent(eventId = 0, aggId = 2, revision = 1)),
+                givenAnEvent(3, modelEvent(eventId = 0, aggId = 1, revision = 1)),
+                givenAnEvent(4, modelEvent(eventId = 0, aggId = 1, revision = 2))
         )
         val eventsOut = listOf(
                 eventsIn[2].copy(eventId = 3),
@@ -196,11 +196,11 @@ internal abstract class EventStoreTest {
     fun `get note events, with updates, filter by revision`() {
         // Given
         val eventsIn = listOf(
-                givenAnEvent(1, modelEvent(eventId = 0, noteId = 3, revision = 1)),
-                givenAnEvent(2, modelEvent(eventId = 0, noteId = 2, revision = 1)),
-                givenAnEvent(3, modelEvent(eventId = 0, noteId = 1, revision = 1)),
-                givenAnEvent(4, modelEvent(eventId = 0, noteId = 1, revision = 2)),
-                givenAnEvent(5, modelEvent(eventId = 0, noteId = 1, revision = 3))
+                givenAnEvent(1, modelEvent(eventId = 0, aggId = 3, revision = 1)),
+                givenAnEvent(2, modelEvent(eventId = 0, aggId = 2, revision = 1)),
+                givenAnEvent(3, modelEvent(eventId = 0, aggId = 1, revision = 1)),
+                givenAnEvent(4, modelEvent(eventId = 0, aggId = 1, revision = 2)),
+                givenAnEvent(5, modelEvent(eventId = 0, aggId = 1, revision = 3))
         )
         val eventsOut = listOf(
                 eventsIn[3].copy(eventId = 4),
@@ -227,7 +227,7 @@ internal abstract class EventStoreTest {
     fun `getEventUpdates, initially`() {
         // Given
         val r: EventStore = createInstance()
-        r.appendEvent(modelEvent(eventId = 0, noteId = 1, revision = 1))
+        r.appendEvent(modelEvent(eventId = 0, aggId = 1, revision = 1))
 
         // When
         val observer = r.getEventUpdates().test()
@@ -241,9 +241,9 @@ internal abstract class EventStoreTest {
     @Test
     fun `getEventUpdates, new event`() {
         // Given
-        val event1In = modelEvent(eventId = 0, noteId = 1, revision = 1)
-        val event2In = modelEvent(eventId = 0, noteId = 2, revision = 1)
-        val event2Out = modelEvent(eventId = 2, noteId = 2, revision = 1)
+        val event1In = modelEvent(eventId = 0, aggId = 1, revision = 1)
+        val event2In = modelEvent(eventId = 0, aggId = 2, revision = 1)
+        val event2Out = modelEvent(eventId = 2, aggId = 2, revision = 1)
         val r: EventStore = createInstance()
         r.appendEvent(event1In)
         val observer = r.getEventUpdates().test()
@@ -263,8 +263,8 @@ internal abstract class EventStoreTest {
     protected abstract fun <T : Event> givenAnEvent(eventId: Int, event: T): T
 
     companion object {
-        internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = Path("path-$noteId"), title = "Title $noteId", content = "Text $noteId")
+        internal fun modelEvent(eventId: Int, aggId: Int, revision: Int): NoteCreatedEvent {
+            return NoteCreatedEvent(eventId = eventId, aggId = "note-$aggId", revision = revision, path = Path("path-$aggId"), title = "Title $aggId", content = "Text $aggId")
         }
     }
 }

@@ -2,7 +2,11 @@ package info.maaskant.wmsnotes.desktop.main
 
 import com.github.thomasnield.rxkotlinfx.events
 import com.github.thomasnield.rxkotlinfx.observeOnFx
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
+import info.maaskant.wmsnotes.model.note.NoteUndeletedEvent
+import info.maaskant.wmsnotes.model.note.TitleChangedEvent
 import info.maaskant.wmsnotes.utilities.logger
 import javafx.scene.control.TreeItem
 import javafx.scene.input.KeyCode
@@ -19,7 +23,7 @@ class TreeView : View() {
 
     private val commandProcessor: CommandProcessor by di()
 
-    private val rootNode = TreeItem(NotebookNode(noteId = "root", title = "Root"))
+    private val rootNode = TreeItem(NotebookNode(aggId = "root", title = "Root"))
 
     private val treeItemReferences = mutableMapOf<String, TreeItem<NotebookNode>>()
 
@@ -30,7 +34,7 @@ class TreeView : View() {
         cellFormat { text = it.title }
         onUserSelect {
             logger.debug("Selected: $it")
-            applicationController.selectNote.onNext(NavigationViewModel.Selection.NoteSelection(noteId = it.noteId, title = it.title))
+            applicationController.selectNote.onNext(NavigationViewModel.Selection.NoteSelection(aggId = it.aggId, title = it.title))
         }
         events(KeyEvent.KEY_PRESSED)
                 .filter { it.code == KeyCode.DELETE }
@@ -43,9 +47,9 @@ class TreeView : View() {
                 .observeOnFx()
                 .subscribe({
                     when (it) {
-                        is NoteCreatedEvent -> addNote(noteId = it.noteId, title = it.title)
+                        is NoteCreatedEvent -> addNote(aggId = it.aggId, title = it.title)
                         is NoteDeletedEvent -> removeNote(it)
-                        is NoteUndeletedEvent -> addNote(noteId = it.noteId, title = "TODO")
+                        is NoteUndeletedEvent -> addNote(aggId = it.aggId, title = "TODO")
                         is TitleChangedEvent -> changeTitle(it)
                         else -> {
                         }
@@ -53,26 +57,26 @@ class TreeView : View() {
                 }, { logger.warn("Error", it) })
     }
 
-    private fun addNote(noteId: String, title: String) {
-        logger.debug("Adding note $noteId")
-        val node = NotebookNode(noteId = noteId, title = title)
+    private fun addNote(aggId: String, title: String) {
+        logger.debug("Adding note $aggId")
+        val node = NotebookNode(aggId = aggId, title = title)
         val treeItem = TreeItem(node)
-        treeItemReferences[noteId] = treeItem
+        treeItemReferences[aggId] = treeItem
         rootNode += treeItem
     }
 
     private fun changeTitle(e: TitleChangedEvent) {
-        logger.debug("Changing title of note ${e.noteId}")
-        val treeItem: TreeItem<NotebookNode> = treeItemReferences[e.noteId]!!
-        treeItem.value = NotebookNode(e.noteId, e.title)
+        logger.debug("Changing title of note ${e.aggId}")
+        val treeItem: TreeItem<NotebookNode> = treeItemReferences[e.aggId]!!
+        treeItem.value = NotebookNode(e.aggId, e.title)
     }
 
     private fun removeNote(e: NoteDeletedEvent) {
-        logger.debug("Removing note ${e.noteId}")
-        val treeItem = treeItemReferences.remove(e.noteId)
+        logger.debug("Removing note ${e.aggId}")
+        val treeItem = treeItemReferences.remove(e.aggId)
         rootNode.children.remove(treeItem)
     }
 
-    data class NotebookNode(val noteId: String, val title: String)
+    data class NotebookNode(val aggId: String, val title: String)
 
 }

@@ -1,7 +1,9 @@
 package info.maaskant.wmsnotes.server.event
 
 import com.google.protobuf.ByteString
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
+import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
+import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import org.springframework.stereotype.Service
 import javax.inject.Inject
@@ -13,7 +15,7 @@ class GrpcEventMapper @Inject constructor() {
     fun toGrpcGetEventsResponse(event: info.maaskant.wmsnotes.model.Event): Event.GetEventsResponse {
         val builder = Event.GetEventsResponse.newBuilder()
                 .setEventId(event.eventId)
-                .setNoteId(event.noteId)
+                .setAggregateId(event.aggId)
                 .setRevision(event.revision)
 
         @Suppress("UNUSED_VARIABLE")
@@ -57,6 +59,9 @@ class GrpcEventMapper @Inject constructor() {
                     path = event.path.toString()
                 }.build()
             }
+            is FolderCreatedEvent -> TODO()
+            is FolderDeletedEvent -> TODO()
+            else -> IllegalArgumentException()
         }
         return builder.build()
     }

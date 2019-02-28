@@ -3,10 +3,11 @@ package info.maaskant.wmsnotes.desktop.main.editing
 import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
 import info.maaskant.wmsnotes.desktop.main.NavigationViewModel.SelectionSwitchingProcessNotification
 import info.maaskant.wmsnotes.desktop.main.NavigationViewModel.SelectionSwitchingProcessNotification.*
+import info.maaskant.wmsnotes.desktop.main.NavigationViewModel.SelectionSwitchingProcessNotification.Nothing
 import info.maaskant.wmsnotes.desktop.main.editing.preview.Renderer
-import info.maaskant.wmsnotes.model.ContentChangedEvent
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.ContentChangedEvent
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.utilities.Optional
 import io.mockk.*
 import io.reactivex.Observable
@@ -26,20 +27,20 @@ internal class EditingViewModelTest {
     private val content = "Text"
     private val note1Notification1 = Note(
             NavigationViewModel.Selection.NoteSelection(note1Id, title),
-            info.maaskant.wmsnotes.model.projection.Note()
-                    .apply(NoteCreatedEvent(eventId = 1, noteId = note1Id, revision = 1, path = path, title = title, content = "")).component1()
-                    .apply(ContentChangedEvent(eventId = 2, noteId = note1Id, revision = 2, content = content)).component1()
+            info.maaskant.wmsnotes.model.note.Note()
+                    .apply(NoteCreatedEvent(eventId = 1, aggId = note1Id, revision = 1, path = path, title = title, content = "")).component1()
+                    .apply(ContentChangedEvent(eventId = 2, aggId = note1Id, revision = 2, content = content)).component1()
     )
     private val note1Notification2 = Note(
             NavigationViewModel.Selection.NoteSelection(note1Id, title),
             note1Notification1.note
-                    .apply(ContentChangedEvent(eventId = 3, noteId = note1Id, revision = 3, content = "Different text")).component1()
+                    .apply(ContentChangedEvent(eventId = 3, aggId = note1Id, revision = 3, content = "Different text")).component1()
     )
     private val note2Notification = Note(
             NavigationViewModel.Selection.NoteSelection(note1Id, title),
-            info.maaskant.wmsnotes.model.projection.Note()
-                    .apply(NoteCreatedEvent(eventId = 4, noteId = note2Id, revision = 1, path = path, title = title, content = "")).component1()
-                    .apply(ContentChangedEvent(eventId = 5, noteId = note2Id, revision = 2, content = content)).component1()
+            info.maaskant.wmsnotes.model.note.Note()
+                    .apply(NoteCreatedEvent(eventId = 4, aggId = note2Id, revision = 1, path = path, title = title, content = "")).component1()
+                    .apply(ContentChangedEvent(eventId = 5, aggId = note2Id, revision = 2, content = content)).component1()
     )
 
     private val navigationViewModel: NavigationViewModel = mockk()
@@ -73,7 +74,7 @@ internal class EditingViewModelTest {
         assertThat(model.getText()).isEqualTo("")
         assertThat(dirtyObserver.values().toList()).isEqualTo(listOf(false))
         assertThat(enabledObserver.values().toList()).isEqualTo(listOf(false))
-        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional<info.maaskant.wmsnotes.model.projection.Note>()))
+        assertThat(noteObserver.values().toList()).isEqualTo(listOf(Optional<info.maaskant.wmsnotes.model.note.Note>()))
         assertThat(textUpdatesForEditorObserver.values().toList()).isEqualTo(emptyList<String>())
     }
 

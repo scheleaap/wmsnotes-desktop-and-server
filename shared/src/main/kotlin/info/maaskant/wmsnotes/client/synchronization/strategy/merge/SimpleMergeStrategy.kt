@@ -2,7 +2,7 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.note.Note
 import javax.inject.Inject
 
 class SimpleMergeStrategy @Inject constructor(

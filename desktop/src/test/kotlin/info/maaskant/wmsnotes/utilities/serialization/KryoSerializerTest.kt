@@ -2,7 +2,6 @@ package info.maaskant.wmsnotes.utilities.serialization
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
-import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just

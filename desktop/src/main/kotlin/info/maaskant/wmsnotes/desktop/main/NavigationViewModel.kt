@@ -2,11 +2,11 @@ package info.maaskant.wmsnotes.desktop.main
 
 import info.maaskant.wmsnotes.desktop.client.indexing.NoteIndex
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import info.maaskant.wmsnotes.model.projection.Note
-import info.maaskant.wmsnotes.model.projection.NoteProjector
+import info.maaskant.wmsnotes.model.note.Note
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.utilities.Optional
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
@@ -25,14 +25,14 @@ import javax.inject.Singleton
 class NavigationViewModel @Inject constructor(
         eventStore: EventStore,
         noteIndex: NoteIndex,
-        private val noteProjector: NoteProjector
+        private val noteRepository: AggregateRepository<Note>
 ) {
 
     private val logger by logger()
 
     final val allEventsWithUpdates: ConnectableObservable<Event> = noteIndex.getNotes()
             .subscribeOn(Schedulers.io())
-            .map { NoteCreatedEvent(eventId = 0, noteId = it.noteId, revision = 0, path = Path(), title = it.title, content = "") as Event }
+            .map { NoteCreatedEvent(eventId = 0, aggId = it.aggId, revision = 0, path = Path(), title = it.title, content = "") as Event }
             .mergeWith(eventStore.getEventUpdates())
             .publish()
 
@@ -83,7 +83,7 @@ class NavigationViewModel @Inject constructor(
                     Observable.just(SelectionSwitchingProcessNotification.Nothing as SelectionSwitchingProcessNotification)
                 }
                 is Selection.NoteSelection -> {
-                    noteProjector.projectAndUpdate(selectionRequest.noteId)
+                    noteRepository.getAndUpdate(selectionRequest.aggId)
                             .subscribeOn(Schedulers.io())
                             .map { SelectionSwitchingProcessNotification.Note(selectionRequest, it) as SelectionSwitchingProcessNotification }
                             .startWith(SelectionSwitchingProcessNotification.Loading(true))
@@ -110,13 +110,13 @@ class NavigationViewModel @Inject constructor(
 
     sealed class Selection {
         object Nothing : Selection()
-        data class NoteSelection(val noteId: String, val title: String) : Selection()
+        data class NoteSelection(val aggId: String, val title: String) : Selection()
         data class FolderSelection(val path: String, val title: String) : Selection()
     }
 
     sealed class SelectionSwitchingProcessNotification {
         data class Loading(val loading: Boolean) : SelectionSwitchingProcessNotification()
         object Nothing : SelectionSwitchingProcessNotification()
-        data class Note(val selection: Selection.NoteSelection, val note: info.maaskant.wmsnotes.model.projection.Note) : SelectionSwitchingProcessNotification()
+        data class Note(val selection: Selection.NoteSelection, val note: info.maaskant.wmsnotes.model.note.Note) : SelectionSwitchingProcessNotification()
     }
 }

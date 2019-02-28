@@ -1,6 +1,6 @@
 package info.maaskant.wmsnotes.client.synchronization
 
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.client.api.GrpcEventMapper
 import info.maaskant.wmsnotes.model.Path
@@ -86,7 +86,7 @@ internal class RemoteEventImporterTest {
         }
 
         internal fun remoteNoteEvent(i: Int): Event.GetEventsResponse {
-            val builder = Event.GetEventsResponse.newBuilder().setEventId(i).setNoteId("note-$i").setRevision(i)
+            val builder = Event.GetEventsResponse.newBuilder().setEventId(i).setAggregateId("note-$i").setRevision(i)
             builder.noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder()
                     .setPath(Path("path-$i").toString())
                     .setTitle("Title $i")
@@ -96,7 +96,7 @@ internal class RemoteEventImporterTest {
         }
 
         internal fun modelEvent(i: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = i, noteId = "note-$i", revision = i, path = Path("path-$i"), title = "Title $i", content = "Text $i")
+            return NoteCreatedEvent(eventId = i, aggId = "note-$i", revision = i, path = Path("path-$i"), title = "Title $i", content = "Text $i")
         }
     }
 }

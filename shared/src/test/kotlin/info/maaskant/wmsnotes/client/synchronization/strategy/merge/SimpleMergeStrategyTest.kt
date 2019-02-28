@@ -2,18 +2,19 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
-import info.maaskant.wmsnotes.model.projection.Note
 import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.*
 
 @Disabled("Tests written while traveling, code to be implemented next")
 internal class SimpleMergeStrategyTest {
-    private val noteId = "note"
+    private val aggId = "note"
     private val attachmentContent1 = "data 1".toByteArray()
     private val attachmentContent2 = "data 2".toByteArray()
 
@@ -32,23 +33,23 @@ internal class SimpleMergeStrategyTest {
     fun test(): List<DynamicTest> {
         val items = listOf(
                 Triple(
-                        TitleChangedEvent(eventId = 0, noteId = noteId, revision = 2, title = "v1"),
-                        listOf(TitleChangedEvent(eventId = 0, noteId = noteId, revision = 2, title = "v2")),
+                        TitleChangedEvent(eventId = 0, aggId = aggId, revision = 2, title = "v1"),
+                        listOf(TitleChangedEvent(eventId = 0, aggId = aggId, revision = 2, title = "v2")),
                         emptyList<Event>()
                 ),
                 Triple(
-                        ContentChangedEvent(eventId = 0, noteId = noteId, revision = 2, content = "v1"),
-                        listOf(ContentChangedEvent(eventId = 0, noteId = noteId, revision = 2, content = "v2")),
+                        ContentChangedEvent(eventId = 0, aggId = aggId, revision = 2, content = "v1"),
+                        listOf(ContentChangedEvent(eventId = 0, aggId = aggId, revision = 2, content = "v2")),
                         emptyList<Event>()
                 ),
                 Triple(
-                        AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 2, name = "att-1", content = attachmentContent1),
+                        AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = 2, name = "att-1", content = attachmentContent1),
                         listOf(
-                                AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 2, name = "att-1", content = attachmentContent2),
-                                AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 2, name = "att-1")
+                                AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = 2, name = "att-1", content = attachmentContent2),
+                                AttachmentDeletedEvent(eventId = 0, aggId = aggId, revision = 2, name = "att-1")
                         ),
                         listOf(
-                                AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 2, name = "att-2", content = attachmentContent1)
+                                AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = 2, name = "att-2", content = attachmentContent1)
                         )
                 )
                 // Add more classes here
@@ -63,7 +64,7 @@ internal class SimpleMergeStrategyTest {
                 val remoteEvent2: Event = mockk()
                 val remoteEvents = listOf(remoteEvent1, remoteEvent2)
                 val baseNote: Note = Note()
-                        .apply(NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path = Path("path"), title = "", content = "")).first
+                        .apply(NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = Path("path"), title = "", content = "")).first
                 val strategy = createStrategy()
 
                 // When / then

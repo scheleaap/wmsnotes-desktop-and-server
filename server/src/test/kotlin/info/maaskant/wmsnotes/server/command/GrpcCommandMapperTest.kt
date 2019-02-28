@@ -1,7 +1,8 @@
 package info.maaskant.wmsnotes.server.command
 
 import com.google.protobuf.ByteString
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.catchThrowable
@@ -21,7 +22,7 @@ internal class GrpcCommandMapperTest {
     fun `command not set`() {
         // Given
         val request = with(Command.PostCommandRequest.newBuilder()) {
-            noteId = "note"
+            aggregateId = "note"
             build()
         }
 
@@ -33,16 +34,16 @@ internal class GrpcCommandMapperTest {
     }
 
     @TestFactory
-    fun `missing note id`(): List<DynamicTest> {
+    fun `missing aggregate id`(): List<DynamicTest> {
         val requests = listOf(
                 Command.PostCommandRequest.newBuilder().apply {
-                    // noteId
+                    // aggId
                     createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
                         title = "Title"
                     }.build()
                 }.build(),
                 Command.PostCommandRequest.newBuilder().apply {
-                    // noteId
+                    // aggId
                     lastRevision = 1
                     deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
                 }.build()
@@ -65,59 +66,59 @@ internal class GrpcCommandMapperTest {
     fun test(): List<DynamicTest> {
         val items = mapOf(
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
                         path = Path("el1", "el2").toString()
                         title = "Title"
                         content = "Text"
                     }.build()
-                }.build() to CreateNoteCommand(noteId = "note", path = Path("el1", "el2"), title = "Title", content = "Text"),
+                }.build() to CreateNoteCommand(aggId = "note", path = Path("el1", "el2"), title = "Title", content = "Text"),
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     lastRevision = 1
                     deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
-                }.build() to DeleteNoteCommand(noteId = "note", lastRevision = 1),
+                }.build() to DeleteNoteCommand(aggId = "note", lastRevision = 1),
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     lastRevision = 1
                     undeleteNote = Command.PostCommandRequest.UndeleteNoteCommand.newBuilder().build()
-                }.build() to UndeleteNoteCommand(noteId = "note", lastRevision = 1),
+                }.build() to UndeleteNoteCommand(aggId = "note", lastRevision = 1),
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     lastRevision = 1
                     addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
                         name = "att"
                         content = ByteString.copyFrom("data".toByteArray())
                     }.build()
-                }.build() to AddAttachmentCommand(noteId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()),
+                }.build() to AddAttachmentCommand(aggId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()),
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     lastRevision = 1
                     deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
                         name = "att"
                     }.build()
-                }.build() to DeleteAttachmentCommand(noteId = "note", lastRevision = 1, name = "att"),
+                }.build() to DeleteAttachmentCommand(aggId = "note", lastRevision = 1, name = "att"),
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     lastRevision = 1
                     changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().apply {
                         content = "Text"
                     }.build()
-                }.build() to ChangeContentCommand(noteId = "note", lastRevision = 1, content = "Text"),
+                }.build() to ChangeContentCommand(aggId = "note", lastRevision = 1, content = "Text"),
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     lastRevision = 1
                     changeTitle = Command.PostCommandRequest.ChangeTitleCommand.newBuilder().apply {
                         title = "Title"
                     }.build()
-                }.build() to ChangeTitleCommand(noteId = "note", lastRevision = 1, title = "Title"),
+                }.build() to ChangeTitleCommand(aggId = "note", lastRevision = 1, title = "Title"),
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     lastRevision = 1
                     move = Command.PostCommandRequest.MoveCommand.newBuilder().apply {
                         path = Path("el1", "el2").toString()
                     }.build()
-                }.build() to MoveCommand(noteId = "note", lastRevision = 1, path = Path("el1", "el2"))
+                }.build() to MoveCommand(aggId = "note", lastRevision = 1, path = Path("el1", "el2"))
                 // Add more classes here
         )
         return items.map { (request, expectedCommand) ->
@@ -135,7 +136,7 @@ internal class GrpcCommandMapperTest {
     fun `other missing fields`(): List<DynamicTest> {
         val requests = listOf(
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     lastRevision = 1
                     addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
                         // name
@@ -143,7 +144,7 @@ internal class GrpcCommandMapperTest {
                     }.build()
                 }.build(),
                 Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                    aggregateId = "note"
                     lastRevision = 1
                     deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
                         // name

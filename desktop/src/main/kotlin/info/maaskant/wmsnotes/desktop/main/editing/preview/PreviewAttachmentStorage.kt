@@ -1,7 +1,7 @@
 package info.maaskant.wmsnotes.desktop.main.editing.preview
 
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
 import io.reactivex.Scheduler

@@ -1,7 +1,6 @@
 package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import info.maaskant.wmsnotes.model.projection.NoteProjector
 import info.maaskant.wmsnotes.utilities.Optional
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
@@ -15,8 +14,7 @@ import javax.inject.Singleton
 @Singleton
 class CommandProcessor @Inject constructor(
         private val eventStore: EventStore,
-        private val projector: NoteProjector,
-        private val commandToEventMapper: CommandToEventMapper
+        private val commandHandler: CommandHandler
 ) {
 
     private val logger by logger()
@@ -43,7 +41,7 @@ class CommandProcessor @Inject constructor(
             it2
                     .observeOn(Schedulers.io())
                     .doOnNext { logger.debug("Received command: $it") }
-                    .map(this::executeCommand)
+                    .map(this::handleCommand)
                     .map { storeEventIfPresent(it) }
         }
     }
@@ -65,11 +63,7 @@ class CommandProcessor @Inject constructor(
         }
     }
 
-    private fun executeCommand(command: Command): Optional<Event> {
-        val event1 = commandToEventMapper.map(command)
-        val note1 = projector.project(event1.noteId, event1.revision - 1)
-        val (_, event2) = note1.apply(event1)
-        return Optional(event2)
+    private fun handleCommand(command: Command): Optional<Event> {
+        return commandHandler.handle(command)
     }
-
 }

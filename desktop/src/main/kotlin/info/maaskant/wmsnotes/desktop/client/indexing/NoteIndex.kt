@@ -1,9 +1,9 @@
 package info.maaskant.wmsnotes.desktop.client.indexing
 
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.NoteDeletedEvent
-import info.maaskant.wmsnotes.model.NoteUndeletedEvent
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
+import info.maaskant.wmsnotes.model.note.NoteUndeletedEvent
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.reactivex.Observable
@@ -40,16 +40,16 @@ class NoteIndex @Inject constructor(
                 .subscribe({
                     when (it) {
                         is NoteCreatedEvent -> {
-                            logger.debug("Adding note ${it.noteId} to index")
-                            updateState(state.addNote(it.noteId, it.title))
+                            logger.debug("Adding note ${it.aggId} to index")
+                            updateState(state.addNote(it.aggId, it.title))
                         }
                         is NoteDeletedEvent -> {
-                            logger.debug("Hiding note ${it.noteId}")
-                            updateState(state.hideNote(it.noteId))
+                            logger.debug("Hiding note ${it.aggId}")
+                            updateState(state.hideNote(it.aggId))
                         }
                         is NoteUndeletedEvent -> {
-                            logger.debug("Showing note ${it.noteId}")
-                            updateState(state.showNote(it.noteId))
+                            logger.debug("Showing note ${it.aggId}")
+                            updateState(state.showNote(it.aggId))
                         }
                         else -> {
                         }

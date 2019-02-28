@@ -155,7 +155,7 @@ class MenuAndToolbarView : View() {
 //                                .map {
 //                                    val chooser: ConflictResolutionChooser = find<ConflictResolutionChooser>(
 //                                            scope = scope,
-//                                            params = mapOf(ConflictResolutionChooser::noteId to "53507bde-be93-406f-9609-4d4406bddedb")
+//                                            params = mapOf(ConflictResolutionChooser::aggId to "53507bde-be93-406f-9609-4d4406bddedb")
 //                                    ).apply {
 //                                        openModal(block = true)
 //                                    }

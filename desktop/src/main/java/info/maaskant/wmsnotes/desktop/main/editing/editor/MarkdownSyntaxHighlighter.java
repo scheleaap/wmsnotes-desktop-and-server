@@ -27,14 +27,13 @@
 
 package info.maaskant.wmsnotes.desktop.main.editing.editor;
 
-import org.fxmisc.richtext.model.Paragraph;
-
 import com.vladsch.flexmark.ast.*;
 import com.vladsch.flexmark.ext.gfm.strikethrough.Strikethrough;
 import com.vladsch.flexmark.ext.gfm.tables.*;
 import com.vladsch.flexmark.ext.wikilink.WikiLink;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
 import javafx.application.Platform;
+import org.fxmisc.richtext.model.Paragraph;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.fxmisc.richtext.model.TwoDimensional.Bias;
 

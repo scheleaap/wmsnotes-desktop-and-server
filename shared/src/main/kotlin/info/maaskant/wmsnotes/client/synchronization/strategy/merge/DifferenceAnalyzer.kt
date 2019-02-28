@@ -2,7 +2,7 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import au.com.console.kassava.kotlinEquals
 import info.maaskant.wmsnotes.model.Path
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.note.Note
 import java.util.*
 
 class DifferenceAnalyzer {

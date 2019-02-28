@@ -1,6 +1,9 @@
 package info.maaskant.wmsnotes.client.synchronization.commandexecutor
 
 import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.*
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -22,8 +25,8 @@ internal class LocalCommandExecutorTest {
     @Test
     fun `success, event`() {
         // Given
-        val command = modelCommand(noteId = 1, lastRevision = 10)
-        val event = modelEvent(eventId = 5, noteId = 1, revision = 11)
+        val command = modelCommand(aggId = 1, lastRevision = 10)
+        val event = modelEvent(eventId = 5, aggId = 1, revision = 11)
         givenACommandProducesAnEvent(command, event)
         val executor = createExecutor()
 
@@ -42,7 +45,7 @@ internal class LocalCommandExecutorTest {
     @Test
     fun `success, no event`() {
         // Given
-        val command = modelCommand(noteId = 1, lastRevision = 10)
+        val command = modelCommand(aggId = 1, lastRevision = 10)
         givenACommandProducesAnEvent(command, null)
         val executor = createExecutor()
 
@@ -61,7 +64,7 @@ internal class LocalCommandExecutorTest {
     @Test
     fun failure() {
         // Given
-        val command = modelCommand(noteId = 1, lastRevision = 10)
+        val command = modelCommand(aggId = 1, lastRevision = 10)
         givenACommandFails(command)
         val executor = createExecutor()
 
@@ -87,16 +90,16 @@ internal class LocalCommandExecutorTest {
     }
 
     companion object {
-        internal fun modelCommand(noteId: Int, lastRevision: Int? = null): Command {
+        internal fun modelCommand(aggId: Int, lastRevision: Int? = null): Command {
             return if (lastRevision == null) {
-                CreateNoteCommand("note-$noteId", path = Path("path-$noteId"), title = "Title $noteId", content = "Text $noteId")
+                CreateNoteCommand("note-$aggId", path = Path("path-$aggId"), title = "Title $aggId", content = "Text $aggId")
             } else {
-                DeleteNoteCommand("note-$noteId", lastRevision)
+                DeleteNoteCommand("note-$aggId", lastRevision)
             }
         }
 
-        internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = Path("path-$noteId"), title = "Title $noteId", content = "Text $noteId")
+        internal fun modelEvent(eventId: Int, aggId: Int, revision: Int): NoteCreatedEvent {
+            return NoteCreatedEvent(eventId = eventId, aggId = "note-$aggId", revision = revision, path = Path("path-$aggId"), title = "Title $aggId", content = "Text $aggId")
         }
     }
 }

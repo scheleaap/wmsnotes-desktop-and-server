@@ -1,16 +1,15 @@
 package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import info.maaskant.wmsnotes.model.projection.Note
-import info.maaskant.wmsnotes.model.projection.NoteProjector
+import info.maaskant.wmsnotes.utilities.Optional
 import io.mockk.*
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 internal class CommandProcessorTest {
 
     private val eventStore: EventStore = mockk()
-    private val projector: NoteProjector = mockk()
-    private val commandToEventMapper: CommandToEventMapper = mockk()
+    private val commandHandler: CommandHandler = mockk()
 
     private lateinit var commandProcessor: CommandProcessor
 
@@ -18,34 +17,28 @@ internal class CommandProcessorTest {
     fun init() {
         clearMocks(
                 eventStore,
-                projector,
-                commandToEventMapper
+                commandHandler
         )
 
         val eventSlot = slot<Event>()
         every { eventStore.appendEvent(capture(eventSlot)) }.answers { eventSlot.captured }
 
-        commandProcessor = CommandProcessor(eventStore, projector, commandToEventMapper)
+        commandProcessor = CommandProcessor(eventStore, commandHandler)
     }
 
     @Test
     fun default() {
         // Given
         val command: Command = mockk()
-        val event1: Event = createEvent("note", 15)
-        val note1: Note = mockk()
-        val event2: Event = createEvent("note", 15)
-        val note2: Note = mockk()
-        every { commandToEventMapper.map(command) }.returns(event1)
-        every { projector.project("note", 14) }.returns(note1)
-        every { note1.apply(event1) }.returns(note2 to event2)
+        val event: Event = createEvent("note", 15)
+        every { commandHandler.handle(command) }.returns(Optional(event))
 
         // When
         commandProcessor.blockingProcessCommand(command)
 
         // Then
         verify {
-            eventStore.appendEvent(event2)
+            eventStore.appendEvent(event)
         }
     }
 
@@ -53,11 +46,7 @@ internal class CommandProcessorTest {
     fun `no event returned by aggregate`() {
         // Given
         val command: Command = mockk()
-        val event1: Event = createEvent("note", 15)
-        val note1: Note = mockk()
-        every { commandToEventMapper.map(command) }.returns(event1)
-        every { projector.project("note", 14) }.returns(note1)
-        every { note1.apply(event1) }.returns(note1 to null)
+        every { commandHandler.handle(command) }.returns(Optional())
 
         // When
         commandProcessor.blockingProcessCommand(command)
@@ -68,9 +57,9 @@ internal class CommandProcessorTest {
         }
     }
 
-    private fun createEvent(noteId: String, revision: Int): Event {
+    private fun createEvent(aggId: String, revision: Int): Event {
         val event: Event = mockk()
-        every { event.noteId }.returns(noteId)
+        every { event.aggId }.returns(aggId)
         every { event.revision }.returns(revision)
         return event
     }

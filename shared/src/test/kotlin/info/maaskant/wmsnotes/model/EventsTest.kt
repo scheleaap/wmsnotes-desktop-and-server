@@ -1,17 +1,25 @@
 package info.maaskant.wmsnotes.model
 
+import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
+import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
+import info.maaskant.wmsnotes.model.note.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 
 internal class EventsTest {
+    private val aggId = "note"
+    private val path = Path("el1", "el2")
+    private val title = "Title"
+    private val content = "Text"
+
     @Test
     fun `equals and hashCode for shared fields`() {
-        val o = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1)
-        val different1 = NoteDeletedEvent(eventId = 2, noteId = o.noteId, revision = o.revision)
-        val different2 = NoteDeletedEvent(eventId = o.eventId, noteId = "note-2", revision = o.revision)
-        val different3 = NoteDeletedEvent(eventId = o.eventId, noteId = o.noteId, revision = 2)
+        val o = NoteDeletedEvent(eventId = 1, aggId = aggId, revision = 1)
+        val different1 = NoteDeletedEvent(eventId = 2, aggId = o.aggId, revision = o.revision)
+        val different2 = NoteDeletedEvent(eventId = o.eventId, aggId = "note-2", revision = o.revision)
+        val different3 = NoteDeletedEvent(eventId = o.eventId, aggId = o.aggId, revision = 2)
 
         assertThat(o).isEqualTo(o)
         assertThat(o.hashCode()).isEqualTo(o.hashCode())
@@ -26,14 +34,16 @@ internal class EventsTest {
     @TestFactory
     fun `copy with eventId for all event types`(): List<DynamicTest> {
         return listOf(
-                NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Title 1", content = "Text"),
-                NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
-                NoteUndeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
-                AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
-                AttachmentDeletedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1"),
-                ContentChangedEvent(eventId = 0, noteId = "note-1", revision = 1, content = "Text"),
-                TitleChangedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1"),
-                MovedEvent(eventId = 0, noteId = "note-1", revision = 1, path = Path("el1", "el2"))
+                NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = path, title = title, content = content),
+                NoteDeletedEvent(eventId = 0, aggId = aggId, revision = 1),
+                NoteUndeletedEvent(eventId = 0, aggId = aggId, revision = 1),
+                AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = 1, name = "att-1", content = "data".toByteArray()),
+                AttachmentDeletedEvent(eventId = 0, aggId = aggId, revision = 1, name = "att-1"),
+                ContentChangedEvent(eventId = 0, aggId = aggId, revision = 1, content = content),
+                TitleChangedEvent(eventId = 0, aggId = aggId, revision = 1, title = title),
+                MovedEvent(eventId = 0, aggId = aggId, revision = 1, path = path),
+                FolderCreatedEvent(eventId = 0, revision = 1, path = path),
+                FolderDeletedEvent(eventId = 0, revision = 1, path = path)
                 // Add more classes here
         ).map {
             DynamicTest.dynamicTest(it::class.simpleName) {
@@ -49,13 +59,15 @@ internal class EventsTest {
     @TestFactory
     fun `copy with revision for all event types`(): List<DynamicTest> {
         return listOf(
-                NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, path = Path.from("folder-1"), title = "Title 1", content = "Text 1"),
-                NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
-                NoteUndeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
-                AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
-                AttachmentDeletedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1"),
-                ContentChangedEvent(eventId = 0, noteId = "note-1", revision = 1, content = "data"),
-                TitleChangedEvent(eventId = 0, noteId = "note-1", revision = 1, title = "Title 1")
+                NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = path, title = title, content = content),
+                NoteDeletedEvent(eventId = 0, aggId = aggId, revision = 1),
+                NoteUndeletedEvent(eventId = 0, aggId = aggId, revision = 1),
+                AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = 1, name = "att-1", content = "data".toByteArray()),
+                AttachmentDeletedEvent(eventId = 0, aggId = aggId, revision = 1, name = "att-1"),
+                ContentChangedEvent(eventId = 0, aggId = aggId, revision = 1, content = "data"),
+                TitleChangedEvent(eventId = 0, aggId = aggId, revision = 1, title = title),
+                FolderCreatedEvent(eventId = 0, revision = 1, path = path),
+                FolderDeletedEvent(eventId = 0, revision = 1, path = path)
                 // Add more classes here
         ).map {
             DynamicTest.dynamicTest(it::class.simpleName) {
@@ -72,51 +84,61 @@ internal class EventsTest {
     fun `equals and hashCode for all event types`(): List<DynamicTest> {
         return listOf(
                 Item(
-                        o = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Title", content = "Text"),
-                        sameButCopy = NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Title", content = "Text"),
+                        o = NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = path, title = title, content = content),
+                        sameButCopy = NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = path, title = title, content = content),
                         differents = listOf(
-                                NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "different"), title = "Title", content = "Text"),
-                                NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Different", content = "Text"),
-                                NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2"), title = "Title", content = "Different")
+                                NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = Path("different"), title = title, content = content),
+                                NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = path, title = "Different", content = content),
+                                NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = path, title = title, content = "Different")
                         )
                 ),
                 Item(
-                        o = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
-                        sameButCopy = NoteDeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
-                        differents = listOf(NoteDeletedEvent(eventId = 1, noteId = "different", revision = 1))
+                        o = NoteDeletedEvent(eventId = 1, aggId = aggId, revision = 1),
+                        sameButCopy = NoteDeletedEvent(eventId = 1, aggId = aggId, revision = 1),
+                        differents = listOf(NoteDeletedEvent(eventId = 1, aggId = "different", revision = 1))
                 ),
                 Item(
-                        o = NoteUndeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
-                        sameButCopy = NoteUndeletedEvent(eventId = 1, noteId = "note-1", revision = 1),
-                        differents = listOf(NoteUndeletedEvent(eventId = 1, noteId = "different", revision = 1))
+                        o = NoteUndeletedEvent(eventId = 1, aggId = aggId, revision = 1),
+                        sameButCopy = NoteUndeletedEvent(eventId = 1, aggId = aggId, revision = 1),
+                        differents = listOf(NoteUndeletedEvent(eventId = 1, aggId = "different", revision = 1))
                 ),
                 Item(
-                        o = AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
-                        sameButCopy = AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),
+                        o = AttachmentAddedEvent(eventId = 1, aggId = aggId, revision = 1, name = "att-1", content = "data".toByteArray()),
+                        sameButCopy = AttachmentAddedEvent(eventId = 1, aggId = aggId, revision = 1, name = "att-1", content = "data".toByteArray()),
                         differents = listOf(
-                                AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "different", content = "data".toByteArray()),
-                                AttachmentAddedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1", content = "different".toByteArray())
+                                AttachmentAddedEvent(eventId = 1, aggId = aggId, revision = 1, name = "different", content = "data".toByteArray()),
+                                AttachmentAddedEvent(eventId = 1, aggId = aggId, revision = 1, name = "att-1", content = "different".toByteArray())
                         )
                 ),
                 Item(
-                        o = AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1"),
-                        sameButCopy = AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "att-1"),
-                        differents = listOf(AttachmentDeletedEvent(eventId = 1, noteId = "note-1", revision = 1, name = "different"))
+                        o = AttachmentDeletedEvent(eventId = 1, aggId = aggId, revision = 1, name = "att-1"),
+                        sameButCopy = AttachmentDeletedEvent(eventId = 1, aggId = aggId, revision = 1, name = "att-1"),
+                        differents = listOf(AttachmentDeletedEvent(eventId = 1, aggId = aggId, revision = 1, name = "different"))
                 ),
                 Item(
-                        o = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "Text"),
-                        sameButCopy = ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "Text"),
-                        differents = listOf(ContentChangedEvent(eventId = 1, noteId = "note-1", revision = 1, content = "Different"))
+                        o = ContentChangedEvent(eventId = 1, aggId = aggId, revision = 1, content = content),
+                        sameButCopy = ContentChangedEvent(eventId = 1, aggId = aggId, revision = 1, content = content),
+                        differents = listOf(ContentChangedEvent(eventId = 1, aggId = aggId, revision = 1, content = "Different"))
                 ),
                 Item(
-                        o = TitleChangedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title"),
-                        sameButCopy = TitleChangedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title"),
-                        differents = listOf(TitleChangedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Different"))
+                        o = TitleChangedEvent(eventId = 1, aggId = aggId, revision = 1, title = title),
+                        sameButCopy = TitleChangedEvent(eventId = 1, aggId = aggId, revision = 1, title = title),
+                        differents = listOf(TitleChangedEvent(eventId = 1, aggId = aggId, revision = 1, title = "Different"))
                 ),
                 Item(
-                        o = MovedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2")),
-                        sameButCopy = MovedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "el2")),
-                        differents = listOf(MovedEvent(eventId = 1, noteId = "note-1", revision = 1, path = Path("el1", "different")))
+                        o = MovedEvent(eventId = 1, aggId = aggId, revision = 1, path = path),
+                        sameButCopy = MovedEvent(eventId = 1, aggId = aggId, revision = 1, path = path),
+                        differents = listOf(MovedEvent(eventId = 1, aggId = aggId, revision = 1, path = Path("different")))
+                ),
+                Item(
+                        o = FolderCreatedEvent(eventId = 1, revision = 1, path = path),
+                        sameButCopy = FolderCreatedEvent(eventId = 1, revision = 1, path = path),
+                        differents = listOf(FolderCreatedEvent(eventId = 1, revision = 1, path = Path("different")))
+                ),
+                Item(
+                        o = FolderDeletedEvent(eventId = 1, revision = 1, path = path),
+                        sameButCopy = FolderDeletedEvent(eventId = 1, revision = 1, path = path),
+                        differents = listOf(FolderDeletedEvent(eventId = 1, revision = 1, path = Path("different")))
                 )
                 // Add more classes here
         ).map {
@@ -138,8 +160,8 @@ internal class EventsTest {
         // These two classes are identical with regards to their fields, but they still must never be equal.
 
         // Given
-        val e1 = NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1)
-        val e2 = NoteUndeletedEvent(eventId = 0, noteId = "note-1", revision = 1)
+        val e1 = NoteDeletedEvent(eventId = 0, aggId = aggId, revision = 1)
+        val e2 = NoteUndeletedEvent(eventId = 0, aggId = aggId, revision = 1)
 
         // When / then
         assertThat(e1).isNotEqualTo(e2)

@@ -1,6 +1,9 @@
 package info.maaskant.wmsnotes.desktop.imprt
 
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.CreateNoteCommand
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import io.mockk.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -12,7 +15,7 @@ import java.time.ZonedDateTime
 
 @Disabled("Tests written while traveling, code to be implemented next")
 internal class MarkdownFilesImporterTest {
-    private val noteId = "note"
+    private val aggId = "note"
     private val clock: Clock = Clock.fixed(ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 7, ZoneId.of("UTC")).toInstant(), ZoneId.of("UTC"))
     private val importFolderName: String = "Import of 2001-02-03 04:05:06"
 
@@ -25,7 +28,7 @@ internal class MarkdownFilesImporterTest {
         clearMocks(
                 commandProcessor
         )
-        every { commandProcessor.blockingProcessCommand(CreateNoteCommand(noteId = null, path = any(), title = any(), content = any())) }.returns(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = Path("el"), title = "", content = ""))
+        every { commandProcessor.blockingProcessCommand(CreateNoteCommand(aggId = null, path = any(), title = any(), content = any())) }.returns(NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = Path("el"), title = "", content = ""))
         every { commandProcessor.commands.onNext(any()) }.just(Runs)
     }
 
@@ -40,7 +43,7 @@ internal class MarkdownFilesImporterTest {
 
         // Then
         verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(noteId = null, path = Path(importFolderName), title = "Title", content = ""))
+            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName), title = "Title", content = ""))
         }
     }
 
@@ -56,7 +59,7 @@ internal class MarkdownFilesImporterTest {
 
         // Then
         verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(noteId = null, path = Path(importFolderName), title = "Title", content = content))
+            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName), title = "Title", content = content))
         }
     }
 
@@ -72,7 +75,7 @@ internal class MarkdownFilesImporterTest {
 
         // Then
         verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(noteId = null, path = Path(importFolderName), title = "Title", content = content))
+            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName), title = "Title", content = content))
         }
     }
 
@@ -89,7 +92,7 @@ internal class MarkdownFilesImporterTest {
 
         // Then
         verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(noteId = null, path = Path(importFolderName), title = "Title", content = importedContent))
+            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName), title = "Title", content = importedContent))
         }
     }
 
@@ -106,7 +109,7 @@ internal class MarkdownFilesImporterTest {
 
         // Then
         verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(noteId = any(), path = any(), title = any(), content = importedContent))
+            commandProcessor.commands.onNext(CreateNoteCommand(aggId = any(), path = any(), title = any(), content = importedContent))
         }
     }
 
@@ -125,7 +128,7 @@ internal class MarkdownFilesImporterTest {
 //            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = importFolderName, path = Path(importFolderName), title = importFolderName)),
 //            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = "$importFolderName/el1", path = Path(importFolderName, "el1"), title = "el1")),
 //            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = "$importFolderName/el1/el2", path = Path(importFolderName, "el1", "el2"), title = "el2")),
-//            commandProcessor.commands.onNext(CreateNoteCommand(noteId = null, path = Path(importFolderName, "el1", "el2"), title = any(), content = any()))
+//            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName, "el1", "el2"), title = any(), content = any()))
 //        }
     }
 

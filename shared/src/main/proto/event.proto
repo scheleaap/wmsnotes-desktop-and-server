@@ -14,8 +14,8 @@ message GetEventsRequest {
 message GetEventsResponse {
     int32 event_id = 1;
 
-    // The id of the note to which the note applies
-    string note_id = 2;
+    // The id of the aggregate to which the event applies
+    string aggregate_id = 2;
 
     int32 revision = 3;
 

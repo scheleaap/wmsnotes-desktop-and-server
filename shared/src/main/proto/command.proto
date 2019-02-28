@@ -7,10 +7,10 @@ service CommandService {
 }
 
 message PostCommandRequest {
-    // The id of the note to which the command applies
-    string note_id = 1;
+    // The id of the aggregate to which the command applies
+    string aggregate_id = 1;
 
-    // The last known revision of the note
+    // The last known revision of the aggregate
     int32 last_revision = 2;
 
     oneof command {
@@ -69,8 +69,8 @@ message PostCommandResponse {
     string errorDescription = 2;
     // The id of the new event, if one was generated
     int32 new_event_id = 3;
-    // The id of the note, for which the new event was produced. Required if new_event_id is not null.
-    string note_id = 4;
-    // The revision of the note, produced by the new event. Required if new_event_id is not null.
+    // The id of the aggregate, for which the new event was produced. Required if new_event_id is not null.
+    string aggregate_id = 4;
+    // The revision of the aggregate, produced by the new event. Required if new_event_id is not null.
     int32 new_revision = 5;
 }

@@ -2,7 +2,7 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.note.Note
 import io.reactivex.Observable
 import javax.inject.Inject
 
@@ -20,20 +20,20 @@ class ManualMergeStrategy @Inject constructor(
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    fun getConflictData(noteId: String): ConflictData {
+    fun getConflictData(aggId: String): ConflictData {
         TODO()
     }
 
-    fun getConflictedNoteIds(): Observable<Set<String>> {
+    fun getConflictedAggregateIds(): Observable<Set<String>> {
         TODO()
     }
 
-    fun resolve(noteId: String, choice: ConflictResolutionChoice) {
+    fun resolve(aggId: String, choice: ConflictResolutionChoice) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     data class ConflictData(
-//            val noteId: String,
+//            val aggId: String,
 //            val localEvents: List<Event>,
 //            val remoteEvents: List<Event>,
             val baseNote: Note,

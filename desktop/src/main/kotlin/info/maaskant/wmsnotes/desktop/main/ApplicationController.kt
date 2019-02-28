@@ -1,13 +1,14 @@
 package info.maaskant.wmsnotes.desktop.main
 
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import org.springframework.stereotype.Component
-import tornadofx.*
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -41,14 +42,14 @@ class ApplicationController @Inject constructor(
         deleteCurrentNote
                 .subscribeOn(Schedulers.computation())
                 .filter { navigationViewModel.currentNoteValue != null }
-                .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.noteId, navigationViewModel.currentNoteValue!!.revision) }
+                .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision) }
                 .subscribe(commandProcessor.commands)
         addAttachmentToCurrentNote
                 .subscribeOn(Schedulers.computation())
                 .filter { navigationViewModel.currentNoteValue != null }
                 .map {
                     AddAttachmentCommand(
-                            noteId = navigationViewModel.currentNoteValue!!.noteId,
+                            aggId = navigationViewModel.currentNoteValue!!.aggId,
                             lastRevision = navigationViewModel.currentNoteValue!!.revision,
                             name = it.name,
                             content = it.readBytes()
@@ -60,7 +61,7 @@ class ApplicationController @Inject constructor(
                 .filter { navigationViewModel.currentNoteValue != null }
                 .map {
                     DeleteAttachmentCommand(
-                            noteId = navigationViewModel.currentNoteValue!!.noteId,
+                            aggId = navigationViewModel.currentNoteValue!!.aggId,
                             lastRevision = navigationViewModel.currentNoteValue!!.revision,
                             name = it
                     )
@@ -72,12 +73,12 @@ class ApplicationController @Inject constructor(
                 .map {
                     if (editingViewModel.isDirty().blockingFirst() == false) throw IllegalStateException()
                     ChangeContentCommand(
-                            noteId = navigationViewModel.currentNoteValue!!.noteId,
+                            aggId = navigationViewModel.currentNoteValue!!.aggId,
                             lastRevision = navigationViewModel.currentNoteValue!!.revision,
                             content = editingViewModel.getText()
                     )
                 }
-                .doOnNext { logger.debug("Saving content of note ${it.noteId}") }
+                .doOnNext { logger.debug("Saving content of note ${it.aggId}") }
                 .subscribe(commandProcessor.commands)
     }
 

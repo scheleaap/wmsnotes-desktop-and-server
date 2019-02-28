@@ -1,7 +1,8 @@
 package info.maaskant.wmsnotes.server.event
 
 import com.google.protobuf.ByteString
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -22,10 +23,10 @@ internal class GrpcEventMapperTest {
     @TestFactory
     fun test(): List<DynamicTest> {
         val items = mapOf(
-                NoteCreatedEvent(eventId = 1, noteId = "note", revision = 1, path = Path("el1", "el2"), title = "Title", content = "Text")
+                NoteCreatedEvent(eventId = 1, aggId = "note", revision = 1, path = Path("el1", "el2"), title = "Title", content = "Text")
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
-                    noteId = "note"
+                    aggregateId = "note"
                     revision = 1
                     noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder().apply {
                         path = Path("el1", "el2").toString()
@@ -33,61 +34,61 @@ internal class GrpcEventMapperTest {
                         content = "Text"
                     }.build()
                 }.build(),
-                NoteDeletedEvent(eventId = 1, noteId = "note", revision = 1)
+                NoteDeletedEvent(eventId = 1, aggId = "note", revision = 1)
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
-                    noteId = "note"
+                    aggregateId = "note"
                     revision = 1
                     noteDeleted = Event.GetEventsResponse.NoteDeletedEvent.newBuilder().build()
                 }.build(),
-                NoteUndeletedEvent(eventId = 1, noteId = "note", revision = 1)
+                NoteUndeletedEvent(eventId = 1, aggId = "note", revision = 1)
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
-                    noteId = "note"
+                    aggregateId = "note"
                     revision = 1
                     noteUndeleted = Event.GetEventsResponse.NoteUndeletedEvent.newBuilder().build()
                 }.build(),
-                AttachmentAddedEvent(eventId = 1, noteId = "note", revision = 1, name = "att", content = "data".toByteArray())
+                AttachmentAddedEvent(eventId = 1, aggId = "note", revision = 1, name = "att", content = "data".toByteArray())
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
-                    noteId = "note"
+                    aggregateId = "note"
                     revision = 1
                     attachmentAdded = Event.GetEventsResponse.AttachmentAddedEvent.newBuilder().apply {
                         name = "att"
                         content = ByteString.copyFrom("data".toByteArray())
                     }.build()
                 }.build(),
-                AttachmentDeletedEvent(eventId = 1, noteId = "note", revision = 1, name = "att")
+                AttachmentDeletedEvent(eventId = 1, aggId = "note", revision = 1, name = "att")
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
-                    noteId = "note"
+                    aggregateId = "note"
                     revision = 1
                     attachmentDeleted = Event.GetEventsResponse.AttachmentDeletedEvent.newBuilder().apply {
                         name = "att"
                     }.build()
                 }.build(),
-                ContentChangedEvent(eventId = 1, noteId = "note", revision = 1, content = "Text")
+                ContentChangedEvent(eventId = 1, aggId = "note", revision = 1, content = "Text")
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
-                    noteId = "note"
+                    aggregateId = "note"
                     revision = 1
                     contentChanged = Event.GetEventsResponse.ContentChangedEvent.newBuilder().apply {
                         content = "Text"
                     }.build()
                 }.build(),
-                TitleChangedEvent(eventId = 1, noteId = "note", revision = 1, title = "Title")
+                TitleChangedEvent(eventId = 1, aggId = "note", revision = 1, title = "Title")
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
-                    noteId = "note"
+                    aggregateId = "note"
                     revision = 1
                     titleChanged = Event.GetEventsResponse.TitleChangedEvent.newBuilder().apply {
                         title = "Title"
                     }.build()
                 }.build(),
-                MovedEvent(eventId = 1, noteId = "note", revision = 1, path = Path("el1", "el2"))
+                MovedEvent(eventId = 1, aggId = "note", revision = 1, path = Path("el1", "el2"))
                         to Event.GetEventsResponse.newBuilder().apply {
                     eventId = 1
-                    noteId = "note"
+                    aggregateId = "note"
                     revision = 1
                     moved = Event.GetEventsResponse.MovedEvent.newBuilder().apply {
                         path = Path("el1", "el2").toString()

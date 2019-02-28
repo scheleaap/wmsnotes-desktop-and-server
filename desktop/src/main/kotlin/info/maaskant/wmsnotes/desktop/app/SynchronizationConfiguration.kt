@@ -19,7 +19,8 @@ import info.maaskant.wmsnotes.desktop.settings.Configuration.storeInMemory
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import info.maaskant.wmsnotes.model.projection.NoteProjector
+import info.maaskant.wmsnotes.model.note.Note
+import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
 import info.maaskant.wmsnotes.utilities.persistence.FileStateRepository
@@ -165,13 +166,13 @@ class SynchronizationConfiguration {
 
     @Bean
     @Singleton
-    fun synchronizationStrategy(mergeStrategy: MergeStrategy, noteProjector: NoteProjector) =
+    fun synchronizationStrategy(mergeStrategy: MergeStrategy, aggregateRepository: AggregateRepository<Note>) =
             MultipleSynchronizationStrategy(
                     LocalOnlySynchronizationStrategy(),
                     RemoteOnlySynchronizationStrategy(),
                     MergingSynchronizationStrategy(
                             mergeStrategy = mergeStrategy,
-                            noteProjector = noteProjector
+                            noteRepository = aggregateRepository
                     )
 
             )

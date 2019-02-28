@@ -64,10 +64,10 @@ class Synchronizer @Inject constructor(
     }
 
     private fun updateLastRevisions(localEvents: Observable<Event>, remoteEvents: Observable<Event>) {
-        val state1 = localEvents.scan(state) { state, event -> state.updateLastKnownLocalRevision(event.noteId, event.revision) }
+        val state1 = localEvents.scan(state) { state, event -> state.updateLastKnownLocalRevision(event.aggId, event.revision) }
                 .last(state)
                 .blockingGet()
-        val state2 = remoteEvents.scan(state1) { state, event -> state.updateLastKnownRemoteRevision(event.noteId, event.revision) }
+        val state2 = remoteEvents.scan(state1) { state, event -> state.updateLastKnownRemoteRevision(event.aggId, event.revision) }
                 .last(state1)
                 .blockingGet()
         if (state2 != state) {
@@ -76,14 +76,14 @@ class Synchronizer @Inject constructor(
     }
 
     private fun synchronizeEvents(eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents>) {
-        for ((noteId, noteEventsToSynchronize) in eventsToSynchronize) {
-            val resolutionResult = synchronizationStrategy.resolve(noteId, noteEventsToSynchronize.localEvents, noteEventsToSynchronize.remoteEvents)
+        for ((aggId, noteEventsToSynchronize) in eventsToSynchronize) {
+            val resolutionResult = synchronizationStrategy.resolve(aggId, noteEventsToSynchronize.localEvents, noteEventsToSynchronize.remoteEvents)
             when (resolutionResult) {
                 SynchronizationStrategy.ResolutionResult.NoSolution -> {
                 }
                 is SynchronizationStrategy.ResolutionResult.Solution ->
                     if (areCompensatingActionsValid(noteEventsToSynchronize.localEvents, noteEventsToSynchronize.remoteEvents, resolutionResult.compensatingActions)) {
-                        executeCompensatingActions(resolutionResult.compensatingActions, noteId)
+                        executeCompensatingActions(resolutionResult.compensatingActions, aggId)
                     } else {
                     }
 
@@ -124,40 +124,40 @@ class Synchronizer @Inject constructor(
         return localEventIdsToSynchronize == compensatedLocalEventIds && remoteEventIdsToSynchronize == compensatedRemoteEventIds
     }
 
-    private fun executeCompensatingActions(compensatingActions: List<CompensatingAction>, noteId: String) {
+    private fun executeCompensatingActions(compensatingActions: List<CompensatingAction>, aggId: String) {
         if (compensatingActions.isNotEmpty()) {
             val head = compensatingActions[0]
-            val success = executeCompensatingAction(head, noteId)
+            val success = executeCompensatingAction(head, aggId)
             if (success && compensatingActions.size > 1) {
                 val tail = compensatingActions.subList(1, compensatingActions.size)
-                executeCompensatingActions(compensatingActions = tail, noteId = noteId)
+                executeCompensatingActions(compensatingActions = tail, aggId = aggId)
             }
         }
     }
 
-    private fun executeCompensatingAction(compensatingAction: CompensatingAction, noteId: String): Boolean {
+    private fun executeCompensatingAction(compensatingAction: CompensatingAction, aggId: String): Boolean {
         for (remoteEvent in compensatingAction.newRemoteEvents) {
-            val command = eventToCommandMapper.map(remoteEvent, state.lastKnownRemoteRevisions[remoteEvent.noteId])
+            val command = eventToCommandMapper.map(remoteEvent, state.lastKnownRemoteRevisions[remoteEvent.aggId])
             val executionResult = remoteCommandExecutor.execute(command)
             when (executionResult) {
                 CommandExecutor.ExecutionResult.Failure -> return false
                 is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
                     updateState(state
-                            .updateLastKnownRemoteRevision(executionResult.newEventMetadata.noteId, executionResult.newEventMetadata.revision)
+                            .updateLastKnownRemoteRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
                             .ignoreRemoteEvent(executionResult.newEventMetadata.eventId)
                     )
                 }
             }
         }
         for (localEvent in compensatingAction.newLocalEvents) {
-            val command = eventToCommandMapper.map(localEvent, state.lastKnownLocalRevisions[localEvent.noteId])
+            val command = eventToCommandMapper.map(localEvent, state.lastKnownLocalRevisions[localEvent.aggId])
             val executionResult = localCommandExecutor.execute(command)
             when (executionResult) {
                 CommandExecutor.ExecutionResult.Failure -> return false
                 is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
                     updateState(state
-                            .updateLastKnownLocalRevision(executionResult.newEventMetadata.noteId, executionResult.newEventMetadata.revision)
-                            .updateLastSynchronizedLocalRevision(executionResult.newEventMetadata.noteId, executionResult.newEventMetadata.revision)
+                            .updateLastKnownLocalRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
+                            .updateLastSynchronizedLocalRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
                             .ignoreLocalEvent(executionResult.newEventMetadata.eventId)
                     )
                 }
@@ -167,9 +167,9 @@ class Synchronizer @Inject constructor(
         compensatingAction.compensatedLocalEvents.forEach { localEvents.removeEvent(it) }
         if (compensatingAction.compensatedLocalEvents.isNotEmpty()) {
             val lastCompensatedLocalEventRevision = compensatingAction.compensatedLocalEvents.last().revision
-            if (state.lastSynchronizedLocalRevisions[noteId] == null || lastCompensatedLocalEventRevision > state.lastSynchronizedLocalRevisions.getValue(noteId)!!) {
+            if (state.lastSynchronizedLocalRevisions[aggId] == null || lastCompensatedLocalEventRevision > state.lastSynchronizedLocalRevisions.getValue(aggId)!!) {
                 updateState(state
-                        .updateLastSynchronizedLocalRevision(noteId, lastCompensatedLocalEventRevision)
+                        .updateLastSynchronizedLocalRevision(aggId, lastCompensatedLocalEventRevision)
                 )
             }
         }
@@ -178,13 +178,13 @@ class Synchronizer @Inject constructor(
 
     private fun groupLocalAndRemoteEventsByNote(localEvents: List<Event>, remoteEvents: List<Event>): SortedMap<String, LocalAndRemoteEvents> {
         val localEventsByNote: Map<String, Collection<Event>> = localEvents.toObservable()
-                .toMultimap { it.noteId }
+                .toMultimap { it.aggId }
                 .blockingGet()
         val remoteEventsByNote: Map<String, Collection<Event>> = remoteEvents.toObservable()
-                .toMultimap { it.noteId }
+                .toMultimap { it.aggId }
                 .blockingGet()
-        val noteIds = localEventsByNote.keys + remoteEventsByNote.keys
-        val result = noteIds.toObservable()
+        val aggId = localEventsByNote.keys + remoteEventsByNote.keys
+        val result = aggId.toObservable()
                 .toMap({ it }, {
                     LocalAndRemoteEvents(
                             localEvents = localEventsByNote[it]?.toList() ?: emptyList(),

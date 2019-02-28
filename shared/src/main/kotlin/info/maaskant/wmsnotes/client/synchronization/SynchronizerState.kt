@@ -28,14 +28,14 @@ data class SynchronizerState internal constructor(
     fun removeRemoteEventToIgnore(eventId: Int) =
             this.copy(remoteEventIdsToIgnore = remoteEventIdsToIgnore - eventId)
 
-    fun updateLastSynchronizedLocalRevision(noteId: String, revision: Int) =
-            this.copy(lastSynchronizedLocalRevisions = lastSynchronizedLocalRevisions + (noteId to revision))
+    fun updateLastSynchronizedLocalRevision(aggId: String, revision: Int) =
+            this.copy(lastSynchronizedLocalRevisions = lastSynchronizedLocalRevisions + (aggId to revision))
 
-    fun updateLastKnownLocalRevision(noteId: String, revision: Int) =
-            this.copy(lastKnownLocalRevisions = lastKnownLocalRevisions + (noteId to revision))
+    fun updateLastKnownLocalRevision(aggId: String, revision: Int) =
+            this.copy(lastKnownLocalRevisions = lastKnownLocalRevisions + (aggId to revision))
 
-    fun updateLastKnownRemoteRevision(noteId: String, revision: Int) =
-            this.copy(lastKnownRemoteRevisions = lastKnownRemoteRevisions + (noteId to revision))
+    fun updateLastKnownRemoteRevision(aggId: String, revision: Int) =
+            this.copy(lastKnownRemoteRevisions = lastKnownRemoteRevisions + (aggId to revision))
 
     companion object {
         fun create(
