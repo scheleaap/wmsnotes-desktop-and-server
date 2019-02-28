@@ -151,11 +151,4 @@ internal class SynchronizationIT {
     private fun givenRemoteEvents(vararg events: Event) {
         events.forEach { remoteEvents.addEvent(it) }
     }
-
-
-    companion object {
-        internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = TODO(), title = "Title $noteId", content = TODO())
-        }
-    }
 }

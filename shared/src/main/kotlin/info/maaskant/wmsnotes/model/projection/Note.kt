@@ -60,11 +60,12 @@ class Note private constructor(
     }
 
     fun apply(event: Event): Pair<Note, Event?> {
+        val expectedRevision = revision + 1
         if (revision == 0) {
             if (event !is NoteCreatedEvent) throw IllegalArgumentException("$event can not be a note's first event")
-            if (event.revision != 1) throw IllegalArgumentException("The revision of $event must be ${revision + 1}")
+            if (event.revision != expectedRevision) throw IllegalArgumentException("The revision of $event must be $expectedRevision")
         } else {
-            if (event.revision != revision + 1) throw IllegalArgumentException("The revision of $event must be ${revision + 1}")
+            if (event.revision != expectedRevision) throw IllegalArgumentException("The revision of $event must be $expectedRevision")
             if (event.noteId != noteId) throw IllegalArgumentException("The note id of $event must be $noteId")
         }
         return when (event) {

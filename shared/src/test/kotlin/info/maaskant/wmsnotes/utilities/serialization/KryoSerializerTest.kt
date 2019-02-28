@@ -27,11 +27,11 @@ internal abstract class KryoSerializerTest<T : Any> {
                 val serializer = createInstance(kryoPool)
 
                 // When
-                val eventAfter = serializer.deserialize(serializer.serialize(itemBefore))
+                val itemAfter = serializer.deserialize(serializer.serialize(itemBefore))
 
                 // Then
-                assertThat(eventAfter).isEqualTo(itemBefore)
-                assertThat(eventAfter.hashCode()).isEqualTo(itemBefore.hashCode())
+                assertThat(itemAfter).isEqualTo(itemBefore)
+                assertThat(itemAfter.hashCode()).isEqualTo(itemBefore.hashCode())
             }
         }
     }
