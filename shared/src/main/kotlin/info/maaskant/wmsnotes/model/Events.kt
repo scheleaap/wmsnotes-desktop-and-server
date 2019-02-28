@@ -47,9 +47,8 @@ class NoteCreatedEvent(eventId: Int, noteId: String, revision: Int, val path: Pa
 }
 
 class NoteDeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(eventId, noteId, revision) {
-    override fun copy(eventId: Int, revision: Int): NoteDeletedEvent {
-        return NoteDeletedEvent(eventId = eventId, noteId = noteId, revision = revision)
-    }
+    override fun copy(eventId: Int, revision: Int): NoteDeletedEvent =
+            NoteDeletedEvent(eventId = eventId, noteId = noteId, revision = revision)
 
     override fun toString() = kotlinToString(properties = arrayOf(NoteDeletedEvent::eventId, NoteDeletedEvent::noteId, NoteDeletedEvent::revision))
 
@@ -57,9 +56,8 @@ class NoteDeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(even
 }
 
 class NoteUndeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(eventId, noteId, revision) {
-    override fun copy(eventId: Int, revision: Int): NoteUndeletedEvent {
-        return NoteUndeletedEvent(eventId = eventId, noteId = noteId, revision = revision)
-    }
+    override fun copy(eventId: Int, revision: Int): NoteUndeletedEvent =
+            NoteUndeletedEvent(eventId = eventId, noteId = noteId, revision = revision)
 
     override fun toString() = kotlinToString(properties = arrayOf(NoteUndeletedEvent::eventId, NoteUndeletedEvent::noteId, NoteUndeletedEvent::revision))
 
@@ -69,9 +67,8 @@ class NoteUndeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(ev
 class AttachmentAddedEvent(eventId: Int, noteId: String, revision: Int, val name: String, val content: ByteArray) : Event(eventId, noteId, revision) {
     private val contentLength = content.size
 
-    override fun copy(eventId: Int, revision: Int): AttachmentAddedEvent {
-        return AttachmentAddedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name, content = content)
-    }
+    override fun copy(eventId: Int, revision: Int): AttachmentAddedEvent =
+            AttachmentAddedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name, content = content)
 
     override fun toString() = kotlinToString(properties = arrayOf(AttachmentAddedEvent::eventId, AttachmentAddedEvent::noteId, AttachmentAddedEvent::revision, AttachmentAddedEvent::name, AttachmentAddedEvent::contentLength))
 
@@ -99,9 +96,8 @@ class AttachmentAddedEvent(eventId: Int, noteId: String, revision: Int, val name
 }
 
 class AttachmentDeletedEvent(eventId: Int, noteId: String, revision: Int, val name: String) : Event(eventId, noteId, revision) {
-    override fun copy(eventId: Int, revision: Int): AttachmentDeletedEvent {
-        return AttachmentDeletedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name)
-    }
+    override fun copy(eventId: Int, revision: Int): AttachmentDeletedEvent =
+            AttachmentDeletedEvent(eventId = eventId, noteId = noteId, revision = revision, name = name)
 
     override fun toString() = kotlinToString(properties = arrayOf(AttachmentDeletedEvent::eventId, AttachmentDeletedEvent::noteId, AttachmentDeletedEvent::revision))
 
@@ -119,9 +115,8 @@ class AttachmentDeletedEvent(eventId: Int, noteId: String, revision: Int, val na
 class ContentChangedEvent(eventId: Int, noteId: String, revision: Int, val content: String) : Event(eventId, noteId, revision) {
     private val contentLength = content.length
 
-    override fun copy(eventId: Int, revision: Int): ContentChangedEvent {
-        return ContentChangedEvent(eventId = eventId, noteId = noteId, revision = revision, content = content)
-    }
+    override fun copy(eventId: Int, revision: Int): ContentChangedEvent =
+            ContentChangedEvent(eventId = eventId, noteId = noteId, revision = revision, content = content)
 
     override fun toString() = kotlinToString(properties = arrayOf(ContentChangedEvent::eventId, ContentChangedEvent::noteId, ContentChangedEvent::revision, ContentChangedEvent::contentLength))
 
@@ -137,9 +132,8 @@ class ContentChangedEvent(eventId: Int, noteId: String, revision: Int, val conte
 }
 
 class TitleChangedEvent(eventId: Int, noteId: String, revision: Int, val title: String) : Event(eventId, noteId, revision) {
-    override fun copy(eventId: Int, revision: Int): TitleChangedEvent {
-        return TitleChangedEvent(eventId = eventId, noteId = noteId, revision = revision, title = title)
-    }
+    override fun copy(eventId: Int, revision: Int): TitleChangedEvent =
+            TitleChangedEvent(eventId = eventId, noteId = noteId, revision = revision, title = title)
 
     override fun toString() = kotlinToString(properties = arrayOf(TitleChangedEvent::eventId, TitleChangedEvent::noteId, TitleChangedEvent::revision, TitleChangedEvent::title))
 
@@ -155,9 +149,8 @@ class TitleChangedEvent(eventId: Int, noteId: String, revision: Int, val title: 
 }
 
 class MovedEvent(eventId: Int, noteId: String, revision: Int, val path: Path) : Event(eventId, noteId, revision) {
-    override fun copy(eventId: Int, revision: Int): MovedEvent {
-        return MovedEvent(eventId = eventId, noteId = noteId, revision = revision, path = path)
-    }
+    override fun copy(eventId: Int, revision: Int): MovedEvent =
+            MovedEvent(eventId = eventId, noteId = noteId, revision = revision, path = path)
 
     override fun toString() = kotlinToString(properties = arrayOf(MovedEvent::eventId, MovedEvent::noteId, MovedEvent::revision, MovedEvent::path))
 
