@@ -6,6 +6,7 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrateg
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
 import io.mockk.clearMocks
@@ -221,7 +222,7 @@ internal class MergingSynchronizationStrategyTest {
 
     companion object {
         internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = TODO(), title = "Title $noteId", content = TODO())
+            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = Path("path-$noteId"), title = "Title $noteId", content = "Text $noteId")
         }
     }
 }

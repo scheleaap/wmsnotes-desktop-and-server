@@ -1,9 +1,6 @@
 package info.maaskant.wmsnotes.model.projection.cache
 
-import info.maaskant.wmsnotes.model.AttachmentAddedEvent
-import info.maaskant.wmsnotes.model.ContentChangedEvent
-import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
@@ -18,7 +15,7 @@ import org.junit.jupiter.api.Test
 internal class CachingNoteProjectorTest {
     private val noteId = "note"
 
-    private val event1 = NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = "Title", content = "Text")
+    private val event1 = NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = Path("path"), title = "Title", content = "Text")
     private val event2 = AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = "att-1", content = "data1".toByteArray())
     private val event3 = AttachmentAddedEvent(eventId = 3, noteId = noteId, revision = 3, name = "att-2", content = "data2".toByteArray())
 

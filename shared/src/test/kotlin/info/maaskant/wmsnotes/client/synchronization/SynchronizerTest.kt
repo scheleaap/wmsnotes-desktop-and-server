@@ -1067,7 +1067,7 @@ internal class SynchronizerTest {
 
         internal fun modelCommand(noteId: String, lastRevision: Int? = null): Command {
             return if (lastRevision == null) {
-                CreateNoteCommand(noteId, path = TODO(), title = "Title $noteId", content = TODO())
+                CreateNoteCommand(noteId, path = Path("path-$noteId"), title = "Title $noteId", content = "Text $noteId")
             } else {
                 DeleteNoteCommand(noteId, lastRevision)
             }
@@ -1075,7 +1075,7 @@ internal class SynchronizerTest {
         }
 
         internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = TODO(), title = "Title $noteId", content = TODO())
+            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = Path("path-$noteId"), title = "Title $noteId", content = "Text $noteId")
         }
     }
 }

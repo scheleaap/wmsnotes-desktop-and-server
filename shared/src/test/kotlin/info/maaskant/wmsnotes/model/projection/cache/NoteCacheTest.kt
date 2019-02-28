@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.model.projection.cache
 
 import info.maaskant.wmsnotes.model.AttachmentAddedEvent
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.projection.Note
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -10,7 +11,7 @@ import java.io.File
 internal abstract class NoteCacheTest {
     protected val noteId = "note"
 
-    protected val noteAfterEvent1 = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = TODO(), title = "Title", content = "Text")).component1()
+    protected val noteAfterEvent1 = Note().apply(NoteCreatedEvent(eventId = 1, noteId = noteId, revision = 1, path = Path("path"), title = "Title", content = "Text")).component1()
     protected val noteAfterEvent2 = noteAfterEvent1.apply(AttachmentAddedEvent(eventId = 2, noteId = noteId, revision = 2, name = "att-1", content = "data1".toByteArray())).component1()
     protected val noteAfterEvent3 = noteAfterEvent2.apply(AttachmentAddedEvent(eventId = 3, noteId = noteId, revision = 3, name = "att-2", content = "data2".toByteArray())).component1()
 
@@ -73,7 +74,7 @@ internal abstract class NoteCacheTest {
         c.put(noteAfterEvent3)
         val otherNoteWithHigherRevision = givenANote(
                 Note()
-                        .apply(NoteCreatedEvent(eventId = 1, noteId = "other", revision = 1, path = TODO(), title = "Title", content = "Text")).component1()
+                        .apply(NoteCreatedEvent(eventId = 1, noteId = "other", revision = 1, path = Path("p"), title = "Title", content = "Text")).component1()
                         .apply(AttachmentAddedEvent(eventId = 2, noteId = "other", revision = 2, name = "att-1", content = "data1".toByteArray())).component1()
                         .apply(AttachmentAddedEvent(eventId = 3, noteId = "other", revision = 3, name = "att-2", content = "data2".toByteArray())).component1()
                         .apply(AttachmentAddedEvent(eventId = 4, noteId = "other", revision = 4, name = "att-3", content = "data3".toByteArray())).component1()

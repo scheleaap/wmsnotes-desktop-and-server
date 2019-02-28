@@ -1,9 +1,6 @@
 package info.maaskant.wmsnotes.desktop.client.indexing
 
-import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.NoteDeletedEvent
-import info.maaskant.wmsnotes.model.NoteUndeletedEvent
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.mockk.clearMocks
 import io.mockk.every
@@ -20,9 +17,9 @@ import org.junit.jupiter.api.Test
 // - TODO Event: Change title
 // - TODO Event: Move
 internal class NoteIndexTest {
-    private val noteId = "note-1"
-    private val title = "Title 1"
-    private val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path = TODO(), title = title, content = TODO())
+    private val noteId = "note"
+    private val title = "Title"
+    private val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path = Path("path"), title = title, content = "Text")
 
     private val scheduler = Schedulers.trampoline()
 

@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.model.eventstore
 
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.mockk.clearMocks
 import io.mockk.every
@@ -29,7 +30,7 @@ internal class FileEventStoreTest : EventStoreTest() {
     @Test
     fun `appendEvent, check file`() {
         // Given
-        val eventIn = NoteCreatedEvent(eventId = 0, noteId = "note", revision = 1, path = TODO(), title = "Title", content = "Text")
+        val eventIn = NoteCreatedEvent(eventId = 0, noteId = "note", revision = 1, path = Path("path"), title = "Title", content = "Text")
         val eventOut = eventIn.copy(eventId = 1)
         val r = createInstance()
 
