@@ -16,22 +16,27 @@ class KryoEventSerializer(kryoPool: Pool<Kryo>) : KryoSerializer<Event>(
         Registration(AttachmentAddedEvent::class.java, AttachmentAddedEventSerializer(), 14),
         Registration(AttachmentDeletedEvent::class.java, AttachmentDeletedEventSerializer(), 15),
         Registration(ContentChangedEvent::class.java, ContentChangedEventSerializer(), 16),
-        Registration(TitleChangedEvent::class.java, TitleChangedEventSerializer(), 17)
+        Registration(TitleChangedEvent::class.java, TitleChangedEventSerializer(), 17),
+        Registration(MovedEvent::class.java, MovedEventSerializer(), 18)
 ) {
     private class NoteCreatedEventSerializer : Serializer<NoteCreatedEvent>() {
         override fun write(kryo: Kryo, output: Output, it: NoteCreatedEvent) {
             output.writeInt(it.eventId, true)
             output.writeString(it.noteId)
             output.writeInt(it.revision, true)
+            output.writeString(it.path.toString())
             output.writeString(it.title)
+            output.writeString(it.content)
         }
 
         override fun read(kryo: Kryo, input: Input, clazz: Class<out NoteCreatedEvent>): NoteCreatedEvent {
             val eventId = input.readInt(true)
             val noteId = input.readString()
             val revision = input.readInt(true)
+            val path = Path.from(input.readString())
             val title = input.readString()
-            return NoteCreatedEvent(eventId = eventId, noteId = noteId, revision = revision, path = TODO(),title = title,content = TODO())
+            val content = input.readString()
+            return NoteCreatedEvent(eventId = eventId, noteId = noteId, revision = revision, path = path, title = title, content = content)
         }
     }
 
@@ -134,6 +139,23 @@ class KryoEventSerializer(kryoPool: Pool<Kryo>) : KryoSerializer<Event>(
             val revision = input.readInt(true)
             val title = input.readString()
             return TitleChangedEvent(eventId = eventId, noteId = noteId, revision = revision, title = title)
+        }
+    }
+
+    private class MovedEventSerializer : Serializer<MovedEvent>() {
+        override fun write(kryo: Kryo, output: Output, it: MovedEvent) {
+            output.writeInt(it.eventId, true)
+            output.writeString(it.noteId)
+            output.writeInt(it.revision, true)
+            output.writeString(it.path.toString())
+        }
+
+        override fun read(kryo: Kryo, input: Input, clazz: Class<out MovedEvent>): MovedEvent {
+            val eventId = input.readInt(true)
+            val noteId = input.readString()
+            val revision = input.readInt(true)
+            val path = Path.from(input.readString())
+            return MovedEvent(eventId = eventId, noteId = noteId, revision = revision, path = path)
         }
     }
 }
