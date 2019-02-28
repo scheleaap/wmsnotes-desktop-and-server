@@ -13,21 +13,37 @@ sealed class Event(val eventId: Int, val noteId: String, val revision: Int) : Su
 }
 
 class NoteCreatedEvent(eventId: Int, noteId: String, revision: Int, val path: Path, val title: String, val content: String) : Event(eventId, noteId, revision) {
+    private val contentLength = content.length
+
     override fun copy(eventId: Int, revision: Int): NoteCreatedEvent {
-        return NoteCreatedEvent(eventId = eventId, noteId = noteId, revision = revision, path = Path("a"), title = title, content = "")
+        return NoteCreatedEvent(
+                eventId = eventId,
+                noteId = noteId,
+                revision = revision,
+                path = path,
+                title = title,
+                content = content
+        )
     }
 
-    override fun toString() = kotlinToString(properties = arrayOf(NoteCreatedEvent::eventId, NoteCreatedEvent::noteId, NoteCreatedEvent::revision, NoteCreatedEvent::title))
+    override fun toString() = kotlinToString(properties = arrayOf(
+            NoteCreatedEvent::eventId,
+            NoteCreatedEvent::noteId,
+            NoteCreatedEvent::revision,
+            NoteCreatedEvent::path,
+            NoteCreatedEvent::title,
+            NoteCreatedEvent::contentLength
+    ))
 
     override fun canEqual(other: Any?) = other is NoteCreatedEvent
 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
-            properties = arrayOf(NoteCreatedEvent::title),
+            properties = arrayOf(NoteCreatedEvent::path, NoteCreatedEvent::title, NoteCreatedEvent::content),
             superEquals = { super.equals(other) }
     )
 
-    override fun hashCode() = Objects.hash(title, super.hashCode())
+    override fun hashCode() = Objects.hash(path, title, content, super.hashCode())
 }
 
 class NoteDeletedEvent(eventId: Int, noteId: String, revision: Int) : Event(eventId, noteId, revision) {

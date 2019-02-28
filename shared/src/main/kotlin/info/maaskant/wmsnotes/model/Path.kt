@@ -13,7 +13,7 @@ data class Path(val elements: List<String>) {
     }
 
     companion object {
-        fun fromString(path: String): Path =
+        fun from(path: String): Path =
                 Path(path.split('/'))
     }
 }

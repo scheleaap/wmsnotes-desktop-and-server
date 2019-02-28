@@ -1,11 +1,9 @@
 package info.maaskant.wmsnotes.model
 
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-import java.util.*
 
 internal class EventsTest {
     @Test
@@ -51,7 +49,7 @@ internal class EventsTest {
     @TestFactory
     fun `copy with revision for all event types`(): List<DynamicTest> {
         return listOf(
-                NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, path = TODO(), title = "Title 1", content = "Text 1"),
+                NoteCreatedEvent(eventId = 0, noteId = "note-1", revision = 1, path = Path.from("folder-1"), title = "Title 1", content = "Text 1"),
                 NoteDeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
                 NoteUndeletedEvent(eventId = 0, noteId = "note-1", revision = 1),
                 AttachmentAddedEvent(eventId = 0, noteId = "note-1", revision = 1, name = "att-1", content = "data".toByteArray()),

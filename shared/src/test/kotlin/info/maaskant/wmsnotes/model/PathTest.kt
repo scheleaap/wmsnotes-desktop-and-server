@@ -51,7 +51,7 @@ internal class PathTest {
     @Test
     fun `create from string`() {
         // When
-        val path = Path.fromString("el1/el2/el3")
+        val path = Path.from("el1/el2/el3")
 
         // Then
         assertThat(path.elements).isEqualTo(listOf("el1", "el2", "el3"))
@@ -60,21 +60,21 @@ internal class PathTest {
     @Test
     fun `create from string, blank`() {
         assertThrows<IllegalArgumentException> {
-            Path.fromString(" ")
+            Path.from(" ")
         }
     }
 
     @Test
     fun `create from string, slash problem 1`() {
         assertThrows<IllegalArgumentException> {
-            Path.fromString("/")
+            Path.from("/")
         }
     }
 
     @Test
     fun `create from string, slash problem 2`() {
         assertThrows<IllegalArgumentException> {
-            Path.fromString("a//b")
+            Path.from("a//b")
         }
     }
 
