@@ -3,6 +3,7 @@ package info.maaskant.wmsnotes.desktop.main
 import info.maaskant.wmsnotes.desktop.client.indexing.NoteIndex
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.model.projection.NoteProjector
@@ -31,7 +32,7 @@ class NavigationViewModel @Inject constructor(
 
     final val allEventsWithUpdates: ConnectableObservable<Event> = noteIndex.getNotes()
             .subscribeOn(Schedulers.io())
-            .map { NoteCreatedEvent(eventId = 0, noteId = it.noteId, revision = 0, path = TODO(), title = it.title, content = TODO()) as Event }
+            .map { NoteCreatedEvent(eventId = 0, noteId = it.noteId, revision = 0, path = Path(), title = it.title, content = "") as Event }
             .mergeWith(eventStore.getEventUpdates())
             .publish()
 

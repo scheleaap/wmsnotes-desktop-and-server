@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.projection.Note
 import info.maaskant.wmsnotes.utilities.serialization.KryoSerializerTest
 import org.junit.jupiter.api.Disabled
@@ -27,7 +28,7 @@ internal class KryoManualMergeStrategyStateSerializerTest : KryoSerializerTest<M
         private const val content = "text"
 
         internal fun modelEvent(eventId: Int, noteId: Int, revision: Int): Event {
-            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = TODO(), title = "Title $noteId", content = TODO())
+            return NoteCreatedEvent(eventId = eventId, noteId = "note-$noteId", revision = revision, path = Path("path-$noteId"), title = "Title $noteId", content = "Text $noteId")
         }
     }
 }
