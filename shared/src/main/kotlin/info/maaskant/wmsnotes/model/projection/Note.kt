@@ -76,7 +76,7 @@ class Note private constructor(
             is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
             is ContentChangedEvent -> applyContentChanged(event)
             is TitleChangedEvent -> applyTitleChanged(event)
-            is MovedEvent -> TODO()
+            is MovedEvent -> applyMoved(event)
         }
     }
 
@@ -120,7 +120,9 @@ class Note private constructor(
         return copy(
                 noteId = event.noteId,
                 revision = event.revision,
+                path = event.path,
                 title = event.title,
+                content = event.content,
                 exists = true
         ) to event
     }
@@ -134,6 +136,13 @@ class Note private constructor(
         } else {
             noChanges()
         }
+    }
+
+    private fun applyMoved(event: MovedEvent): Pair<Note, Event?> {
+        return if (path == event.path) noChanges() else copy(
+                revision = event.revision,
+                path = event.path
+        ) to event
     }
 
     private fun applyTitleChanged(event: TitleChangedEvent): Pair<Note, Event?> {

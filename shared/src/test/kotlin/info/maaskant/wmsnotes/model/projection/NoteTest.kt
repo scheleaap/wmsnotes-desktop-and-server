@@ -383,8 +383,8 @@ internal class NoteTest {
     @Test
     fun `content changed`() {
         // Given
-        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text"))
-        val eventIn = ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, content = "Text")
+        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text 1"))
+        val eventIn = ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, content = "Text 2")
 
         // When
         val (noteAfter, eventOut) = noteBefore.apply(eventIn)
@@ -392,9 +392,9 @@ internal class NoteTest {
         // Then
         assertThat(eventOut).isEqualTo(eventIn)
         assertThat(noteBefore.revision).isEqualTo(1)
-        assertThat(noteBefore.content).isEqualTo("")
+        assertThat(noteBefore.content).isEqualTo("Text 1")
         assertThat(noteAfter.revision).isEqualTo(2)
-        assertThat(noteAfter.content).isEqualTo("Text")
+        assertThat(noteAfter.content).isEqualTo("Text 2")
     }
 
     @Test
@@ -415,7 +415,7 @@ internal class NoteTest {
     fun `content changed, idempotence 2`() {
         // Given
         val noteBefore = noteWithEvents(
-                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text"),
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text 1"),
                 ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, content = "Text 2")
         )
         val eventIn = ContentChangedEvent(eventId = 0, noteId = randomNoteId, revision = 3, content = "Text 2")
@@ -431,7 +431,7 @@ internal class NoteTest {
     @Test
     fun `title changed`() {
         // Given
-        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text"))
+        val noteBefore = noteWithEvents(NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title 1", content = "Text"))
         val eventIn = TitleChangedEvent(eventId = 0, noteId = randomNoteId, revision = 2, title = "Title 2")
 
         // When
@@ -511,7 +511,7 @@ internal class NoteTest {
     fun `moved, idempotence 2`() {
         // Given
         val noteBefore = noteWithEvents(
-                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el"), title = "Title", content = "Text"),
+                NoteCreatedEvent(eventId = 0, noteId = randomNoteId, revision = 1, path = Path("el1"), title = "Title", content = "Text"),
                 MovedEvent(eventId = 0, noteId = randomNoteId, revision = 2, path = Path("el2"))
         )
         val eventIn = MovedEvent(eventId = 0, noteId = randomNoteId, revision = 3, path = Path("el2"))
@@ -531,7 +531,7 @@ internal class NoteTest {
         val revision = 0
         val exists = false
         val noteId = ""
-        val path = TODO()
+        val path = Path("el")
         val title = ""
         val content = "Text"
         val attachments = emptyMap<String, ByteArray>()
