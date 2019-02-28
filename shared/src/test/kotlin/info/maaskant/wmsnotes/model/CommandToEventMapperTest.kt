@@ -15,7 +15,7 @@ internal class CommandToEventMapperTest {
         val eventRevision = lastRevision + 1
 
         val pairs = listOf(
-                CreateNoteCommand(noteId = noteId, path = TODO(), title = "Title 1", content = "Text 1") to NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path = TODO(), title = "Title 1", content = "Text 1"),
+                CreateNoteCommand(noteId = noteId, path = Path("el1", "el2"), title = "Title 1", content = "Text 1") to NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 1, path = Path("el1","el2"), title = "Title 1", content = "Text 1"),
                 DeleteNoteCommand(noteId = noteId, lastRevision = lastRevision) to NoteDeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision),
                 UndeleteNoteCommand(noteId = noteId, lastRevision = lastRevision) to NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = eventRevision),
                 AddAttachmentCommand(noteId = noteId, lastRevision = lastRevision, name = "att-1", content = "data".toByteArray()) to AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = eventRevision, name = "att-1", content = "data".toByteArray()),
@@ -35,7 +35,7 @@ internal class CommandToEventMapperTest {
     @Test
     fun `create, note id null`() {
         // Given
-        val command = CreateNoteCommand(null, path = TODO(), title = "Title 1", content = "Text 1")
+        val command = CreateNoteCommand(null, path = Path("el"), title = "Title 1", content = "Text 1")
 
         // When
         val event = CommandToEventMapper().map(command)
