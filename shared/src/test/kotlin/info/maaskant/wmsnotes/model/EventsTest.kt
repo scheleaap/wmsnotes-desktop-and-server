@@ -32,7 +32,7 @@ internal class EventsTest {
     }
 
     @TestFactory
-    fun `copy with eventId for all event types`(): List<DynamicTest> {
+    fun `copy with eventId`(): List<DynamicTest> {
         return listOf(
                 NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = path, title = title, content = content),
                 NoteDeletedEvent(eventId = 0, aggId = aggId, revision = 1),
@@ -57,7 +57,7 @@ internal class EventsTest {
     }
 
     @TestFactory
-    fun `copy with revision for all event types`(): List<DynamicTest> {
+    fun `copy with revision`(): List<DynamicTest> {
         return listOf(
                 NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = path, title = title, content = content),
                 NoteDeletedEvent(eventId = 0, aggId = aggId, revision = 1),
@@ -81,7 +81,7 @@ internal class EventsTest {
     }
 
     @TestFactory
-    fun `equals and hashCode for all event types`(): List<DynamicTest> {
+    fun `equals and hashCode`(): List<DynamicTest> {
         return listOf(
                 Item(
                         o = NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = path, title = title, content = content),

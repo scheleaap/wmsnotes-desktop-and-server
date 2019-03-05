@@ -112,7 +112,7 @@ internal class NoteTest {
     }
 
     @Test
-    fun `after construction`() {
+    fun `after instantiation`() {
         // When
         val note = Note()
 
@@ -564,13 +564,15 @@ internal class NoteTest {
             }
         }
     }
-}
 
-private fun noteWithEvents(vararg events: NoteEvent): Note {
-    var note = Note()
-    for (event in events) {
-        val (newNote, _) = note.apply(event)
-        note = newNote
+    companion object {
+        private fun noteWithEvents(vararg events: NoteEvent): Note {
+            var note = Note()
+            for (event in events) {
+                val (newNote, _) = note.apply(event)
+                note = newNote
+            }
+            return note
+        }
     }
-    return note
 }

@@ -35,9 +35,9 @@ class Note private constructor(
             attachmentHashes = emptyMap()
     )
 
-    override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::revision, Note::exists, Note::aggId, Note::path, Note::title, Note::content, Note::attachmentHashes))
-    override fun hashCode() = Objects.hash(revision, exists, aggId, path, title, content, attachmentHashes)
-    override fun toString() = kotlinToString(properties = arrayOf(Note::revision, Note::exists, Note::aggId, Note::path, Note::title, Note::contentLength, Note::attachmentHashes))
+    override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::aggId, Note::revision, Note::exists, Note::path, Note::title, Note::content, Note::attachmentHashes))
+    override fun hashCode() = Objects.hash(aggId, revision, exists, path, title, content, attachmentHashes)
+    override fun toString() = kotlinToString(properties = arrayOf(Note::aggId, Note::revision, Note::exists, Note::path, Note::title, Note::contentLength, Note::attachmentHashes))
 
     private fun copy(
             revision: Int = this.revision,
@@ -64,7 +64,7 @@ class Note private constructor(
     override fun apply(event: Event): Pair<Note, Event?> {
         val expectedRevision = revision + 1
         if (revision == 0) {
-            if (event !is NoteCreatedEvent) throw IllegalArgumentException("$event can not be a note's first event")
+            if (event !is NoteCreatedEvent) throw IllegalArgumentException("$event cannot be a note's first event")
             if (event.revision != expectedRevision) throw IllegalArgumentException("The revision of $event must be $expectedRevision")
         } else {
             if (event.revision != expectedRevision) throw IllegalArgumentException("The revision of $event must be $expectedRevision")
@@ -81,7 +81,7 @@ class Note private constructor(
                 is TitleChangedEvent -> applyTitleChanged(event)
                 is MovedEvent -> applyMoved(event)
             }
-            else -> noChanges()
+            else -> throw IllegalArgumentException("Wrong event type $event")
         }
     }
 
