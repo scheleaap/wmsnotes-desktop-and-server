@@ -29,6 +29,14 @@ class MenuAndToolbarView : View() {
 
     private val markdownEditorPane: MarkdownEditorPane by di()
 
+    private val createFolderAction = StatelessAction(messageKey = "menu.file.createFolder", graphic = FontAwesomeIconView(FontAwesomeIcon.FOLDER_ALT).apply { size = largerIconSize },
+            accelerator = "Shortcut+N") {
+        applicationController.createFolder.onNext(Unit)
+    }
+    private val deleteFolderAction = StatelessAction(messageKey = "menu.file.deleteFolder",
+            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+        applicationController.deleteCurrentFolder.onNext(Unit)
+    }
     private val createNoteAction = StatelessAction(messageKey = "menu.file.createNote", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = largerIconSize },
             accelerator = "Shortcut+N") {
         applicationController.createNote.onNext(Unit)
@@ -106,6 +114,8 @@ class MenuAndToolbarView : View() {
                     menu(Messages["menu.file"]) {
                         item(createNoteAction)
                         item(deleteNoteAction)
+                        item(createFolderAction)
+                        item(deleteFolderAction)
                         separator()
                         item(exitAction)
                     }
@@ -133,6 +143,8 @@ class MenuAndToolbarView : View() {
                     orientation = Orientation.HORIZONTAL
                     button(createNoteAction)
                     button(deleteNoteAction)
+                    button(createFolderAction)
+                    button(deleteFolderAction)
                     // toggleswitch {
                     this += ToggleSwitch().apply {
                         selectedProperty().toObservable()

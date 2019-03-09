@@ -3,6 +3,7 @@ package info.maaskant.wmsnotes.desktop.main
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.schedulers.Schedulers
@@ -10,6 +11,8 @@ import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import org.springframework.stereotype.Component
 import java.io.File
+import java.time.LocalDateTime
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,6 +27,10 @@ class ApplicationController @Inject constructor(
     private val logger by logger()
 
     // TODO: Replace with SerializedSubject
+    // Folder
+    final val createFolder: Subject<Unit> = PublishSubject.create()
+    final val deleteCurrentFolder: Subject<Unit> = PublishSubject.create()
+    // Note
     final val selectNote: Subject<NavigationViewModel.Selection> = PublishSubject.create()
     final val createNote: Subject<Unit> = PublishSubject.create()
     final val deleteCurrentNote: Subject<Unit> = PublishSubject.create()
@@ -34,10 +41,22 @@ class ApplicationController @Inject constructor(
     private var i: Int = 1
 
     init {
+        // Folder
+        createFolder
+                .subscribeOn(Schedulers.computation())
+                .map { CreateFolderCommand(path = Path("Folder " + LocalDateTime.now().toString()), lastRevision = 0) }
+                .subscribe(commandProcessor.commands)
+//        deleteCurrentNote
+//                .subscribeOn(Schedulers.computation())
+//                .filter { navigationViewModel.currentNoteValue != null }
+//                .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision) }
+//                .subscribe(commandProcessor.commands)
+
+        // Note
         selectNote.subscribe(navigationViewModel.selectionRequest)
         createNote
                 .subscribeOn(Schedulers.computation())
-                .map { CreateNoteCommand(null, path = Path(), title = "New Note ${i++}", content = "") }
+                .map { CreateNoteCommand(null, path = Path(), title = "Note ${i++}", content = "") }
                 .subscribe(commandProcessor.commands)
         deleteCurrentNote
                 .subscribeOn(Schedulers.computation())

@@ -89,7 +89,7 @@ class NavigationViewModel @Inject constructor(
                             .startWith(SelectionSwitchingProcessNotification.Loading(true))
                 }
                 is Selection.FolderSelection -> {
-                    TODO()
+                    Observable.just(SelectionSwitchingProcessNotification.Nothing as SelectionSwitchingProcessNotification)
                 }
             }.concatMap { it ->
                 if (it !is SelectionSwitchingProcessNotification.Loading) {
@@ -111,7 +111,7 @@ class NavigationViewModel @Inject constructor(
     sealed class Selection {
         object Nothing : Selection()
         data class NoteSelection(val aggId: String, val title: String) : Selection()
-        data class FolderSelection(val path: String, val title: String) : Selection()
+        data class FolderSelection(val aggId: String, val title: String) : Selection()
     }
 
     sealed class SelectionSwitchingProcessNotification {

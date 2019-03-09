@@ -180,7 +180,7 @@ class SynchronizationConfiguration {
     @Bean
     @Singleton
     fun mergeStrategy(differenceAnalyzer: DifferenceAnalyzer, differenceCompensator: DifferenceCompensator) =
-            KeepBothMergeStrategy(differenceAnalyzer, differenceCompensator) { UUID.randomUUID().toString() }
+            KeepBothMergeStrategy(differenceAnalyzer, differenceCompensator) { "n-" + UUID.randomUUID().toString() }
 
     @Bean
     @Singleton
