@@ -8,7 +8,7 @@ import org.apache.commons.codec.digest.DigestUtils
 
 sealed class FolderEvent(eventId: Int, revision: Int, val path: Path) : Event(eventId, aggId(path), revision) {
     companion object {
-        private fun aggId(path: Path): String {
+        fun aggId(path: Path): String {
             return "f-" + String(Hex.encodeHex(DigestUtils.sha1(path.toString())))
         }
     }
