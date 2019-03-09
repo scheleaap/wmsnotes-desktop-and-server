@@ -1,14 +1,16 @@
-package info.maaskant.wmsnotes.model
+package info.maaskant.wmsnotes.model.note
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
-import info.maaskant.wmsnotes.model.note.*
+import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.model.KryoEventSerializer
+import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.utilities.serialization.KryoSerializerTest
 
-internal class KryoEventSerializerTest : KryoSerializerTest<Event>() {
+internal class KryoNoteEventSerializationTest : KryoSerializerTest<Event>() {
     private val aggId = "note-1"
 
-    override val items: List<Event> = listOf(
+    override val items: List<NoteEvent> = listOf(
             NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = Path("path"), title = "Title", content = "Text"),
             NoteDeletedEvent(eventId = 1, aggId = aggId, revision = 1),
             NoteUndeletedEvent(eventId = 1, aggId = aggId, revision = 1),

@@ -1,19 +1,15 @@
 package info.maaskant.wmsnotes.model.folder
 
 import au.com.console.kassava.kotlinToString
-import com.google.common.hash.Hashing.md5
-import com.google.common.hash.Hashing.sha1
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
 
 sealed class FolderEvent(eventId: Int, revision: Int, val path: Path) : Event(eventId, aggId(path), revision) {
     companion object {
         private fun aggId(path: Path): String {
-            return String(Hex.encodeHex(DigestUtils.sha1(path.toString())))
+            return "f-" + String(Hex.encodeHex(DigestUtils.sha1(path.toString())))
         }
     }
 }

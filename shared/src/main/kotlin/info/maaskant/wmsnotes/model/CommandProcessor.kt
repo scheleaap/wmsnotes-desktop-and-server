@@ -1,5 +1,7 @@
 package info.maaskant.wmsnotes.model
 
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
+import info.maaskant.wmsnotes.model.CommandHandler.Result.*
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.Optional
 import info.maaskant.wmsnotes.utilities.logger
@@ -14,7 +16,7 @@ import javax.inject.Singleton
 @Singleton
 class CommandProcessor @Inject constructor(
         private val eventStore: EventStore,
-        private val commandHandler: CommandHandler
+        private vararg val commandHandlers: CommandHandler
 ) {
 
     private val logger by logger()
@@ -64,6 +66,12 @@ class CommandProcessor @Inject constructor(
     }
 
     private fun handleCommand(command: Command): Optional<Event> {
-        return commandHandler.handle(command)
+        for (commandHandler in commandHandlers) {
+            val result = commandHandler.handle(command)
+            if (result is Handled) {
+                return result.newEvent
+            }
+        }
+        throw IllegalArgumentException("Command $command cannot be handled by any known command handler")
     }
 }

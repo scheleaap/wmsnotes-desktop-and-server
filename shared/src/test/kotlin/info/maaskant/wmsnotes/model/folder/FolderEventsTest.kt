@@ -21,7 +21,7 @@ internal class FolderEventsTest {
                 // Add more classes here
         ).map {
             DynamicTest.dynamicTest(it::class.simpleName) {
-                assertThat(it.aggId).isEqualTo(hash)
+                assertThat(it.aggId).isEqualTo("f-$hash")
             }
         }
     }

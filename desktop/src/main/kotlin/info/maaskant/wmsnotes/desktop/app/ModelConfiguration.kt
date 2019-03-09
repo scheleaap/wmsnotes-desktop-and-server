@@ -47,7 +47,7 @@ class ModelConfiguration {
     fun noteCommandHandler(repository: AggregateRepository<Note>): AggregateCommandHandler<Note> =
             AggregateCommandHandler(
                     repository,
-                    CommandToEventMapper()
+                    NoteCommandToEventMapper()
             )
 
     @Bean

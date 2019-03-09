@@ -1,13 +1,16 @@
-package info.maaskant.wmsnotes.model
+package info.maaskant.wmsnotes.model.note
 
-import info.maaskant.wmsnotes.model.note.*
+import info.maaskant.wmsnotes.model.Path
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import java.util.*
 
-internal class CommandToEventMapperTest {
+internal class NoteCommandToEventMapperTest {
+    private val path = Path("el1", "el2")
+    private val title = "Title"
+    private val content = "Text"
 
     @TestFactory
     fun test(): List<DynamicTest> {
@@ -16,19 +19,19 @@ internal class CommandToEventMapperTest {
         val eventRevision = lastRevision + 1
 
         val pairs = listOf(
-                CreateNoteCommand(aggId = aggId, path = Path("el1", "el2"), title = "Title 1", content = "Text 1") to NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = Path("el1", "el2"), title = "Title 1", content = "Text 1"),
+                CreateNoteCommand(aggId = aggId, path = path, title = title, content = content) to NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = path, title = title, content = content),
                 DeleteNoteCommand(aggId = aggId, lastRevision = lastRevision) to NoteDeletedEvent(eventId = 0, aggId = aggId, revision = eventRevision),
                 UndeleteNoteCommand(aggId = aggId, lastRevision = lastRevision) to NoteUndeletedEvent(eventId = 0, aggId = aggId, revision = eventRevision),
                 AddAttachmentCommand(aggId = aggId, lastRevision = lastRevision, name = "att-1", content = "data".toByteArray()) to AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = eventRevision, name = "att-1", content = "data".toByteArray()),
                 DeleteAttachmentCommand(aggId = aggId, lastRevision = lastRevision, name = "att-1") to AttachmentDeletedEvent(eventId = 0, aggId = aggId, revision = eventRevision, name = "att-1"),
-                ChangeContentCommand(aggId = aggId, lastRevision = lastRevision, content = "Text") to ContentChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, content = "Text"),
-                ChangeTitleCommand(aggId = aggId, lastRevision = lastRevision, title = "Title") to TitleChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, title = "Title"),
-                MoveCommand(aggId = aggId, lastRevision = lastRevision, path = Path("el1", "el2")) to MovedEvent(eventId = 0, aggId = aggId, revision = eventRevision, path = Path("el1", "el2"))
+                ChangeContentCommand(aggId = aggId, lastRevision = lastRevision, content = content) to ContentChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, content = content),
+                ChangeTitleCommand(aggId = aggId, lastRevision = lastRevision, title = title) to TitleChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, title = title),
+                MoveCommand(aggId = aggId, lastRevision = lastRevision, path = path) to MovedEvent(eventId = 0, aggId = aggId, revision = eventRevision, path = path)
                 // Add more classes here
         )
         return pairs.map { (command, expectedEvent) ->
             DynamicTest.dynamicTest("${command::class.simpleName} to ${expectedEvent::class.simpleName}") {
-                assertThat(CommandToEventMapper().map(command)).isEqualTo(expectedEvent)
+                assertThat(NoteCommandToEventMapper().map(command)).isEqualTo(expectedEvent)
             }
         }
     }
@@ -36,13 +39,14 @@ internal class CommandToEventMapperTest {
     @Test
     fun `create, aggregate id null`() {
         // Given
-        val command = CreateNoteCommand(null, path = Path("el"), title = "Title 1", content = "Text 1")
+        val command = CreateNoteCommand(null, path = path, title = title, content = content)
 
         // When
-        val event = CommandToEventMapper().map(command)
+        val event = NoteCommandToEventMapper().map(command)
 
         // Then
-        UUID.fromString(event.aggId) // Expected not to throw an exception
+        assertThat(event.aggId).startsWith("n-")
+        UUID.fromString(event.aggId.substring(startIndex = 2)) // Expected not to throw an exception
     }
 
 }

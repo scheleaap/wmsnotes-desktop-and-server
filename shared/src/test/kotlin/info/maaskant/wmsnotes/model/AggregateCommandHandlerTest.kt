@@ -1,7 +1,9 @@
 package info.maaskant.wmsnotes.model
 
+import info.maaskant.wmsnotes.model.CommandHandler.Result.*
 import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
+import info.maaskant.wmsnotes.model.note.NoteCommandToEventMapper
 import info.maaskant.wmsnotes.utilities.Optional
 import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
@@ -11,7 +13,7 @@ import org.junit.jupiter.api.Test
 internal class AggregateCommandHandlerTest {
 
     private val repository: AggregateRepository<Note> = mockk()
-    private val commandToEventMapper: CommandToEventMapper = mockk()
+    private val commandToEventMapper: NoteCommandToEventMapper = mockk()
 
     private lateinit var handler: AggregateCommandHandler<Note>
 
@@ -40,7 +42,7 @@ internal class AggregateCommandHandlerTest {
         val result = handler.handle(command)
 
         // Then
-        assertThat(result).isEqualTo(Optional(event2))
+        assertThat(result).isEqualTo(Handled(Optional(event2)))
     }
 
     @Test
@@ -57,7 +59,7 @@ internal class AggregateCommandHandlerTest {
         val result = handler.handle(command)
 
         // Then
-        assertThat(result).isEqualTo(Optional<Event>())
+        assertThat(result).isEqualTo(Handled(Optional()))
     }
 
     private fun createEvent(aggId: String, revision: Int): Event {

@@ -1,15 +1,18 @@
 package info.maaskant.wmsnotes.model
 
+import info.maaskant.wmsnotes.model.CommandHandler.Result.*
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.Optional
 import io.mockk.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 internal class CommandProcessorTest {
 
     private val eventStore: EventStore = mockk()
-    private val commandHandler: CommandHandler = mockk()
+    private val commandHandler1: CommandHandler = mockk()
+    private val commandHandler2: CommandHandler = mockk()
 
     private lateinit var commandProcessor: CommandProcessor
 
@@ -17,21 +20,41 @@ internal class CommandProcessorTest {
     fun init() {
         clearMocks(
                 eventStore,
-                commandHandler
+                commandHandler2
         )
 
         val eventSlot = slot<Event>()
         every { eventStore.appendEvent(capture(eventSlot)) }.answers { eventSlot.captured }
-
-        commandProcessor = CommandProcessor(eventStore, commandHandler)
+        every { commandHandler1.handle(any()) }.returns(NotHandled)
+        every { commandHandler2.handle(any()) }.returns(NotHandled)
+        commandProcessor = CommandProcessor(eventStore, commandHandler1, commandHandler2)
     }
 
     @Test
-    fun default() {
+    fun `default, 1`() {
         // Given
         val command: Command = mockk()
-        val event: Event = createEvent("note", 15)
-        every { commandHandler.handle(command) }.returns(Optional(event))
+        val event1: Event = createEvent("note", 15)
+        val event2: Event = createEvent("note", 16)
+        every { commandHandler1.handle(command) }.returns(Handled(Optional(event1)))
+        every { commandHandler2.handle(command) }.returns(Handled(Optional(event2)))
+
+        // When
+        commandProcessor.blockingProcessCommand(command)
+
+        // Then
+        verify {
+            eventStore.appendEvent(event1)
+        }
+    }
+
+    @Test
+    fun `default, 2`() {
+        // Given
+        val command: Command = mockk()
+        val event: Event = createEvent("note", 16)
+        every { commandHandler1.handle(command) }.returns(NotHandled)
+        every { commandHandler2.handle(command) }.returns(Handled(Optional(event)))
 
         // When
         commandProcessor.blockingProcessCommand(command)
@@ -46,12 +69,26 @@ internal class CommandProcessorTest {
     fun `no event returned by aggregate`() {
         // Given
         val command: Command = mockk()
-        every { commandHandler.handle(command) }.returns(Optional())
+        every { commandHandler2.handle(command) }.returns(Handled(Optional()))
 
         // When
         commandProcessor.blockingProcessCommand(command)
 
         // Then
+        verify {
+            eventStore.appendEvent(any()) wasNot Called
+        }
+    }
+
+    @Test
+    fun `command not handled`() {
+        // Given
+        val command: Command = mockk()
+
+        // When / then
+        assertThrows<IllegalArgumentException> {
+            commandProcessor.blockingProcessCommand(command)
+        }
         verify {
             eventStore.appendEvent(any()) wasNot Called
         }
@@ -63,5 +100,4 @@ internal class CommandProcessorTest {
         every { event.revision }.returns(revision)
         return event
     }
-
 }

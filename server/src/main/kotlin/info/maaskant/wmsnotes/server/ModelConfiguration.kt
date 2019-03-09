@@ -9,8 +9,8 @@ import info.maaskant.wmsnotes.model.eventstore.FileEventStore
 import info.maaskant.wmsnotes.model.note.KryoNoteSerializer
 import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
-import info.maaskant.wmsnotes.model.CommandToEventMapper
-import info.maaskant.wmsnotes.model.KryoEventSerializer
+import info.maaskant.wmsnotes.model.note.NoteCommandToEventMapper
+import info.maaskant.wmsnotes.model.note.KryoNoteEventSerializer
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateCache
 import info.maaskant.wmsnotes.model.aggregaterepository.CachingAggregateRepository
 import info.maaskant.wmsnotes.model.aggregaterepository.FileAggregateCache
@@ -27,7 +27,7 @@ class ModelConfiguration {
     fun eventStore(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): EventStore =
             FileEventStore(
                     appDirectory.resolve("events"),
-                    KryoEventSerializer(kryoPool)
+                    KryoNoteEventSerializer(kryoPool)
             )
 
     @Bean
@@ -35,7 +35,7 @@ class ModelConfiguration {
     fun noteCommandHandler(repository: AggregateRepository<Note>): AggregateCommandHandler<Note> =
             AggregateCommandHandler(
                     repository,
-                    CommandToEventMapper()
+                    NoteCommandToEventMapper()
             )
 
     @Bean
