@@ -6,16 +6,21 @@ import info.maaskant.wmsnotes.model.Path
 data class TreeIndexState(
         val foldersWithChildren: ImmutableListMultimap<Path, String> = ImmutableListMultimap.of(),
         val notes: Map<String, Note> = emptyMap(),
+        val autoFolders: Set<String> = emptySet(),
         val hiddenNotes: Set<String> = emptySet()
 ) {
-    fun addFolder(folder: Folder) = copy(
+    private fun addFolder(folder: Folder) = copy(
             foldersWithChildren = ImmutableListMultimap.builder<Path, String>()
                     .putAll(foldersWithChildren)
                     .put(folder.path, folder.aggId)
                     .build()
-//            ,
-//            notes = notes + (folder.aggId to folder)
     )
+
+    fun addAutoFolder(folder: Folder) =
+            addFolder(folder).copy(autoFolders = autoFolders + folder.aggId)
+
+    fun addNormalFolder(folder: Folder) =
+            addFolder(folder)
 
     fun addNote(note: Note) = copy(
             foldersWithChildren = ImmutableListMultimap.builder<Path, String>()
@@ -25,7 +30,10 @@ data class TreeIndexState(
             notes = notes + (note.aggId to note)
     )
 
-    fun removeFolder(aggId: String): TreeIndexState {
+    fun markFolderAsNormal(aggId: String) =
+            copy(autoFolders = autoFolders - aggId)
+
+    private fun removeFolder(aggId: String): TreeIndexState {
         val builder = ImmutableListMultimap.builder<Path, String>()
         foldersWithChildren.entries().asSequence()
                 .filter { it.value != aggId }
@@ -33,10 +41,14 @@ data class TreeIndexState(
                     builder.put(it)
                 }
         val foldersWithChildren = builder.build()
-        return copy(
-                foldersWithChildren = foldersWithChildren
-        )
+        return copy(foldersWithChildren = foldersWithChildren)
     }
+
+    fun removeAutoFolder(aggId: String) =
+            removeFolder(aggId).copy(autoFolders = autoFolders - aggId)
+
+    fun removeNormalFolder(aggId: String) =
+            removeFolder(aggId)
 
     fun removeNote(aggId: String): TreeIndexState {
         val builder = ImmutableListMultimap.builder<Path, String>()
@@ -44,9 +56,7 @@ data class TreeIndexState(
                 .filter { it.value != aggId }
                 .forEach { builder.put(it) }
         val foldersWithChildren = builder.build()
-        return copy(
-                foldersWithChildren = foldersWithChildren
-        )
+        return copy(foldersWithChildren = foldersWithChildren)
     }
 
 //    fun removeFolder(path: Path) = copy(folders = folders - path)

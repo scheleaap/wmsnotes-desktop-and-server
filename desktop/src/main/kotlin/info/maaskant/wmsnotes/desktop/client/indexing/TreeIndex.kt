@@ -46,11 +46,11 @@ class TreeIndex @Inject constructor(
                 .subscribeOn(scheduler)
                 .subscribe({
                     when (it) {
-                        is NoteCreatedEvent -> noteCreated(it)
-                        is NoteDeletedEvent -> noteDeleted(it)
-                        is NoteUndeletedEvent -> noteUndeleted(it)
-                        is FolderCreatedEvent -> folderCreated(it)
-                        is FolderDeletedEvent -> folderDeleted(it)
+                        is NoteCreatedEvent -> handleNoteCreated(it)
+                        is NoteDeletedEvent -> handleNoteDeleted(it)
+                        is NoteUndeletedEvent -> handleNoteUndeleted(it)
+                        is FolderCreatedEvent -> handleFolderCreated(it)
+                        is FolderDeletedEvent -> handleFolderDeleted(it)
                         else -> TODO()
                     }
                 }, { logger.warn("Error", it) })
@@ -62,17 +62,23 @@ class TreeIndex @Inject constructor(
             addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
             logger.debug("Adding automatically generated folder $path to index")
             val folder = Folder(aggId = aggId, path = path, title = path.elements.last())
+            updateState(state.addAutoFolder(folder))
             changes.onNext(NodeAdded(folder))
         }
     }
 
     private fun addFolder(aggId: String, path: Path) {
-        if (aggId !in state.foldersWithChildren.get(path) && path.elements.isNotEmpty()) {
-            addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
-            logger.debug("Adding folder $path to index")
-            val folder = Folder(aggId = aggId, path = path, title = path.elements.last())
-            updateState(state.addFolder(folder))
-            changes.onNext(NodeAdded(folder))
+        if (path.elements.isNotEmpty()) {
+            if (aggId !in state.foldersWithChildren.get(path)) {
+                addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
+                logger.debug("Adding folder $path to index")
+                val folder = Folder(aggId = aggId, path = path, title = path.elements.last())
+                updateState(state.addNormalFolder(folder))
+                changes.onNext(NodeAdded(folder))
+            } else {
+                logger.debug("Adding folder $path to index")
+                updateState(state.markFolderAsNormal(aggId))
+            }
         }
     }
 
@@ -83,46 +89,54 @@ class TreeIndex @Inject constructor(
         changes.onNext(NodeAdded(note))
     }
 
-    private fun folderCreated(it: FolderCreatedEvent) =
-            addFolder(aggId = it.aggId, path = it.path)
-
-    private fun folderDeleted(it: FolderDeletedEvent) =
-            removeFolderIfNecessary(it.path)
-
     fun getChanges(): Observable<Change> = changes
 
-    private fun noteCreated(it: NoteCreatedEvent) =
+    private fun handleFolderCreated(it: FolderCreatedEvent) =
+            addFolder(aggId = it.aggId, path = it.path)
+
+    private fun handleFolderDeleted(it: FolderDeletedEvent) =
+            removeFolder(it.path)
+
+    private fun handleNoteCreated(it: NoteCreatedEvent) =
             addNote(Note(it.aggId, it.path, it.title))
 
-    private fun noteDeleted(it: NoteDeletedEvent) {
-        if (it.aggId in state.notes && it.aggId !in state.hiddenNotes) {
-            logger.debug("Removing note ${it.aggId} from index")
-            updateState(state.removeNote(it.aggId))
-            changes.onNext(NodeRemoved(it.aggId))
-            removeAutomaticallyGeneratedFoldersIfNecessary(state.notes.getValue(it.aggId).path)
+    private fun handleNoteDeleted(it: NoteDeletedEvent) =
+            removeNote(it.aggId)
+
+    private fun handleNoteUndeleted(it: NoteUndeletedEvent) =
+            addNote(state.notes.getValue(it.aggId))
+
+    private fun removeAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
+        val aggId = FolderEvent.aggId(path)
+        if (aggId in state.autoFolders && path.elements.isNotEmpty()) {
+            val children = state.foldersWithChildren.get(path)
+            if (children.size == 1 && aggId in children) {
+                logger.debug("Removing automatically generated folder $path from index")
+                updateState(state.removeAutoFolder(aggId))
+                changes.onNext(NodeRemoved(aggId))
+                removeAutomaticallyGeneratedFoldersIfNecessary(path.parent())
+            }
         }
     }
 
-    private fun removeAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
-        if (path.elements.isNotEmpty() && state.foldersWithChildren.get(path).isEmpty()) {
-            logger.debug("Removing automatically generated folder $path from index")
+    private fun removeFolder(path: Path) {
+        if (path.elements.isNotEmpty()) {
+            logger.debug("Removing folder $path from index")
             val aggId = FolderEvent.aggId(path)
-            changes.onNext(NodeRemoved(aggId))
+            updateState(state.removeNormalFolder(aggId))
+            changes.onNext(NodeRemoved(aggId = aggId))
             removeAutomaticallyGeneratedFoldersIfNecessary(path.parent())
         }
     }
 
-    private fun removeFolderIfNecessary(path: Path) {
-        if (path.elements.isNotEmpty()) {
-            logger.debug("Removing folder $path from index")
-            val aggId = FolderEvent.aggId(path)
-            updateState(state.removeFolder(aggId))
-            removeAutomaticallyGeneratedFoldersIfNecessary(path)
+    private fun removeNote(aggId: String) {
+        if (aggId in state.notes && aggId !in state.hiddenNotes) {
+            logger.debug("Removing note $aggId from index")
+            updateState(state.removeNote(aggId))
+            changes.onNext(NodeRemoved(aggId))
+            removeAutomaticallyGeneratedFoldersIfNecessary(state.notes.getValue(aggId).path)
         }
     }
-
-    private fun noteUndeleted(it: NoteUndeletedEvent) =
-            addNote(state.notes.getValue(it.aggId))
 
     private fun updateState(state: TreeIndexState) {
         this.state = state

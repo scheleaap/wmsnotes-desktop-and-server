@@ -70,7 +70,6 @@ internal class TreeIndexTest {
         ))
     }
 
-    @Disabled
     @Test
     fun `note created before folder`() {
         // Given
@@ -217,11 +216,11 @@ internal class TreeIndexTest {
         // Given
         val folder1Title = "el1"
         val folder2Title = "el2"
-        val notePath = Path(folder1Title, folder2Title)
         val folder1Path = Path(folder1Title)
-        val folder2Path = notePath
+        val folder2Path = Path(folder1Title, folder2Title)
         val folder1AggId = FolderEvent.aggId(folder1Path)
         val folder2AggId = FolderEvent.aggId(folder2Path)
+        val notePath =folder2Path
         val event1 = noteCreatedEvent(aggId1, notePath, title)
         val event2 = noteDeletedEvent(aggId1)
         val event3 = noteUndeletedEvent(aggId1)
@@ -373,6 +372,7 @@ internal class TreeIndexTest {
     // - note move
     // - folder create, duplicate
     // - folder create, empty path = error
+    // - create folder, create note, delete folder, delete note -> check that folder is deleted
 
     private fun folderCreatedEvent(path: Path) = FolderCreatedEvent(eventId = 0, revision = 1, path = path)
     private fun folderDeletedEvent(path: Path) = FolderDeletedEvent(eventId = 0, revision = 1, path = path)
