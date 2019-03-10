@@ -16,6 +16,14 @@ data class Path(val elements: List<String>) {
     override fun toString(): String =
             elements.joinToString(separator = "/")
 
+    fun parent(): Path =
+        if (elements.isNotEmpty()) {
+            Path(elements.subList(0, elements.lastIndex))
+        } else {
+            throw IllegalStateException("Root path does not have a parent")
+        }
+
+
     companion object {
         fun from(path: String): Path =
                 if (path.isEmpty()) {

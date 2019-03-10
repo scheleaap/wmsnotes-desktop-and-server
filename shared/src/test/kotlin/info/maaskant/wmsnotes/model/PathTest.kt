@@ -117,4 +117,39 @@ internal class PathTest {
         assertThat(path1).isEqualTo(path1)
         assertThat(path1).isNotEqualTo(path2)
     }
+
+    @Test
+    fun `parent, 1`() {
+        // Given
+        val path = Path("el1", "el2")
+
+        // When
+        val parentPath = path.parent()
+
+        // Then
+        assertThat(parentPath).isEqualTo(Path("el1"))
+    }
+
+    @Test
+    fun `parent, 2`() {
+        // Given
+        val path = Path("el1")
+
+        // When
+        val parentPath = path.parent()
+
+        // Then
+        assertThat(parentPath).isEqualTo(Path())
+    }
+
+    @Test
+    fun `parent, 3`() {
+        // Given
+        val path = Path()
+
+        // When / then
+        assertThrows<IllegalStateException> {
+            path.parent()
+        }
+    }
 }

@@ -4,6 +4,7 @@ import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change.*
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
+import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
 import info.maaskant.wmsnotes.model.folder.FolderEvent
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
@@ -49,55 +50,79 @@ class TreeIndex @Inject constructor(
                         is NoteDeletedEvent -> noteDeleted(it)
                         is NoteUndeletedEvent -> noteUndeleted(it)
                         is FolderCreatedEvent -> folderCreated(it)
+                        is FolderDeletedEvent -> folderDeleted(it)
                         else -> TODO()
                     }
                 }, { logger.warn("Error", it) })
     }
 
-    private fun addFolderIfNecessary(aggId: String, path: Path) {
-        if (path !in state.folders && path != Path()) {
-            logger.debug("Adding folder $aggId to index")
-            updateState(state.addFolder(path))
-            changes.onNext(NodeAdded(Folder(aggId, path, path.elements.last())))
+    private fun addAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
+        val aggId = FolderEvent.aggId(path)
+        if (aggId !in state.foldersWithChildren.get(path) && path.elements.isNotEmpty()) {
+            addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
+            logger.debug("Adding automatically generated folder $path to index")
+            val folder = Folder(aggId = aggId, path = path, title = path.elements.last())
+            changes.onNext(NodeAdded(folder))
         }
     }
 
-    private fun folderCreated(it: FolderCreatedEvent) =
-            addFolderIfNecessary(aggId = it.aggId, path = it.path)
+    private fun addFolder(aggId: String, path: Path) {
+        if (aggId !in state.foldersWithChildren.get(path) && path.elements.isNotEmpty()) {
+            addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
+            logger.debug("Adding folder $path to index")
+            val folder = Folder(aggId = aggId, path = path, title = path.elements.last())
+            updateState(state.addFolder(folder))
+            changes.onNext(NodeAdded(folder))
+        }
+    }
 
-    fun getChanges(): Observable<Change> = changes
-
-    private fun noteCreated(it: NoteCreatedEvent) {
-        addFolderIfNecessary(aggId = FolderEvent.aggId(it.path), path = it.path)
-        logger.debug("Adding note ${it.aggId} to index")
-        val note = Note(it.aggId, it.path, it.title)
+    private fun addNote(note: Note) {
+        addAutomaticallyGeneratedFoldersIfNecessary(path = note.path)
+        logger.debug("Adding note ${note.aggId} to index")
         updateState(state.addNote(note))
         changes.onNext(NodeAdded(note))
     }
 
+    private fun folderCreated(it: FolderCreatedEvent) =
+            addFolder(aggId = it.aggId, path = it.path)
+
+    private fun folderDeleted(it: FolderDeletedEvent) =
+            removeFolderIfNecessary(it.path)
+
+    fun getChanges(): Observable<Change> = changes
+
+    private fun noteCreated(it: NoteCreatedEvent) =
+            addNote(Note(it.aggId, it.path, it.title))
+
     private fun noteDeleted(it: NoteDeletedEvent) {
         if (it.aggId in state.notes && it.aggId !in state.hiddenNotes) {
-            logger.debug("Hiding note ${it.aggId} in index")
-            updateState(state.hideNote(it.aggId))
+            logger.debug("Removing note ${it.aggId} from index")
+            updateState(state.removeNote(it.aggId))
             changes.onNext(NodeRemoved(it.aggId))
-
-            val note = state.notes.getValue(it.aggId)
-            val folderPath = note.path
-            val folderAggId = FolderEvent.aggId(folderPath)
-            if (folderPath != Path()) {
-                updateState(state.removeFolder(folderPath))
-                changes.onNext(NodeRemoved(folderAggId))
-            }
+            removeAutomaticallyGeneratedFoldersIfNecessary(state.notes.getValue(it.aggId).path)
         }
     }
 
-    private fun noteUndeleted(it: NoteUndeletedEvent) {
-        if (it.aggId in state.hiddenNotes) {
-            logger.debug("Showing note ${it.aggId} in index")
-            updateState(state.unhidNote(it.aggId))
-            changes.onNext(NodeAdded(state.notes.getValue(it.aggId)))
+    private fun removeAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
+        if (path.elements.isNotEmpty() && state.foldersWithChildren.get(path).isEmpty()) {
+            logger.debug("Removing automatically generated folder $path from index")
+            val aggId = FolderEvent.aggId(path)
+            changes.onNext(NodeRemoved(aggId))
+            removeAutomaticallyGeneratedFoldersIfNecessary(path.parent())
         }
     }
+
+    private fun removeFolderIfNecessary(path: Path) {
+        if (path.elements.isNotEmpty()) {
+            logger.debug("Removing folder $path from index")
+            val aggId = FolderEvent.aggId(path)
+            updateState(state.removeFolder(aggId))
+            removeAutomaticallyGeneratedFoldersIfNecessary(path)
+        }
+    }
+
+    private fun noteUndeleted(it: NoteUndeletedEvent) =
+            addNote(state.notes.getValue(it.aggId))
 
     private fun updateState(state: TreeIndexState) {
         this.state = state

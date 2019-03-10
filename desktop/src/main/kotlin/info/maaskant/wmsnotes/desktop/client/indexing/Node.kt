@@ -13,9 +13,9 @@ sealed class Node(val aggId: String, val path: Path, val title: String) {
 }
 
 class Folder(aggId: String, path: Path, title: String) : Node(aggId, path, title) {
-    override fun toString() = kotlinToString(properties = arrayOf(Folder::aggId, Folder::title))
+    override fun toString() = kotlinToString(properties = arrayOf(Folder::aggId, Folder::path, Folder::title))
 }
 
 class Note(aggId: String, path: Path, title: String) : Node(aggId, path, title) {
-    override fun toString() = kotlinToString(properties = arrayOf(Note::aggId, Note::title))
+    override fun toString() = kotlinToString(properties = arrayOf(Note::aggId, Note::path, Note::title))
 }
