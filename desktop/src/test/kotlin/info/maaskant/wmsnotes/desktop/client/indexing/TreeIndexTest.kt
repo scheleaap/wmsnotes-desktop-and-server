@@ -1,8 +1,7 @@
 package info.maaskant.wmsnotes.desktop.client.indexing
 
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change.NodeAdded
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change.NodeRemoved
+import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change.*
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore
@@ -12,6 +11,7 @@ import info.maaskant.wmsnotes.model.folder.FolderEvent
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
 import info.maaskant.wmsnotes.model.note.NoteUndeletedEvent
+import info.maaskant.wmsnotes.model.note.TitleChangedEvent
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -21,7 +21,6 @@ import io.reactivex.subjects.PublishSubject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.*
 
 internal class TreeIndexTest {
     private val aggId1 = "note-1"
@@ -435,6 +434,27 @@ internal class TreeIndexTest {
         assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
     }
 
+    @Test
+    fun `title changed`() {
+        // Given
+        val event1 = noteCreatedEvent(aggId1, rootPath, title)
+        val event2 = TitleChangedEvent(eventId = 0, aggId = aggId1, revision = 0, title = "different")
+        val index = TreeIndex(eventStore, treeIndexState, scheduler)
+        eventUpdatesSubject.onNext(event1)
+        val observer = index.getChanges().test()
+
+        // When
+        eventUpdatesSubject.onNext(event2)
+
+        // Then
+        observer.assertNoErrors()
+        assertThat(observer.values().toList()).isEqualTo(listOf(
+                TitleChanged(aggId1, "different")
+        ))
+    }
+
+    // TODO:
+    // - store title for later use
 
     private fun folderCreatedEvent(path: Path) = FolderCreatedEvent(eventId = 0, revision = 1, path = path)
     private fun folderDeletedEvent(path: Path) = FolderDeletedEvent(eventId = 0, revision = 1, path = path)

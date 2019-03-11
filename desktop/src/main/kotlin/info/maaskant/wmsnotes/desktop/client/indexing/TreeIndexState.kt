@@ -69,4 +69,8 @@ data class TreeIndexState(
         val foldersWithChildren = builder.build()
         return copy(foldersWithChildren = foldersWithChildren)
     }
+
+    fun replaceNote(note: Note): TreeIndexState = copy(
+            notes = notes + (note.aggId to note)
+    )
 }

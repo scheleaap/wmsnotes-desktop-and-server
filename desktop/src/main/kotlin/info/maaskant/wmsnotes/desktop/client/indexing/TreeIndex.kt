@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.desktop.client.indexing
 
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change.*
+import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
@@ -9,6 +10,7 @@ import info.maaskant.wmsnotes.model.folder.FolderEvent
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
 import info.maaskant.wmsnotes.model.note.NoteUndeletedEvent
+import info.maaskant.wmsnotes.model.note.TitleChangedEvent
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.reactivex.Observable
@@ -51,7 +53,9 @@ class TreeIndex @Inject constructor(
                         is NoteUndeletedEvent -> handleNoteUndeleted(it)
                         is FolderCreatedEvent -> handleFolderCreated(it)
                         is FolderDeletedEvent -> handleFolderDeleted(it)
-                        else -> TODO()
+                        is TitleChangedEvent -> handleTitleChanged(it)
+                        else -> {
+                        }
                     }
                 }, { logger.warn("Error", it) })
     }
@@ -108,6 +112,13 @@ class TreeIndex @Inject constructor(
     private fun handleNoteUndeleted(it: NoteUndeletedEvent) =
             state.notes[it.aggId]?.let { addNote(it) }
 
+    private fun handleTitleChanged(it: TitleChangedEvent) {
+        val oldNote = state.getNote(aggId = it.aggId)
+        val newNote = Note(aggId = oldNote.aggId, path = oldNote.path, title = it.title)
+//        updateState(state.replaceNote(newNote))
+        changes.onNext(TitleChanged(it.aggId, it.title))
+    }
+
     private fun removeAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
         val aggId = FolderEvent.aggId(path)
         if (state.isAutoFolder(aggId) && path.elements.isNotEmpty()) {
@@ -158,6 +169,7 @@ class TreeIndex @Inject constructor(
     sealed class Change {
         data class NodeAdded(val metadata: Node) : Change()
         data class NodeRemoved(val aggId: String) : Change()
+        data class TitleChanged(val aggId: String, val title: String) : Change()
     }
 }
 
