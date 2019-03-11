@@ -58,7 +58,7 @@ class TreeIndex @Inject constructor(
 
     private fun addAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
         val aggId = FolderEvent.aggId(path)
-        if (aggId !in state.foldersWithChildren.get(path) && path.elements.isNotEmpty()) {
+        if (!state.isNodeInFolder(aggId, path) && path.elements.isNotEmpty()) {
             addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
             logger.debug("Adding automatically generated folder $path to index")
             val folder = Folder(aggId = aggId, path = path, title = path.elements.last())
@@ -69,7 +69,7 @@ class TreeIndex @Inject constructor(
 
     private fun addFolder(aggId: String, path: Path) {
         if (path.elements.isNotEmpty()) {
-            if (aggId !in state.foldersWithChildren.get(path)) {
+            if (!state.isNodeInFolder(aggId, path)) {
                 addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
                 logger.debug("Adding folder $path to index")
                 val folder = Folder(aggId = aggId, path = path, title = path.elements.last())
@@ -83,10 +83,12 @@ class TreeIndex @Inject constructor(
     }
 
     private fun addNote(note: Note) {
-        addAutomaticallyGeneratedFoldersIfNecessary(path = note.path)
-        logger.debug("Adding note ${note.aggId} to index")
-        updateState(state.addNote(note))
-        changes.onNext(NodeAdded(note))
+        if (!state.isNodeInFolder(note.aggId, note.path)) {
+            addAutomaticallyGeneratedFoldersIfNecessary(path = note.path)
+            logger.debug("Adding note ${note.aggId} to index")
+            updateState(state.addNote(note))
+            changes.onNext(NodeAdded(note))
+        }
     }
 
     fun getChanges(): Observable<Change> = changes
@@ -104,11 +106,11 @@ class TreeIndex @Inject constructor(
             removeNote(it.aggId)
 
     private fun handleNoteUndeleted(it: NoteUndeletedEvent) =
-            addNote(state.notes.getValue(it.aggId))
+            addNote(state.getNote(it.aggId))
 
     private fun removeAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
         val aggId = FolderEvent.aggId(path)
-        if (aggId in state.autoFolders && path.elements.isNotEmpty()) {
+        if (state.isAutoFolder(aggId) && path.elements.isNotEmpty()) {
             val children = state.foldersWithChildren.get(path)
             if (children.size == 1 && aggId in children) {
                 logger.debug("Removing automatically generated folder $path from index")
@@ -130,11 +132,11 @@ class TreeIndex @Inject constructor(
     }
 
     private fun removeNote(aggId: String) {
-        if (aggId in state.notes && aggId !in state.hiddenNotes) {
+        if (aggId in state.notes && state.isNodeInFolder(aggId, state.getNote(aggId).path)) {
             logger.debug("Removing note $aggId from index")
             updateState(state.removeNote(aggId))
             changes.onNext(NodeRemoved(aggId))
-            removeAutomaticallyGeneratedFoldersIfNecessary(state.notes.getValue(aggId).path)
+            removeAutomaticallyGeneratedFoldersIfNecessary(state.getNote(aggId).path)
         }
     }
 

@@ -20,7 +20,6 @@ import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.util.*
 
@@ -68,6 +67,22 @@ internal class TreeIndexTest {
         assertThat(observer.values().toList()).isEqualTo(listOf(
                 NodeAdded(Note(event2.aggId, event2.path, event2.title))
         ))
+    }
+
+    @Test
+    fun `note created, twice`() {
+        // Given
+        val event = noteCreatedEvent(aggId1, rootPath, title)
+        val index = TreeIndex(eventStore, treeIndexState, scheduler)
+        eventUpdatesSubject.onNext(event)
+        val observer = index.getChanges().test()
+
+        // When
+        eventUpdatesSubject.onNext(event)
+
+        // Then
+        observer.assertNoErrors()
+        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
     }
 
     @Test
@@ -139,7 +154,6 @@ internal class TreeIndexTest {
         ))
     }
 
-    @Disabled
     @Test
     fun `note deleted, note does not exist`() {
         // Given
@@ -155,7 +169,6 @@ internal class TreeIndexTest {
         assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
     }
 
-    @Disabled
     @Test
     fun `note deleted, twice`() {
         // Given
@@ -174,7 +187,6 @@ internal class TreeIndexTest {
         assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
     }
 
-    @Disabled
     @Test
     fun `note undeleted, note does not exist`() {
         // Given
@@ -190,7 +202,6 @@ internal class TreeIndexTest {
         assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
     }
 
-    @Disabled
     @Test
     fun `note undeleted, twice`() {
         // Given
@@ -220,7 +231,7 @@ internal class TreeIndexTest {
         val folder2Path = Path(folder1Title, folder2Title)
         val folder1AggId = FolderEvent.aggId(folder1Path)
         val folder2AggId = FolderEvent.aggId(folder2Path)
-        val notePath =folder2Path
+        val notePath = folder2Path
         val event1 = noteCreatedEvent(aggId1, notePath, title)
         val event2 = noteDeletedEvent(aggId1)
         val event3 = noteUndeletedEvent(aggId1)
