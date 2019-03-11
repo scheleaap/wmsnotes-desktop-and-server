@@ -1,7 +1,6 @@
 package info.maaskant.wmsnotes.desktop.client.indexing
 
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change.*
-import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
@@ -15,6 +14,7 @@ import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.reactivex.Observable
 import io.reactivex.Scheduler
+import io.reactivex.rxkotlin.toObservable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
@@ -65,7 +65,7 @@ class TreeIndex @Inject constructor(
         if (!state.isNodeInFolder(aggId, path) && path.elements.isNotEmpty()) {
             addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
             logger.debug("Adding automatically generated folder $path to index")
-            val folder = Folder(aggId = aggId, path = path, title = path.elements.last())
+            val folder = folder(aggId, path)
             updateState(state.addAutoFolder(folder))
             changes.onNext(NodeAdded(folder))
         }
@@ -76,7 +76,7 @@ class TreeIndex @Inject constructor(
             if (!state.isNodeInFolder(aggId, path)) {
                 addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
                 logger.debug("Adding folder $path to index")
-                val folder = Folder(aggId = aggId, path = path, title = path.elements.last())
+                val folder = folder(aggId, path)
                 updateState(state.addNormalFolder(folder))
                 changes.onNext(NodeAdded(folder))
             } else {
@@ -97,6 +97,17 @@ class TreeIndex @Inject constructor(
 
     fun getChanges(): Observable<Change> = changes
 
+    fun getExistingNodesAsChanges(): Observable<Change> {
+        return state.foldersWithChildren.entries().toObservable()
+                .map { (path, aggId) ->
+                    if (aggId in state.notes) {
+                        NodeAdded(state.notes.getValue(aggId))
+                    } else {
+                        NodeAdded(folder(aggId, path))
+                    }
+                }
+    }
+
     private fun handleFolderCreated(it: FolderCreatedEvent) =
             addFolder(aggId = it.aggId, path = it.path)
 
@@ -115,7 +126,7 @@ class TreeIndex @Inject constructor(
     private fun handleTitleChanged(it: TitleChangedEvent) {
         val oldNote = state.getNote(aggId = it.aggId)
         val newNote = Note(aggId = oldNote.aggId, path = oldNote.path, title = it.title)
-//        updateState(state.replaceNote(newNote))
+        updateState(state.replaceNote(newNote))
         changes.onNext(TitleChanged(it.aggId, it.title))
     }
 
@@ -170,6 +181,11 @@ class TreeIndex @Inject constructor(
         data class NodeAdded(val metadata: Node) : Change()
         data class NodeRemoved(val aggId: String) : Change()
         data class TitleChanged(val aggId: String, val title: String) : Change()
+    }
+
+    companion object {
+        private fun folder(aggId: String, path: Path) =
+                Folder(aggId = aggId, path = path, title = path.elements.last())
     }
 }
 

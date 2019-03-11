@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.util.Pool
 import info.maaskant.wmsnotes.desktop.client.indexing.KryoNoteIndexStateSerializer
 import info.maaskant.wmsnotes.desktop.client.indexing.NoteIndex
 import info.maaskant.wmsnotes.desktop.client.indexing.NoteIndexState
+import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.persistence.FileStateRepository
 import info.maaskant.wmsnotes.utilities.persistence.StateRepository
@@ -30,13 +31,15 @@ class IndexingConfiguration {
 
     @Bean
     @Singleton
-    fun noteIndex(eventStore: EventStore, stateRepository: StateRepository<NoteIndexState>): NoteIndex {
-        return NoteIndex(
+    fun treeIndex(eventStore: EventStore, stateRepository: StateRepository<NoteIndexState>): TreeIndex {
+        return TreeIndex(
                 eventStore,
-                stateRepository.load(),
+                null,
+//                stateRepository.load(),
                 Schedulers.io()
-        ).apply {
-            stateRepository.connect(this)
-        }
+        )
+//        .apply {
+//            stateRepository.connect(this)
+//    }
     }
 }

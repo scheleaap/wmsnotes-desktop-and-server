@@ -234,22 +234,29 @@ internal class TreeIndexTest {
         val event2 = noteDeletedEvent(aggId1)
         val event3 = noteUndeletedEvent(aggId1)
         val index = TreeIndex(eventStore, treeIndexState, scheduler)
-        val observer = index.getChanges().test()
+        val changeObserver = index.getChanges().test()
 
         // When
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
         eventUpdatesSubject.onNext(event3)
+        val initializationObserver = index.getExistingNodesAsChanges().test()
 
         // Then
-        observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(listOf(
+        changeObserver.assertNoErrors()
+        assertThat(changeObserver.values().toList()).isEqualTo(listOf(
                 NodeAdded(Folder(folder1AggId, folder1Path, folder1Title)),
                 NodeAdded(Folder(folder2AggId, folder2Path, folder2Title)),
                 NodeAdded(Note(aggId1, notePath, title)),
                 NodeRemoved(aggId1),
                 NodeRemoved(folder2AggId),
                 NodeRemoved(folder1AggId),
+                NodeAdded(Folder(folder1AggId, folder1Path, folder1Title)),
+                NodeAdded(Folder(folder2AggId, folder2Path, folder2Title)),
+                NodeAdded(Note(aggId1, notePath, title))
+        ))
+        initializationObserver.assertNoErrors()
+        assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
                 NodeAdded(Folder(folder1AggId, folder1Path, folder1Title)),
                 NodeAdded(Folder(folder2AggId, folder2Path, folder2Title)),
                 NodeAdded(Note(aggId1, notePath, title))
@@ -441,15 +448,20 @@ internal class TreeIndexTest {
         val event2 = TitleChangedEvent(eventId = 0, aggId = aggId1, revision = 0, title = "different")
         val index = TreeIndex(eventStore, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event1)
-        val observer = index.getChanges().test()
+        val changeObserver = index.getChanges().test()
 
         // When
         eventUpdatesSubject.onNext(event2)
+        val initializationObserver = index.getExistingNodesAsChanges().test()
 
         // Then
-        observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(listOf(
+        changeObserver.assertNoErrors()
+        assertThat(changeObserver.values().toList()).isEqualTo(listOf(
                 TitleChanged(aggId1, "different")
+        ))
+        initializationObserver.assertNoErrors()
+        assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
+                NodeAdded(Note(aggId1, rootPath, "different"))
         ))
     }
 

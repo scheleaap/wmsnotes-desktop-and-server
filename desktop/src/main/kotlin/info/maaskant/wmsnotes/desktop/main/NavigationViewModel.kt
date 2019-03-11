@@ -23,18 +23,10 @@ import javax.inject.Singleton
 @Singleton
 @Component
 class NavigationViewModel @Inject constructor(
-        eventStore: EventStore,
-        noteIndex: NoteIndex,
         private val noteRepository: AggregateRepository<Note>
 ) {
 
     private val logger by logger()
-
-    final val allEventsWithUpdates: ConnectableObservable<Event> = noteIndex.getNotes()
-            .subscribeOn(Schedulers.io())
-            .map { NoteCreatedEvent(eventId = 0, aggId = it.aggId, revision = 0, path = Path(), title = it.title, content = "") as Event }
-            .mergeWith(eventStore.getEventUpdates())
-            .publish()
 
     // TODO: Replace with SerializedSubject
     final val selectionRequest: Subject<Selection> = PublishSubject.create()
@@ -100,7 +92,6 @@ class NavigationViewModel @Inject constructor(
             }
 
     fun start() {
-        allEventsWithUpdates.connect()
         selectionRequest.onNext(Selection.Nothing)
     }
 
