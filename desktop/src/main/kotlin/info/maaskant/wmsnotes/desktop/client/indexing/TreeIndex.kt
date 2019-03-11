@@ -106,7 +106,7 @@ class TreeIndex @Inject constructor(
             removeNote(it.aggId)
 
     private fun handleNoteUndeleted(it: NoteUndeletedEvent) =
-            addNote(state.getNote(it.aggId))
+            state.notes[it.aggId]?.let { addNote(it) }
 
     private fun removeAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
         val aggId = FolderEvent.aggId(path)
@@ -123,20 +123,28 @@ class TreeIndex @Inject constructor(
 
     private fun removeFolder(path: Path) {
         if (path.elements.isNotEmpty()) {
-            logger.debug("Removing folder $path from index")
             val aggId = FolderEvent.aggId(path)
-            updateState(state.removeNormalFolder(aggId))
-            changes.onNext(NodeRemoved(aggId = aggId))
-            removeAutomaticallyGeneratedFoldersIfNecessary(path.parent())
+            val children = state.foldersWithChildren.get(path)
+            if (children.size == 1 && aggId in children) {
+                logger.debug("Removing folder $path from index")
+                updateState(state.removeNormalFolder(aggId))
+                changes.onNext(NodeRemoved(aggId))
+                removeAutomaticallyGeneratedFoldersIfNecessary(path.parent())
+            } else {
+                updateState(state.markFolderAsAuto(aggId))
+            }
         }
     }
 
     private fun removeNote(aggId: String) {
-        if (aggId in state.notes && state.isNodeInFolder(aggId, state.getNote(aggId).path)) {
-            logger.debug("Removing note $aggId from index")
-            updateState(state.removeNote(aggId))
-            changes.onNext(NodeRemoved(aggId))
-            removeAutomaticallyGeneratedFoldersIfNecessary(state.getNote(aggId).path)
+        if (aggId in state.notes) {
+            val path = state.getNote(aggId).path
+            if (state.isNodeInFolder(aggId, path)) {
+                logger.debug("Removing note $aggId from index")
+                updateState(state.removeNote(aggId))
+                changes.onNext(NodeRemoved(aggId))
+                removeAutomaticallyGeneratedFoldersIfNecessary(path)
+            }
         }
     }
 

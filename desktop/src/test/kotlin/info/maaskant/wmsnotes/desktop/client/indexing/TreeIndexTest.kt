@@ -24,10 +24,9 @@ import org.junit.jupiter.api.Test
 import java.util.*
 
 internal class TreeIndexTest {
-    private val aggId1 = UUID.randomUUID().toString()
-    private val aggId2 = UUID.randomUUID().toString()
+    private val aggId1 = "note-1"
+    private val aggId2 = "note-2"
     private val rootPath = Path()
-    private val path = Path("el1", "el2")
     private val title = "Title"
     private val content = "Text"
 
@@ -379,11 +378,63 @@ internal class TreeIndexTest {
         ))
     }
 
-    // TODO:
-    // - note move
-    // - folder create, duplicate
-    // - folder create, empty path = error
-    // - create folder, create note, delete folder, delete note -> check that folder is deleted
+    @Test
+    fun `delete folder later if it cannot be deleted right away`() {
+        // Given
+        val path = Path("el1")
+        val folderAggId = FolderEvent.aggId(path)
+        val event1 = noteCreatedEvent(aggId1, path, title)
+        val event2 = folderCreatedEvent(path)
+        val event3 = folderDeletedEvent(path)
+        val event4 = noteDeletedEvent(aggId1)
+        val index = TreeIndex(eventStore, treeIndexState, scheduler)
+        eventUpdatesSubject.onNext(event1)
+        eventUpdatesSubject.onNext(event2)
+        eventUpdatesSubject.onNext(event3)
+        val observer = index.getChanges().test()
+
+        // When
+        eventUpdatesSubject.onNext(event4)
+
+        // Then
+        observer.assertNoErrors()
+        assertThat(observer.values().toList()).isEqualTo(listOf(
+                NodeRemoved(aggId1),
+                NodeRemoved(folderAggId)
+        ))
+    }
+
+    @Test
+    fun `folder created, twice`() {
+        // Given
+        val event = folderCreatedEvent(Path("el"))
+        val index = TreeIndex(eventStore, treeIndexState, scheduler)
+        eventUpdatesSubject.onNext(event)
+        val observer = index.getChanges().test()
+
+        // When
+        eventUpdatesSubject.onNext(event)
+
+        // Then
+        observer.assertNoErrors()
+        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
+    }
+
+    @Test
+    fun `folder created, empty path`() {
+        // Given
+        val event = folderCreatedEvent(Path())
+        val index = TreeIndex(eventStore, treeIndexState, scheduler)
+        val observer = index.getChanges().test()
+
+        // When
+        eventUpdatesSubject.onNext(event)
+
+        // Then
+        observer.assertNoErrors()
+        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
+    }
+
 
     private fun folderCreatedEvent(path: Path) = FolderCreatedEvent(eventId = 0, revision = 1, path = path)
     private fun folderDeletedEvent(path: Path) = FolderDeletedEvent(eventId = 0, revision = 1, path = path)

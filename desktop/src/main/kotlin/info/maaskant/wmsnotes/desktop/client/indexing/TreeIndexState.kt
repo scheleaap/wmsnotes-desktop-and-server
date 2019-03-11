@@ -38,6 +38,9 @@ data class TreeIndexState(
     fun isNodeInFolder(aggId: String, path: Path) =
             aggId in foldersWithChildren.get(path)
 
+    fun markFolderAsAuto(aggId: String) =
+            copy(autoFolders = autoFolders + aggId)
+
     fun markFolderAsNormal(aggId: String) =
             copy(autoFolders = autoFolders - aggId)
 
