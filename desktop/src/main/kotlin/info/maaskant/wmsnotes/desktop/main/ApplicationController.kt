@@ -12,7 +12,6 @@ import io.reactivex.subjects.Subject
 import org.springframework.stereotype.Component
 import java.io.File
 import java.time.LocalDateTime
-import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,6 +33,7 @@ class ApplicationController @Inject constructor(
     final val selectNote: Subject<NavigationViewModel.Selection> = PublishSubject.create()
     final val createNote: Subject<Unit> = PublishSubject.create()
     final val deleteCurrentNote: Subject<Unit> = PublishSubject.create()
+    final val renameCurrentNote: Subject<Unit> = PublishSubject.create()
     final val addAttachmentToCurrentNote: Subject<File> = PublishSubject.create()
     final val deleteAttachmentFromCurrentNote: Subject<String> = PublishSubject.create()
     final val saveContent: Subject<Unit> = PublishSubject.create()
@@ -46,7 +46,7 @@ class ApplicationController @Inject constructor(
                 .subscribeOn(Schedulers.computation())
                 .map { CreateFolderCommand(path = Path("Folder " + LocalDateTime.now().toString()), lastRevision = 0) }
                 .subscribe(commandProcessor.commands)
-//        deleteCurrentNote
+//        deleteCurrentFolder
 //                .subscribeOn(Schedulers.computation())
 //                .filter { navigationViewModel.currentNoteValue != null }
 //                .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision) }
@@ -62,6 +62,11 @@ class ApplicationController @Inject constructor(
                 .subscribeOn(Schedulers.computation())
                 .filter { navigationViewModel.currentNoteValue != null }
                 .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision) }
+                .subscribe(commandProcessor.commands)
+        renameCurrentNote
+                .subscribeOn(Schedulers.computation())
+                .filter { navigationViewModel.currentNoteValue != null }
+                .map { ChangeTitleCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision, "random title " + LocalDateTime.now().toString()) }
                 .subscribe(commandProcessor.commands)
         addAttachmentToCurrentNote
                 .subscribeOn(Schedulers.computation())

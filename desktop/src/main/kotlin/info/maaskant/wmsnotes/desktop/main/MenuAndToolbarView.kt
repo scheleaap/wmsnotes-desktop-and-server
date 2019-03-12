@@ -45,6 +45,10 @@ class MenuAndToolbarView : View() {
             enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }
+    private val renameNoteAction = StatelessAction(messageKey = "menu.file.renameNote",
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
+        applicationController.renameCurrentNote.onNext(Unit)
+    }
     private val cutAction = StatelessAction(messageKey = "menu.edit.cut", graphic = FontAwesomeIconView(FontAwesomeIcon.CUT),
             accelerator = "Shortcut+X",
             enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
@@ -143,6 +147,7 @@ class MenuAndToolbarView : View() {
                     orientation = Orientation.HORIZONTAL
                     button(createNoteAction)
                     button(deleteNoteAction)
+                    button(renameNoteAction)
                     button(createFolderAction)
                     button(deleteFolderAction)
                     // toggleswitch {
