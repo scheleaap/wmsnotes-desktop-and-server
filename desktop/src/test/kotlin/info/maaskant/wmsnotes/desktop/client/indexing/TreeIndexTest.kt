@@ -15,11 +15,13 @@ import info.maaskant.wmsnotes.model.note.TitleChangedEvent
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class TreeIndexTest {
@@ -40,7 +42,7 @@ internal class TreeIndexTest {
     @BeforeEach
     fun init() {
         eventUpdatesSubject = PublishSubject.create<Event>()
-        treeIndexState = TreeIndexState(/*isInitialized = false*/)
+        treeIndexState = TreeIndexState(isInitialized = false)
         clearMocks(
                 eventStore
         )
@@ -465,8 +467,48 @@ internal class TreeIndexTest {
         ))
     }
 
-    // TODO:
-    // - store title for later use
+    @Test
+    fun initialize() {
+        // Given
+        val event = noteCreatedEvent(aggId1, rootPath, title)
+        every { eventStore.getEvents() }.returns(Observable.just(event))
+        val index1 = TreeIndex(eventStore, treeIndexState, scheduler) // Instantiate twice to test double initialization
+        val stateObserver = index1.getStateUpdates().test()
+        val index2 = TreeIndex(eventStore, stateObserver.values().last(), scheduler)
+
+        // When
+        val initializationObserver = index2.getExistingNodesAsChanges().test()
+
+        // Then
+        initializationObserver.assertComplete()
+        initializationObserver.assertNoErrors()
+        assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
+                NodeAdded(Note(aggId1, rootPath, title))
+        ))
+        verify(exactly = 1) {
+            eventStore.getEvents(any())
+        }
+    }
+
+    @Test
+    fun `read state`() {
+        // Given
+        val event = noteCreatedEvent(aggId1, rootPath, title)
+        val index1 = TreeIndex(eventStore, treeIndexState, scheduler) // This instance is supposed to save the state
+        val stateObserver = index1.getStateUpdates().test()
+        eventUpdatesSubject.onNext(event)
+        val index2 = TreeIndex(eventStore, stateObserver.values().last(), scheduler) // This instance is supposed to read the state
+
+        // When
+        val initializationObserver = index2.getExistingNodesAsChanges().test()
+
+        // Then
+        initializationObserver.assertComplete()
+        initializationObserver.assertNoErrors()
+        assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
+                NodeAdded(Note(aggId1, rootPath, title))
+        ))
+    }
 
     private fun folderCreatedEvent(path: Path) = FolderCreatedEvent(eventId = 0, revision = 1, path = path)
     private fun folderDeletedEvent(path: Path) = FolderDeletedEvent(eventId = 0, revision = 1, path = path)

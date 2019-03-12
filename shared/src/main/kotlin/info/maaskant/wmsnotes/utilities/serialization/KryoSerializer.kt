@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.Registration
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import com.esotericsoftware.kryo.util.Pool
+import com.google.common.collect.ImmutableListMultimap
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
@@ -93,6 +94,23 @@ fun <T, U> Output.writeMap(items: Map<T, U>, function: (key: T, value: U) -> Uni
 fun <T, U> Output.writeMapWithNullableValues(items: Map<T, U?>, function: (key: T, value: U?) -> Unit) {
     writeInt(items.size)
     for ((key, value) in items) {
+        function(key, value)
+    }
+}
+
+fun <T, U> Input.readImmutableListMultimap(function: () -> Pair<T, U>): ImmutableListMultimap<T, U> {
+    val numberOfItems = readInt()
+    val builder: ImmutableListMultimap.Builder<T, U> = ImmutableListMultimap.builder<T, U>()
+    for (i in 1..numberOfItems) {
+        val (key, value) = function()
+        builder.put(key, value)
+    }
+    return builder.build()
+}
+
+fun <T, U> Output.writeImmutableListMultimap(items: ImmutableListMultimap<T, U>, function: (key: T, value: U) -> Unit) {
+    writeInt(items.size())
+    for ((key, value) in items.entries()) {
         function(key, value)
     }
 }

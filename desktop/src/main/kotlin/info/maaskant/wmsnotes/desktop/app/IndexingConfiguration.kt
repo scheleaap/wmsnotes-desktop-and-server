@@ -2,10 +2,9 @@ package info.maaskant.wmsnotes.desktop.app
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
-import info.maaskant.wmsnotes.desktop.client.indexing.KryoNoteIndexStateSerializer
-import info.maaskant.wmsnotes.desktop.client.indexing.NoteIndex
-import info.maaskant.wmsnotes.desktop.client.indexing.NoteIndexState
+import info.maaskant.wmsnotes.desktop.client.indexing.KryoTreeIndexStateSerializer
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex
+import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndexState
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.persistence.FileStateRepository
 import info.maaskant.wmsnotes.utilities.persistence.StateRepository
@@ -20,10 +19,10 @@ import javax.inject.Singleton
 class IndexingConfiguration {
     @Bean
     @Singleton
-    fun noteIndexStateRepository(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): StateRepository<NoteIndexState> =
+    fun treeIndexStateRepository(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): StateRepository<TreeIndexState> =
             FileStateRepository(
-                    serializer = KryoNoteIndexStateSerializer(kryoPool),
-                    file = appDirectory.resolve("cache").resolve("note_index"),
+                    serializer = KryoTreeIndexStateSerializer(kryoPool),
+                    file = appDirectory.resolve("cache").resolve("tree_index"),
                     scheduler = Schedulers.io(),
                     timeout = 1,
                     unit = TimeUnit.SECONDS
@@ -31,15 +30,13 @@ class IndexingConfiguration {
 
     @Bean
     @Singleton
-    fun treeIndex(eventStore: EventStore, stateRepository: StateRepository<NoteIndexState>): TreeIndex {
+    fun treeIndex(eventStore: EventStore, stateRepository: StateRepository<TreeIndexState>): TreeIndex {
         return TreeIndex(
                 eventStore,
-                null,
-//                stateRepository.load(),
+                stateRepository.load(),
                 Schedulers.io()
-        )
-//        .apply {
-//            stateRepository.connect(this)
-//    }
+        ).apply {
+            stateRepository.connect(this)
+        }
     }
 }

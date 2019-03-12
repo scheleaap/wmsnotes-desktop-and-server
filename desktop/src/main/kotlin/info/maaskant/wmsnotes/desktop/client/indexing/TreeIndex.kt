@@ -27,23 +27,23 @@ class TreeIndex @Inject constructor(
 
     private val logger by logger()
 
-    private var state: TreeIndexState = initialState ?: TreeIndexState(/*isInitialized = false*/)
+    private var state: TreeIndexState = initialState ?: TreeIndexState(isInitialized = false)
     private val stateUpdates: BehaviorSubject<TreeIndexState> = BehaviorSubject.create()
     private val changes: PublishSubject<Change> = PublishSubject.create()
 
     init {
-        val source = eventStore.getEventUpdates()
-//        if (!state.isInitialized) {
-//            source = Observable.concat(
-//                    eventStore.getEvents()
-//                            .doOnSubscribe { logger.debug("Creating initial note index") }
-//                            .doOnComplete {
-//                                updateState(state.initializationFinished())
-//                                logger.debug("Initial note index created")
-//                            },
-//                    source
-//            )
-//        }
+        var source = eventStore.getEventUpdates()
+        if (!state.isInitialized) {
+            source = Observable.concat(
+                    eventStore.getEvents()
+                            .doOnSubscribe { logger.debug("Creating initial tree index") }
+                            .doOnComplete {
+                                updateState(state.initializationFinished())
+                                logger.debug("Initial tree index created")
+                            },
+                    source
+            )
+        }
         source
                 .subscribeOn(scheduler)
                 .subscribe({
