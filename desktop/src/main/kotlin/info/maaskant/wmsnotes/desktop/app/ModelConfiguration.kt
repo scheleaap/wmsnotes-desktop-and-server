@@ -15,10 +15,12 @@ import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.eventstore.FileEventStore
 import info.maaskant.wmsnotes.model.eventstore.InMemoryEventStore
 import info.maaskant.wmsnotes.model.folder.Folder
+import info.maaskant.wmsnotes.model.folder.FolderCommand
 import info.maaskant.wmsnotes.model.folder.FolderCommandToEventMapper
 import info.maaskant.wmsnotes.model.folder.KryoFolderSerializer
 import info.maaskant.wmsnotes.model.note.KryoNoteSerializer
 import info.maaskant.wmsnotes.model.note.Note
+import info.maaskant.wmsnotes.model.note.NoteCommand
 import info.maaskant.wmsnotes.model.note.NoteCommandToEventMapper
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import org.springframework.context.annotation.Bean
@@ -53,6 +55,7 @@ class ModelConfiguration {
     @Singleton
     fun folderCommandHandler(repository: AggregateRepository<Folder>): AggregateCommandHandler<Folder> =
             AggregateCommandHandler(
+                    FolderCommand::class,
                     repository,
                     FolderCommandToEventMapper()
             )
@@ -61,6 +64,7 @@ class ModelConfiguration {
     @Singleton
     fun noteCommandHandler(repository: AggregateRepository<Note>): AggregateCommandHandler<Note> =
             AggregateCommandHandler(
+                    NoteCommand::class,
                     repository,
                     NoteCommandToEventMapper()
             )

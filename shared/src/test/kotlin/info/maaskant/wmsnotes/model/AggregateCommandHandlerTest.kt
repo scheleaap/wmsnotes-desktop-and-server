@@ -1,11 +1,16 @@
 package info.maaskant.wmsnotes.model
 
-import info.maaskant.wmsnotes.model.CommandHandler.Result.*
-import info.maaskant.wmsnotes.model.note.Note
+import info.maaskant.wmsnotes.model.CommandHandler.Result.Handled
+import info.maaskant.wmsnotes.model.CommandHandler.Result.NotHandled
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
+import info.maaskant.wmsnotes.model.folder.FolderCommand
+import info.maaskant.wmsnotes.model.note.Note
+import info.maaskant.wmsnotes.model.note.NoteCommand
 import info.maaskant.wmsnotes.model.note.NoteCommandToEventMapper
 import info.maaskant.wmsnotes.utilities.Optional
-import io.mockk.*
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -23,13 +28,13 @@ internal class AggregateCommandHandlerTest {
                 repository,
                 commandToEventMapper
         )
-        handler = AggregateCommandHandler(repository, commandToEventMapper)
+        handler = AggregateCommandHandler(NoteCommand::class, repository, commandToEventMapper)
     }
 
     @Test
     fun default() {
         // Given
-        val command: Command = mockk()
+        val command: NoteCommand = mockk()
         val event1: Event = createEvent("note", 15)
         val note1: Note = mockk()
         val event2: Event = createEvent("note", 15)
@@ -48,7 +53,7 @@ internal class AggregateCommandHandlerTest {
     @Test
     fun `no event returned by aggregate`() {
         // Given
-        val command: Command = mockk()
+        val command: NoteCommand = mockk()
         val event1: Event = createEvent("note", 15)
         val note1: Note = mockk()
         every { commandToEventMapper.map(command) }.returns(event1)
@@ -60,6 +65,18 @@ internal class AggregateCommandHandlerTest {
 
         // Then
         assertThat(result).isEqualTo(Handled(Optional()))
+    }
+
+    @Test
+    fun `only handle commands that the handler is responsible for`() {
+        // Given
+        val command: FolderCommand = mockk()
+
+        // When
+        val result = handler.handle(command)
+
+        // Then
+        assertThat(result).isEqualTo(NotHandled)
     }
 
     private fun createEvent(aggId: String, revision: Int): Event {

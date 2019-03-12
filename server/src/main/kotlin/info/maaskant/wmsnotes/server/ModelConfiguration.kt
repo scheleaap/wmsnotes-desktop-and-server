@@ -2,18 +2,19 @@ package info.maaskant.wmsnotes.server
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
-import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.AggregateCommandHandler
+import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.KryoEventSerializer
+import info.maaskant.wmsnotes.model.aggregaterepository.AggregateCache
+import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
+import info.maaskant.wmsnotes.model.aggregaterepository.CachingAggregateRepository
+import info.maaskant.wmsnotes.model.aggregaterepository.FileAggregateCache
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.eventstore.FileEventStore
 import info.maaskant.wmsnotes.model.note.KryoNoteSerializer
 import info.maaskant.wmsnotes.model.note.Note
-import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
+import info.maaskant.wmsnotes.model.note.NoteCommand
 import info.maaskant.wmsnotes.model.note.NoteCommandToEventMapper
-import info.maaskant.wmsnotes.model.note.KryoNoteEventSerializer
-import info.maaskant.wmsnotes.model.aggregaterepository.AggregateCache
-import info.maaskant.wmsnotes.model.aggregaterepository.CachingAggregateRepository
-import info.maaskant.wmsnotes.model.aggregaterepository.FileAggregateCache
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.io.File
@@ -27,13 +28,14 @@ class ModelConfiguration {
     fun eventStore(@OtherConfiguration.AppDirectory appDirectory: File, kryoPool: Pool<Kryo>): EventStore =
             FileEventStore(
                     appDirectory.resolve("events"),
-                    KryoNoteEventSerializer(kryoPool)
+                    KryoEventSerializer(kryoPool)
             )
 
     @Bean
     @Singleton
     fun noteCommandHandler(repository: AggregateRepository<Note>): AggregateCommandHandler<Note> =
             AggregateCommandHandler(
+                    NoteCommand::class,
                     repository,
                     NoteCommandToEventMapper()
             )
