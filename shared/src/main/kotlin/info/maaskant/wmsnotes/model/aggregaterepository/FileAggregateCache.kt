@@ -41,9 +41,11 @@ class FileAggregateCache<T : Aggregate<T>>(private val rootDirectory: File, priv
     override fun put(note: T) {
         val noteFilePath = noteFilePath(note)
 
-        logger.debug("Storing note ${note.aggId} revision ${note.revision}, saving to $noteFilePath")
-        noteFilePath.parentFile.mkdirs()
-        noteFilePath.writeBytes(serializer.serialize(note))
+        if (!noteFilePath.exists()) {
+            logger.debug("Storing note ${note.aggId} revision ${note.revision}, saving to $noteFilePath")
+            noteFilePath.parentFile.mkdirs()
+            noteFilePath.writeBytes(serializer.serialize(note))
+        }
     }
 
     override fun remove(aggId: String, revision: Int) {

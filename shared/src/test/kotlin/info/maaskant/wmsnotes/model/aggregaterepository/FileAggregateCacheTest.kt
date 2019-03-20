@@ -43,6 +43,24 @@ internal class FileAggregateCacheTest : AggregateCacheTest() {
     }
 
     @Test
+    fun `put, do not replace if file exists`() {
+        // Given
+        val note: Note = noteAfterEvent2
+        val c = createInstance()
+        val aggregateDir = tempDir.resolve(aggId)
+        val revisionFile = aggregateDir.resolve("0000000002")
+        aggregateDir.mkdirs()
+        revisionFile.writeBytes(data)
+
+        // When
+        c.put(note)
+
+        // Then
+        assertThat(revisionFile).exists()
+        assertThat(revisionFile.readBytes()).isEqualTo(data)
+    }
+
+    @Test
     fun `remove, check file`() {
         // Given
         val note: Note = noteAfterEvent2
