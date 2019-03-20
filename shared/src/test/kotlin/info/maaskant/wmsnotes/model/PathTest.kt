@@ -90,6 +90,39 @@ internal class PathTest {
     }
 
     @Test
+    fun `create from parent, normal`() {
+        // Given
+        val path = Path("el1")
+
+        // When
+        val childPath = path.child("el2")
+
+        // Then
+        assertThat(childPath).isEqualTo(Path("el1", "el2"))
+    }
+
+    @Test
+    fun `create from parent, illegal character`() {
+        assertThrows<IllegalArgumentException> {
+            Path().child("el/1")
+        }
+    }
+
+    @Test
+    fun `create from parent, empty element`() {
+        assertThrows<IllegalArgumentException> {
+            Path().child("")
+        }
+    }
+
+    @Test
+    fun `create from parent, blank element`() {
+        assertThrows<IllegalArgumentException> {
+            Path().child(" ")
+        }
+    }
+
+    @Test
     fun `to string, normal`() {
         // When
         val path = Path("el1", "el2", "el3")

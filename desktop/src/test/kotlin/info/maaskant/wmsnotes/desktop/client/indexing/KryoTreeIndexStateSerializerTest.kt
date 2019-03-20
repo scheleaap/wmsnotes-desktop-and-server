@@ -21,8 +21,8 @@ internal class KryoTreeIndexStateSerializerTest : KryoSerializerTest<TreeIndexSt
                     .build()
             ),
             TreeIndexState(isInitialized = true, notes = mapOf(
-                    (aggId1 to Note(aggId = aggId1, path = path1, title = "Title 1")),
-                    (aggId2 to Note(aggId = aggId2, path = path2, title = "Title 2"))
+                    (aggId1 to Note(aggId = aggId1, parentAggId = null, path = path1, title = "Title 1")),
+                    (aggId2 to Note(aggId = aggId2, parentAggId = aggId1, path = path2, title = "Title 2"))
             )),
             TreeIndexState(isInitialized = true, autoFolders = setOf(aggId1, aggId2))
 

@@ -21,7 +21,6 @@ import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class TreeIndexTest {
@@ -65,7 +64,7 @@ internal class TreeIndexTest {
         // Then
         observer.assertNoErrors()
         assertThat(observer.values().toList()).isEqualTo(listOf(
-                NodeAdded(Note(event2.aggId, event2.path, event2.title))
+                NodeAdded(Note(aggId = event2.aggId, parentAggId = null, path = event2.path, title = event2.title))
         ))
     }
 
@@ -103,8 +102,8 @@ internal class TreeIndexTest {
         // Then
         observer.assertNoErrors()
         assertThat(observer.values().toList()).isEqualTo(listOf(
-                NodeAdded(Folder(folderAggId, path, folderTitle)),
-                NodeAdded(Note(aggId1, path, title))
+                NodeAdded(Folder(aggId = folderAggId, parentAggId = null, path = path, title = folderTitle)),
+                NodeAdded(Note(aggId = aggId1, parentAggId = folderAggId, path = path, title = title))
         ))
     }
 
@@ -126,8 +125,8 @@ internal class TreeIndexTest {
         // Then
         observer.assertNoErrors()
         assertThat(observer.values().toList()).isEqualTo(listOf(
-                NodeAdded(Folder(folderAggId, path, folderTitle)),
-                NodeAdded(Note(aggId1, path, title))
+                NodeAdded(Folder(aggId = folderAggId, parentAggId = null, path = path, title = folderTitle)),
+                NodeAdded(Note(aggId = aggId1, parentAggId = folderAggId, path = path, title = title))
         ))
     }
 
@@ -148,9 +147,9 @@ internal class TreeIndexTest {
         // Then
         observer.assertNoErrors()
         assertThat(observer.values().toList()).isEqualTo(listOf(
-                NodeAdded(Note(aggId1, rootPath, title)),
+                NodeAdded(Note(aggId = aggId1, parentAggId = null, path = rootPath, title = title)),
                 NodeRemoved(event2.aggId),
-                NodeAdded(Note(aggId1, rootPath, title))
+                NodeAdded(Note(aggId = aggId1, parentAggId = null, path = rootPath, title = title))
         ))
     }
 
@@ -247,21 +246,21 @@ internal class TreeIndexTest {
         // Then
         changeObserver.assertNoErrors()
         assertThat(changeObserver.values().toList()).isEqualTo(listOf(
-                NodeAdded(Folder(folder1AggId, folder1Path, folder1Title)),
-                NodeAdded(Folder(folder2AggId, folder2Path, folder2Title)),
-                NodeAdded(Note(aggId1, notePath, title)),
+                NodeAdded(Folder(aggId = folder1AggId, parentAggId = null, path = folder1Path, title = folder1Title)),
+                NodeAdded(Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title)),
+                NodeAdded(Note(aggId = aggId1, parentAggId = folder2AggId, path = notePath, title = title)),
                 NodeRemoved(aggId1),
                 NodeRemoved(folder2AggId),
                 NodeRemoved(folder1AggId),
-                NodeAdded(Folder(folder1AggId, folder1Path, folder1Title)),
-                NodeAdded(Folder(folder2AggId, folder2Path, folder2Title)),
-                NodeAdded(Note(aggId1, notePath, title))
+                NodeAdded(Folder(aggId = folder1AggId, parentAggId = null, path = folder1Path, title = folder1Title)),
+                NodeAdded(Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title)),
+                NodeAdded(Note(aggId = aggId1, parentAggId = folder2AggId, path = notePath, title = title))
         ))
         initializationObserver.assertNoErrors()
         assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
-                NodeAdded(Folder(folder1AggId, folder1Path, folder1Title)),
-                NodeAdded(Folder(folder2AggId, folder2Path, folder2Title)),
-                NodeAdded(Note(aggId1, notePath, title))
+                NodeAdded(Folder(aggId = folder1AggId, parentAggId = null, path = folder1Path, title = folder1Title)),
+                NodeAdded(Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title)),
+                NodeAdded(Note(aggId = aggId1, parentAggId = folder2AggId, path = notePath, title = title))
         ))
     }
 
@@ -283,16 +282,22 @@ internal class TreeIndexTest {
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
         eventUpdatesSubject.onNext(event1)
+        val initializationObserver = index.getExistingNodesAsChanges().test()
 
         // Then
         observer.assertNoErrors()
         assertThat(observer.values().toList()).isEqualTo(listOf(
-                NodeAdded(Folder(folder1AggId, folder1Path, folder1Title)),
-                NodeAdded(Folder(folder2AggId, folder2Path, folder2Title)),
+                NodeAdded(Folder(aggId = folder1AggId, parentAggId = null, path = folder1Path, title = folder1Title)),
+                NodeAdded(Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title)),
                 NodeRemoved(folder2AggId),
                 NodeRemoved(folder1AggId),
-                NodeAdded(Folder(folder1AggId, folder1Path, folder1Title)),
-                NodeAdded(Folder(folder2AggId, folder2Path, folder2Title))
+                NodeAdded(Folder(aggId = folder1AggId, parentAggId = null, path = folder1Path, title = folder1Title)),
+                NodeAdded(Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title))
+        ))
+        initializationObserver.assertNoErrors()
+        assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
+                NodeAdded(Folder(aggId = folder1AggId, parentAggId = null, path = folder1Path, title = folder1Title)),
+                NodeAdded(Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title))
         ))
     }
 
@@ -463,7 +468,7 @@ internal class TreeIndexTest {
         ))
         initializationObserver.assertNoErrors()
         assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
-                NodeAdded(Note(aggId1, rootPath, "different"))
+                NodeAdded(Note(aggId = aggId1, parentAggId = null, path = rootPath, title = "different"))
         ))
     }
 
@@ -483,7 +488,7 @@ internal class TreeIndexTest {
         initializationObserver.assertComplete()
         initializationObserver.assertNoErrors()
         assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
-                NodeAdded(Note(aggId1, rootPath, title))
+                NodeAdded(Note(aggId = aggId1, parentAggId = null, path = rootPath, title = title))
         ))
         verify(exactly = 1) {
             eventStore.getEvents(any())
@@ -506,7 +511,7 @@ internal class TreeIndexTest {
         initializationObserver.assertComplete()
         initializationObserver.assertNoErrors()
         assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
-                NodeAdded(Note(aggId1, rootPath, title))
+                NodeAdded(Note(aggId = aggId1, parentAggId = null, path = rootPath, title = title))
         ))
     }
 

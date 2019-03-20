@@ -8,6 +8,7 @@ import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex
 import info.maaskant.wmsnotes.desktop.main.TreeView.NotebookNode.Type.FOLDER
 import info.maaskant.wmsnotes.desktop.main.TreeView.NotebookNode.Type.NOTE
 import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
 import javafx.scene.control.TreeItem
@@ -25,7 +26,7 @@ class TreeView : View() {
 
     private val treeIndex: TreeIndex by di()
 
-    private val rootNode = TreeItem(NotebookNode(aggId = "root", type = FOLDER, title = "Root"))
+    private val rootNode = TreeItem(NotebookNode(aggId = "root", type = FOLDER, path = Path(), title = "Root"))
 
     private val treeItemReferences = mutableMapOf<String, TreeItem<NotebookNode>>()
 
@@ -37,8 +38,8 @@ class TreeView : View() {
         onUserSelect {
             logger.debug("Selected: $it")
             when (it.type) {
-                FOLDER -> applicationController.selectNote.onNext(NavigationViewModel.Selection.FolderSelection(aggId = it.aggId, title = it.title))
                 NOTE -> applicationController.selectNote.onNext(NavigationViewModel.Selection.NoteSelection(aggId = it.aggId, title = it.title))
+                FOLDER -> applicationController.selectNote.onNext(NavigationViewModel.Selection.FolderSelection(aggId = it.aggId, path = it.path, title = it.title))
             }
         }
         events(KeyEvent.KEY_PRESSED)
@@ -57,8 +58,8 @@ class TreeView : View() {
                     when (it) {
                         is TreeIndex.Change.NodeAdded -> {
                             when (it.metadata) {
-                                is Folder -> addFolder(aggId = it.metadata.aggId, title = it.metadata.path.toString())
-                                is Note -> addNote(aggId = it.metadata.aggId, title = it.metadata.title)
+                                is Folder -> addFolder(it.metadata)
+                                is Note -> addNote(it.metadata)
                             }
                         }
                         is TreeIndex.Change.NodeRemoved -> removeNode(it.aggId)
@@ -68,26 +69,36 @@ class TreeView : View() {
 
     }
 
-    private fun addFolder(aggId: String, title: String) {
-        logger.debug("Adding folder $aggId")
-        val node = NotebookNode(aggId = aggId, type = FOLDER, title = title)
+    private fun addFolder(folder: Folder) {
+        logger.debug("Adding folder ${folder.aggId}")
+        val parentTreeItem: TreeItem<NotebookNode> = if (folder.parentAggId != null) {
+            treeItemReferences[folder.parentAggId]!!
+        } else {
+            rootNode
+        }
+        val node = NotebookNode(aggId = folder.aggId, type = FOLDER, path = folder.path, title = folder.title)
         val treeItem = TreeItem(node)
-        treeItemReferences[aggId] = treeItem
-        rootNode += treeItem
+        treeItemReferences[folder.aggId] = treeItem
+        parentTreeItem += treeItem
     }
 
-    private fun addNote(aggId: String, title: String) {
-        logger.debug("Adding note $aggId")
-        val node = NotebookNode(aggId = aggId, type = NOTE, title = title)
+    private fun addNote(note: Note) {
+        logger.debug("Adding note ${note.aggId}")
+        val parentTreeItem: TreeItem<NotebookNode> = if (note.parentAggId != null) {
+            treeItemReferences[note.parentAggId]!!
+        } else {
+            rootNode
+        }
+        val node = NotebookNode(aggId = note.aggId, type = NOTE, path = note.path, title = note.title)
         val treeItem = TreeItem(node)
-        treeItemReferences[aggId] = treeItem
-        rootNode += treeItem
+        treeItemReferences[note.aggId] = treeItem
+        parentTreeItem += treeItem
     }
 
     private fun changeTitle(aggId: String, title: String) {
         logger.debug("Changing title of note $aggId")
         val treeItem: TreeItem<NotebookNode> = treeItemReferences[aggId]!!
-        treeItem.value = NotebookNode(aggId, NOTE, title)
+        treeItem.value = NotebookNode(aggId, type = NOTE, path = TODO(), title = title)
     }
 
     private fun removeNode(aggId: String) {
@@ -96,7 +107,7 @@ class TreeView : View() {
         rootNode.children.remove(treeItem)
     }
 
-    data class NotebookNode(val aggId: String, val type: Type, val title: String) {
+    data class NotebookNode(val aggId: String, val type: Type, val path: Path, val title: String) {
         enum class Type {
             FOLDER,
             NOTE

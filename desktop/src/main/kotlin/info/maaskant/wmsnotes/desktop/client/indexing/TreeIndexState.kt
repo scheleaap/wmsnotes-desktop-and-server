@@ -102,7 +102,7 @@ class KryoTreeIndexStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) : K
             output.writeMap(it.notes) { _, note ->
                 kryo.writeObject(output, note)
             }
-            output.writeSet(it.autoFolders) {aggId ->
+            output.writeSet(it.autoFolders) { aggId ->
                 output.writeString(aggId)
             }
         }
@@ -133,15 +133,17 @@ class KryoTreeIndexStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) : K
     private class KryoNoteSerializer : Serializer<Note>() {
         override fun write(kryo: Kryo, output: Output, it: Note) {
             output.writeString(it.aggId)
+            output.writeString(it.parentAggId)
             output.writeString(it.path.toString())
             output.writeString(it.title)
         }
 
         override fun read(kryo: Kryo, input: Input, clazz: Class<out Note>): Note {
             val aggId = input.readString()
+            val parentAggId = input.readString()
             val path = Path.from(input.readString())
             val title = input.readString()
-            return Note(aggId = aggId, path = path, title = title)
+            return Note(aggId = aggId, parentAggId = parentAggId, path = path, title = title)
         }
     }
 }

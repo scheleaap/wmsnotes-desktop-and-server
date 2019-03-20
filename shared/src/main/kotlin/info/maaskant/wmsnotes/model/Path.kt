@@ -17,11 +17,15 @@ data class Path(val elements: List<String>) {
             elements.joinToString(separator = "/")
 
     fun parent(): Path =
-        if (elements.isNotEmpty()) {
-            Path(elements.subList(0, elements.lastIndex))
-        } else {
-            throw IllegalStateException("Root path does not have a parent")
-        }
+            if (elements.isNotEmpty()) {
+                Path(elements.subList(0, elements.lastIndex))
+            } else {
+                throw IllegalStateException("Root path does not have a parent")
+            }
+
+    fun child(childElement: String): Path {
+        return Path(elements + childElement)
+    }
 
 
     companion object {
