@@ -33,16 +33,12 @@ class MenuAndToolbarView : View() {
             accelerator = "Shortcut+N") {
         applicationController.createFolder.onNext(Unit)
     }
-    private val deleteFolderAction = StatelessAction(messageKey = "menu.file.deleteFolder",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
-        applicationController.deleteCurrentFolder.onNext(Unit)
-    }
     private val createNoteAction = StatelessAction(messageKey = "menu.file.createNote", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = largerIconSize },
             accelerator = "Shortcut+N") {
         applicationController.createNote.onNext(Unit)
     }
     private val deleteNoteAction = StatelessAction(messageKey = "menu.file.deleteNote", graphic = FontAwesomeIconView(FontAwesomeIcon.TRASH_ALT).apply { size = largerIconSize },
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }
     private val renameNoteAction = StatelessAction(messageKey = "menu.file.renameNote",
@@ -51,52 +47,52 @@ class MenuAndToolbarView : View() {
     }
     private val cutAction = StatelessAction(messageKey = "menu.edit.cut", graphic = FontAwesomeIconView(FontAwesomeIcon.CUT),
             accelerator = "Shortcut+X",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.cut()
     }
     private val copyAction = StatelessAction(messageKey = "menu.edit.copy", graphic = FontAwesomeIconView(FontAwesomeIcon.COPY),
             accelerator = "Shortcut+C",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.copy()
     }
     private val pasteAction = StatelessAction(messageKey = "menu.edit.paste", graphic = FontAwesomeIconView(FontAwesomeIcon.PASTE),
             accelerator = "Shortcut+V",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.paste()
     }
     private val selectAllAction = StatelessAction(messageKey = "menu.edit.selectAll",
             accelerator = "Shortcut+A",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.selectAll()
     }
     private val findAction = StatelessAction(messageKey = "menu.edit.find", graphic = FontAwesomeIconView(FontAwesomeIcon.SEARCH),
             accelerator = "Shortcut+F",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.find(false)
     }
     private val replaceAction = StatelessAction(messageKey = "menu.edit.replace",
             accelerator = "Shortcut+H",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.find(true)
     }
     private val findNextAction = StatelessAction(messageKey = "menu.edit.findNext",
             accelerator = "F3",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.findNextPrevious(true)
     }
     private val findPreviousAction = StatelessAction(messageKey = "menu.edit.findPrevious",
             accelerator = "Shift+F3",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.findNextPrevious(false)
     }
     private val insertBoldAction = StatelessAction(messageKey = "menu.insert.bold", graphic = FontAwesomeIconView(FontAwesomeIcon.BOLD),
             accelerator = "Shortcut+B",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.smartEdit.insertBold(Messages["defaultText.bold"])
     }
     private val insertItalicAction = StatelessAction(messageKey = "menu.insert.italic", graphic = FontAwesomeIconView(FontAwesomeIcon.ITALIC),
             accelerator = "Shortcut+I",
-            enabled = navigationViewModel.currentSelection.map { it != NavigationViewModel.Selection.Nothing }) {
+            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         markdownEditorPane.smartEdit.insertItalic(Messages["defaultText.italic"])
     }
     private val toggleLineNumbersAction = StatefulAction(messageKey = "menu.view.showLineNumbers",
@@ -119,7 +115,6 @@ class MenuAndToolbarView : View() {
                         item(createNoteAction)
                         item(deleteNoteAction)
                         item(createFolderAction)
-                        item(deleteFolderAction)
                         separator()
                         item(exitAction)
                     }
@@ -149,7 +144,6 @@ class MenuAndToolbarView : View() {
                     button(deleteNoteAction)
                     button(renameNoteAction)
                     button(createFolderAction)
-                    button(deleteFolderAction)
                     // toggleswitch {
                     this += ToggleSwitch().apply {
                         selectedProperty().toObservable()

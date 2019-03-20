@@ -30,7 +30,7 @@ class ApplicationController @Inject constructor(
     final val createFolder: Subject<Unit> = PublishSubject.create()
     final val deleteCurrentFolder: Subject<Unit> = PublishSubject.create()
     // Note
-    final val selectNote: Subject<NavigationViewModel.Selection> = PublishSubject.create()
+    final val selectNote: Subject<NavigationViewModel.SelectionRequest> = PublishSubject.create()
     final val createNote: Subject<Unit> = PublishSubject.create()
     final val deleteCurrentNote: Subject<Unit> = PublishSubject.create()
     final val renameCurrentNote: Subject<Unit> = PublishSubject.create()
@@ -44,19 +44,14 @@ class ApplicationController @Inject constructor(
         // Folder
         createFolder
                 .subscribeOn(Schedulers.computation())
-                .map { CreateFolderCommand(path = Path("Folder " + LocalDateTime.now().toString()), lastRevision = 0) }
+                .map { CreateFolderCommand(path = navigationViewModel.currentPathValue.child("Folder ${i++}"), lastRevision = 0) }
                 .subscribe(commandProcessor.commands)
-//        deleteCurrentFolder
-//                .subscribeOn(Schedulers.computation())
-//                .filter { navigationViewModel.currentNoteValue != null }
-//                .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision) }
-//                .subscribe(commandProcessor.commands)
 
         // Note
         selectNote.subscribe(navigationViewModel.selectionRequest)
         createNote
                 .subscribeOn(Schedulers.computation())
-                .map { CreateNoteCommand(null, path = Path(), title = "Note ${i++}", content = "") }
+                .map { CreateNoteCommand(aggId = null, path = navigationViewModel.currentPathValue, title = "Note ${i++}", content = "") }
                 .subscribe(commandProcessor.commands)
         deleteCurrentNote
                 .subscribeOn(Schedulers.computation())

@@ -38,8 +38,8 @@ class TreeView : View() {
         onUserSelect {
             logger.debug("Selected: $it")
             when (it.type) {
-                NOTE -> applicationController.selectNote.onNext(NavigationViewModel.Selection.NoteSelection(aggId = it.aggId, title = it.title))
-                FOLDER -> applicationController.selectNote.onNext(NavigationViewModel.Selection.FolderSelection(aggId = it.aggId, path = it.path, title = it.title))
+                FOLDER -> applicationController.selectNote.onNext(NavigationViewModel.SelectionRequest.FolderSelectionRequest(aggId = it.aggId, path = it.path, title = it.title))
+                NOTE -> applicationController.selectNote.onNext(NavigationViewModel.SelectionRequest.NoteSelectionRequest(aggId = it.aggId))
             }
         }
         events(KeyEvent.KEY_PRESSED)
