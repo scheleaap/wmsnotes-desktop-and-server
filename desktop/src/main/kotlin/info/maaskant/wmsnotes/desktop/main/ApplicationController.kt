@@ -2,7 +2,6 @@ package info.maaskant.wmsnotes.desktop.main
 
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
 import info.maaskant.wmsnotes.model.CommandProcessor
-import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.utilities.logger
@@ -11,7 +10,6 @@ import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import org.springframework.stereotype.Component
 import java.io.File
-import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,7 +30,7 @@ class ApplicationController @Inject constructor(
     final val selectNote: Subject<NavigationViewModel.SelectionRequest> = PublishSubject.create()
     final val createNote: Subject<Unit> = PublishSubject.create()
     final val deleteCurrentNote: Subject<Unit> = PublishSubject.create()
-    final val renameCurrentNote: Subject<Unit> = PublishSubject.create()
+    final val renameCurrentNote: Subject<String> = PublishSubject.create()
     final val addAttachmentToCurrentNote: Subject<File> = PublishSubject.create()
     final val deleteAttachmentFromCurrentNote: Subject<String> = PublishSubject.create()
     final val saveContent: Subject<Unit> = PublishSubject.create()
@@ -60,7 +58,7 @@ class ApplicationController @Inject constructor(
         renameCurrentNote
                 .subscribeOn(Schedulers.computation())
                 .filter { navigationViewModel.currentNoteValue != null }
-                .map { ChangeTitleCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision, "random title " + LocalDateTime.now().toString()) }
+                .map { ChangeTitleCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision, title = it) }
                 .subscribe(commandProcessor.commands)
         addAttachmentToCurrentNote
                 .subscribeOn(Schedulers.computation())

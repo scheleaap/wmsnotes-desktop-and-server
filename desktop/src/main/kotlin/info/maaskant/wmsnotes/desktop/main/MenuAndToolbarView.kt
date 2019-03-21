@@ -58,7 +58,19 @@ class MenuAndToolbarView : View() {
     }
     private val renameNoteAction = StatelessAction(messageKey = "menu.file.renameNote",
             enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
-        applicationController.renameCurrentNote.onNext(Unit)
+        TextInputDialog("TODO").apply {
+            title = Messages["RenameNoteDialog.title"]
+            contentText = Messages["RenameNoteDialog.contentText"]
+        }
+                .showAndWait()
+                .flatMap {
+                    if (it.isNotBlank()) {
+                        Optional.of(it)
+                    } else {
+                        Optional.empty()
+                    }
+                }
+                .ifPresent { applicationController.renameCurrentNote.onNext(it) }
     }
     private val cutAction = StatelessAction(messageKey = "menu.edit.cut", graphic = FontAwesomeIconView(FontAwesomeIcon.CUT),
             accelerator = "Shortcut+X",
