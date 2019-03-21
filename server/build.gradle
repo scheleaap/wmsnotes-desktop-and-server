@@ -37,7 +37,7 @@ dependencies {
     testImplementation('org.junit.jupiter:junit-jupiter-api')
     testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine')
     // See also https://blog.philipphauer.de/best-practices-unit-testing-kotlin/
-    testImplementation 'io.mockk:mockk:1.8.8'
+    testImplementation 'io.mockk:mockk:1.9.2'
 }
 
 compileKotlin {
