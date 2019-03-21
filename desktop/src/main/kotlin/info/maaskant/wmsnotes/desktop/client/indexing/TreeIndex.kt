@@ -135,7 +135,7 @@ class TreeIndex @Inject constructor(
 
     private fun handleTitleChanged(it: TitleChangedEvent) {
         val oldNote = state.getNote(aggId = it.aggId)
-        val newNote = Note(aggId = oldNote.aggId, parentAggId = null, path = oldNote.path, title = it.title)
+        val newNote = Note(aggId = oldNote.aggId, parentAggId = oldNote.parentAggId, path = oldNote.path, title = it.title)
         updateState(state.replaceNote(newNote))
         changes.onNext(TitleChanged(it.aggId, it.title))
     }

@@ -451,14 +451,19 @@ internal class TreeIndexTest {
     @Test
     fun `title changed`() {
         // Given
-        val event1 = noteCreatedEvent(aggId1, rootPath, title)
-        val event2 = TitleChangedEvent(eventId = 0, aggId = aggId1, revision = 0, title = "different")
+        val folderTitle = "el"
+        val path = Path(folderTitle)
+        val folderAggId = FolderEvent.aggId(path)
+        val event1 = folderCreatedEvent(path)
+        val event2 = noteCreatedEvent(aggId1, path, title)
+        val event3 = TitleChangedEvent(eventId = 0, aggId = aggId1, revision = 0, title = "different")
         val index = TreeIndex(eventStore, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event1)
+        eventUpdatesSubject.onNext(event2)
         val changeObserver = index.getChanges().test()
 
         // When
-        eventUpdatesSubject.onNext(event2)
+        eventUpdatesSubject.onNext(event3)
         val initializationObserver = index.getExistingNodesAsChanges().test()
 
         // Then
@@ -468,7 +473,8 @@ internal class TreeIndexTest {
         ))
         initializationObserver.assertNoErrors()
         assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
-                NodeAdded(Note(aggId = aggId1, parentAggId = null, path = rootPath, title = "different"))
+                NodeAdded(Folder(aggId = folderAggId, parentAggId = null, path = path, title = folderTitle)),
+                NodeAdded(Note(aggId = aggId1, parentAggId = folderAggId, path = path, title = "different"))
         ))
     }
 

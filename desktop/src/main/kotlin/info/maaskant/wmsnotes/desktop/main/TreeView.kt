@@ -98,7 +98,9 @@ class TreeView : View() {
     private fun changeTitle(aggId: String, title: String) {
         logger.debug("Changing title of note $aggId")
         val treeItem: TreeItem<NotebookNode> = treeItemReferences[aggId]!!
-        treeItem.value = NotebookNode(aggId, type = NOTE, path = TODO(), title = title)
+        val oldNode = treeItem.value
+        val newNode = NotebookNode(oldNode.aggId, type = oldNode.type, path = oldNode.path, title = title)
+        treeItem.value = newNode
     }
 
     private fun removeNode(aggId: String) {
