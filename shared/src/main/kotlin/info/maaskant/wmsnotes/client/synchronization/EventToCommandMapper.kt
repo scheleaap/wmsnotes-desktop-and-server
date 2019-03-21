@@ -11,20 +11,20 @@ import javax.inject.Singleton
 class EventToCommandMapper @Inject constructor() {
     fun map(source: Event, lastRevision: Int?): Command {
         return when (source) {
-            is NoteEvent -> map1(source, lastRevision)
-            is FolderEvent -> map2(source, lastRevision)
+            is NoteEvent -> map(source, lastRevision = lastRevision)
+            is FolderEvent -> map(source, lastRevision = lastRevision ?: 0)
             else -> throw IllegalArgumentException()
         }
     }
 
-    private fun map2(source: FolderEvent, lastRevision: Int?): FolderCommand {
+    private fun map(source: FolderEvent, lastRevision: Int): FolderCommand {
         return when (source) {
-            is FolderCreatedEvent -> TODO()
-            is FolderDeletedEvent -> TODO()
+            is FolderCreatedEvent -> CreateFolderCommand(path = source.path, lastRevision = lastRevision)
+            is FolderDeletedEvent -> DeleteFolderCommand(path = source.path, lastRevision = lastRevision)
         }
     }
 
-    private fun map1(source: NoteEvent, lastRevision: Int?): Command {
+    private fun map(source: NoteEvent, lastRevision: Int?): Command {
         return when (source) {
             is NoteCreatedEvent -> CreateNoteCommand(source.aggId, path = source.path, title = source.title, content = source.content)
             is NoteDeletedEvent -> DeleteNoteCommand(source.aggId, lastRevision!!)
