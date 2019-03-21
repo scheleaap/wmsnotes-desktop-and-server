@@ -3,16 +3,9 @@ package info.maaskant.wmsnotes.model.folder
 import au.com.console.kassava.kotlinToString
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
-import org.apache.commons.codec.binary.Hex
-import org.apache.commons.codec.digest.DigestUtils
+import info.maaskant.wmsnotes.model.folder.Folder.Companion.aggId
 
-sealed class FolderEvent(eventId: Int, revision: Int, val path: Path) : Event(eventId, aggId(path), revision) {
-    companion object {
-        fun aggId(path: Path): String {
-            return "f-" + String(Hex.encodeHex(DigestUtils.sha1(path.toString())))
-        }
-    }
-}
+sealed class FolderEvent(eventId: Int, revision: Int, val path: Path) : Event(eventId, aggId(path), revision)
 
 class FolderCreatedEvent(eventId: Int, revision: Int, path: Path) : FolderEvent(eventId, revision, path) {
     override fun copy(eventId: Int, revision: Int): FolderCreatedEvent =

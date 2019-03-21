@@ -3,9 +3,9 @@ package info.maaskant.wmsnotes.desktop.client.indexing
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change.*
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.model.folder.Folder.Companion.aggId
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
 import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
-import info.maaskant.wmsnotes.model.folder.FolderEvent
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
 import info.maaskant.wmsnotes.model.note.NoteUndeletedEvent
@@ -62,7 +62,7 @@ class TreeIndex @Inject constructor(
 
     private fun addAutomaticallyGeneratedFoldersIfNecessary(path: Path): String? {
         if (path.elements.isNotEmpty()) {
-            val aggId = FolderEvent.aggId(path)
+            val aggId = aggId(path)
             if (!state.isNodeInFolder(aggId, path)) {
                 val parentAggId = addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
                 logger.debug("Adding automatically generated folder $path to index")
@@ -110,7 +110,7 @@ class TreeIndex @Inject constructor(
                         NodeAdded(state.notes.getValue(aggId))
                     } else {
                         if (path.elements.size > 1) {
-                            NodeAdded(folder(aggId, parentAggId = FolderEvent.aggId(path.parent()), path = path))
+                            NodeAdded(folder(aggId, parentAggId = aggId(path.parent()), path = path))
                         } else {
                             NodeAdded(folder(aggId, parentAggId = null, path = path))
                         }
@@ -141,7 +141,7 @@ class TreeIndex @Inject constructor(
     }
 
     private fun removeAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
-        val aggId = FolderEvent.aggId(path)
+        val aggId = aggId(path)
         if (state.isAutoFolder(aggId) && path.elements.isNotEmpty()) {
             val children = state.foldersWithChildren.get(path)
             if (children.size == 1 && aggId in children) {
@@ -155,7 +155,7 @@ class TreeIndex @Inject constructor(
 
     private fun removeFolder(path: Path) {
         if (path.elements.isNotEmpty()) {
-            val aggId = FolderEvent.aggId(path)
+            val aggId = aggId(path)
             val children = state.foldersWithChildren.get(path)
             if (children.size == 1 && aggId in children) {
                 logger.debug("Removing folder $path from index")

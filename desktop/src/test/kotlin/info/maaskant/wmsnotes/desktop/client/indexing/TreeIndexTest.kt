@@ -5,9 +5,9 @@ import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change.*
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.model.folder.Folder.Companion.aggId
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
 import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
-import info.maaskant.wmsnotes.model.folder.FolderEvent
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
 import info.maaskant.wmsnotes.model.note.NoteUndeletedEvent
@@ -89,7 +89,7 @@ internal class TreeIndexTest {
         // Given
         val folderTitle = "el"
         val path = Path(folderTitle)
-        val folderAggId = FolderEvent.aggId(path)
+        val folderAggId = aggId(path)
         val event1 = noteCreatedEvent(aggId1, path, title)
         val event2 = folderCreatedEvent(path)
         val index = TreeIndex(eventStore, treeIndexState, scheduler)
@@ -112,7 +112,7 @@ internal class TreeIndexTest {
         // Given
         val folderTitle = "el"
         val path = Path(folderTitle)
-        val folderAggId = FolderEvent.aggId(path)
+        val folderAggId = aggId(path)
         val event1 = folderCreatedEvent(path)
         val event2 = noteCreatedEvent(aggId1, path, title)
         val index = TreeIndex(eventStore, treeIndexState, scheduler)
@@ -228,8 +228,8 @@ internal class TreeIndexTest {
         val folder2Title = "el2"
         val folder1Path = Path(folder1Title)
         val folder2Path = Path(folder1Title, folder2Title)
-        val folder1AggId = FolderEvent.aggId(folder1Path)
-        val folder2AggId = FolderEvent.aggId(folder2Path)
+        val folder1AggId = aggId(folder1Path)
+        val folder2AggId = aggId(folder2Path)
         val notePath = folder2Path
         val event1 = noteCreatedEvent(aggId1, notePath, title)
         val event2 = noteDeletedEvent(aggId1)
@@ -271,8 +271,8 @@ internal class TreeIndexTest {
         val folder2Title = "el2"
         val folder1Path = Path(folder1Title)
         val folder2Path = Path(folder1Title, folder2Title)
-        val folder1AggId = FolderEvent.aggId(folder1Path)
-        val folder2AggId = FolderEvent.aggId(folder2Path)
+        val folder1AggId = aggId(folder1Path)
+        val folder2AggId = aggId(folder2Path)
         val event1 = folderCreatedEvent(folder2Path)
         val event2 = folderDeletedEvent(folder2Path)
         val index = TreeIndex(eventStore, treeIndexState, scheduler)
@@ -372,7 +372,7 @@ internal class TreeIndexTest {
         // Given
         val folder1Path = Path("el1")
         val folder2Path = Path("el1", "el2")
-        val folder2AggId = FolderEvent.aggId(folder2Path)
+        val folder2AggId = aggId(folder2Path)
         val event1 = folderCreatedEvent(folder2Path)
         val event2 = folderCreatedEvent(folder1Path)
         val event3 = folderDeletedEvent(folder2Path)
@@ -395,7 +395,7 @@ internal class TreeIndexTest {
     fun `delete folder later if it cannot be deleted right away`() {
         // Given
         val path = Path("el1")
-        val folderAggId = FolderEvent.aggId(path)
+        val folderAggId = aggId(path)
         val event1 = noteCreatedEvent(aggId1, path, title)
         val event2 = folderCreatedEvent(path)
         val event3 = folderDeletedEvent(path)
@@ -453,7 +453,7 @@ internal class TreeIndexTest {
         // Given
         val folderTitle = "el"
         val path = Path(folderTitle)
-        val folderAggId = FolderEvent.aggId(path)
+        val folderAggId = aggId(path)
         val event1 = folderCreatedEvent(path)
         val event2 = noteCreatedEvent(aggId1, path, title)
         val event3 = TitleChangedEvent(eventId = 0, aggId = aggId1, revision = 0, title = "different")

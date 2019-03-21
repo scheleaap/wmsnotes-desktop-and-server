@@ -7,6 +7,8 @@ import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
+import org.apache.commons.codec.binary.Hex
+import org.apache.commons.codec.digest.DigestUtils
 import java.util.*
 
 class Folder private constructor(
@@ -85,6 +87,10 @@ class Folder private constructor(
     }
 
     companion object {
+        fun aggId(path: Path): String {
+            return "f-" + String(Hex.encodeHex(DigestUtils.sha1(path.toString())))
+        }
+
         fun deserialize(
                 revision: Int,
                 exists: Boolean,
