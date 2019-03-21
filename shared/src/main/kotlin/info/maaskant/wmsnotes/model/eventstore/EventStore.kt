@@ -17,24 +17,24 @@ interface EventStore {
     fun getEventUpdates(): Observable<Event>
 
     /**
-     * Returns a completing observable that streams all events applicable to a given note. Updates are not included.
+     * Returns a completing observable that streams all events applicable to a given aggregate. Updates are not included.
      *
-     * @param noteId The note id.
+     * @param aggId The aggregate id.
      * @param afterRevision If specified, only events with a revision higher than the parameter will be returned.
      */
-    fun getEventsOfNote(noteId: String, afterRevision: Int? = null): Observable<Event>
+    fun getEventsOfAggregate(aggId: String, afterRevision: Int? = null): Observable<Event>
 
     /**
-     * Returns a non-completing observable that streams all events applicable to a given note, including new events as they are added to the store.
+     * Returns a non-completing observable that streams all events applicable to a given aggregate, including new events as they are added to the store.
      *
-     * @param noteId The note id.
+     * @param aggId The aggregate id.
      * @param afterRevision If specified, only events with a revision higher than the parameter will be returned.
      */
-    fun getEventsOfNoteWithUpdates(noteId: String, afterRevision: Int? = null): Observable<Event> {
+    fun getEventsOfAggregateWithUpdates(aggId: String, afterRevision: Int? = null): Observable<Event> {
         return Observable.concat(
-                getEventsOfNote(noteId, afterRevision),
+                getEventsOfAggregate(aggId, afterRevision),
                 getEventUpdates()
-                        .filter { it.noteId == noteId }
+                        .filter { it.aggId == aggId }
                         .filter { afterRevision == null || it.revision > afterRevision }
         )
     }

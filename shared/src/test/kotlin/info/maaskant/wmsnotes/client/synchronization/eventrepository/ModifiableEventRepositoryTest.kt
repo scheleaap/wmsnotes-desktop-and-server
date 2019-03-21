@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.client.synchronization.eventrepository
 
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.Path
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -8,9 +9,9 @@ import org.junit.jupiter.api.assertThrows
 internal abstract class ModifiableEventRepositoryTest {
 
     protected val events = listOf(
-            NoteCreatedEvent(eventId = 1, noteId = "note-1", revision = 1, title = "Title 1") to "DATA1",
-            NoteCreatedEvent(eventId = 2, noteId = "note-2", revision = 2, title = "Title 2") to "DATA2",
-            NoteCreatedEvent(eventId = 3, noteId = "note-3", revision = 3, title = "Title 3") to "DATA3"
+            NoteCreatedEvent(eventId = 1, aggId = "note-1", revision = 1, path = Path("p1"), title = "Title 1", content = "Text 1") to "DATA1",
+            NoteCreatedEvent(eventId = 2, aggId = "note-2", revision = 2, path = Path("p2"), title = "Title 2", content = "Text 2") to "DATA2",
+            NoteCreatedEvent(eventId = 3, aggId = "note-3", revision = 3, path = Path("p3"), title = "Title 3", content = "Text 3") to "DATA3"
     )
 
     @Test

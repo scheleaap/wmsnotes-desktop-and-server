@@ -2,8 +2,9 @@ package info.maaskant.wmsnotes.client.synchronization
 
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import info.maaskant.wmsnotes.model.NoteCreatedEvent
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
+import info.maaskant.wmsnotes.model.Path
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -71,8 +72,10 @@ internal class LocalEventImporterTest {
             eventRepository.addEvent(event2)
         }
     }
-}
 
-private fun modelEvent(i: Int): NoteCreatedEvent {
-    return NoteCreatedEvent(eventId = i, noteId = "note-$i", revision = i, title = "Title $i")
+    companion object {
+        internal fun modelEvent(i: Int): NoteCreatedEvent {
+            return NoteCreatedEvent(eventId = i, aggId = "note-$i", revision = i, path = Path("path-$i"), title = "Title $i", content = "Text $i")
+        }
+    }
 }

@@ -1,21 +1,24 @@
-package info.maaskant.wmsnotes.model.projection
+package info.maaskant.wmsnotes.model.note
 
 import au.com.console.kassava.kotlinEquals
 import au.com.console.kassava.kotlinToString
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.Aggregate
+import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.model.Path
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.*
 
 class Note private constructor(
-        val revision: Int,
+        override val revision: Int,
         val exists: Boolean,
-        val noteId: String,
+        override val aggId: String,
+        val path: Path,
         val title: String,
         val content: String,
         val attachments: Map<String, ByteArray>,
         val attachmentHashes: Map<String, String>
-) {
+) : Aggregate<Note> {
 
     private val nameReplacementPattern: Regex = Regex("""[\\\t /&]""")
 
@@ -24,21 +27,23 @@ class Note private constructor(
     constructor() : this(
             revision = 0,
             exists = false,
-            noteId = "",
+            aggId = "",
             title = "",
+            path = Path(),
             content = "",
             attachments = emptyMap(),
             attachmentHashes = emptyMap()
     )
 
-    override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::title, Note::content, Note::attachmentHashes))
-    override fun hashCode() = Objects.hash(revision, exists, noteId, title, content, attachmentHashes)
-    override fun toString() = kotlinToString(properties = arrayOf(Note::revision, Note::exists, Note::noteId, Note::title, Note::contentLength, Note::attachmentHashes))
+    override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::aggId, Note::revision, Note::exists, Note::path, Note::title, Note::content, Note::attachmentHashes))
+    override fun hashCode() = Objects.hash(aggId, revision, exists, path, title, content, attachmentHashes)
+    override fun toString() = kotlinToString(properties = arrayOf(Note::aggId, Note::revision, Note::exists, Note::path, Note::title, Note::contentLength, Note::attachmentHashes))
 
     private fun copy(
             revision: Int = this.revision,
             exists: Boolean = this.exists,
-            noteId: String = this.noteId,
+            aggId: String = this.aggId,
+            path: Path = this.path,
             title: String = this.title,
             content: String = this.content,
             attachments: Map<String, ByteArray> = this.attachments,
@@ -47,7 +52,8 @@ class Note private constructor(
         return Note(
                 revision = revision,
                 exists = exists,
-                noteId = noteId,
+                aggId = aggId,
+                path = path,
                 title = title,
                 content = content,
                 attachments = attachments,
@@ -55,27 +61,31 @@ class Note private constructor(
         )
     }
 
-
-    fun apply(event: Event): Pair<Note, Event?> {
+    override fun apply(event: Event): Pair<Note, Event?> {
+        val expectedRevision = revision + 1
         if (revision == 0) {
-            if (event !is NoteCreatedEvent) throw IllegalArgumentException("$event can not be a note's first event")
-            if (event.revision != 1) throw IllegalArgumentException("The revision of $event must be ${revision + 1}")
+            if (event !is NoteCreatedEvent) throw IllegalArgumentException("$event cannot be a note's first event")
+            if (event.revision != expectedRevision) throw IllegalArgumentException("The revision of $event must be $expectedRevision")
         } else {
-            if (event.revision != revision + 1) throw IllegalArgumentException("The revision of $event must be ${revision + 1}")
-            if (event.noteId != noteId) throw IllegalArgumentException("The note id of $event must be $noteId")
+            if (event.revision != expectedRevision) throw IllegalArgumentException("The revision of $event must be $expectedRevision")
+            if (event.aggId != aggId) throw IllegalArgumentException("The aggregate id of $event must be $aggId")
         }
         return when (event) {
-            is NoteCreatedEvent -> applyCreated(event)
-            is NoteDeletedEvent -> applyDeleted(event)
-            is NoteUndeletedEvent -> applyUndeleted(event)
-            is AttachmentAddedEvent -> applyAttachmentAdded(event)
-            is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
-            is ContentChangedEvent -> applyContentChanged(event)
-            is TitleChangedEvent -> applyTitleChanged(event)
+            is NoteEvent -> when (event) {
+                is NoteCreatedEvent -> applyCreated(event)
+                is NoteDeletedEvent -> applyDeleted(event)
+                is NoteUndeletedEvent -> applyUndeleted(event)
+                is AttachmentAddedEvent -> applyAttachmentAdded(event)
+                is AttachmentDeletedEvent -> applyAttachmentDeleted(event)
+                is ContentChangedEvent -> applyContentChanged(event)
+                is TitleChangedEvent -> applyTitleChanged(event)
+                is MovedEvent -> applyMoved(event)
+            }
+            else -> throw IllegalArgumentException("Wrong event type $event")
         }
     }
 
-    private fun applyAttachmentAdded(event: AttachmentAddedEvent): Pair<Note, Event?> {
+    private fun applyAttachmentAdded(event: AttachmentAddedEvent): Pair<Note, NoteEvent?> {
         if (event.name.isEmpty()) throw IllegalArgumentException("An attachment name must not be empty ($event)")
         val sanitizedName = event.name.replace(nameReplacementPattern, "_")
         return if (sanitizedName in attachments) {
@@ -90,7 +100,7 @@ class Note private constructor(
         }
     }
 
-    private fun applyAttachmentDeleted(event: AttachmentDeletedEvent): Pair<Note, Event?> {
+    private fun applyAttachmentDeleted(event: AttachmentDeletedEvent): Pair<Note, NoteEvent?> {
         return if (event.name in attachments) {
             copy(
                     revision = event.revision,
@@ -102,25 +112,27 @@ class Note private constructor(
         }
     }
 
-    private fun applyContentChanged(event: ContentChangedEvent): Pair<Note, Event?> {
+    private fun applyContentChanged(event: ContentChangedEvent): Pair<Note, NoteEvent?> {
         return if (content == event.content) noChanges() else copy(
                 revision = event.revision,
                 content = event.content
         ) to event
     }
 
-    private fun applyCreated(event: NoteCreatedEvent): Pair<Note, Event> {
+    private fun applyCreated(event: NoteCreatedEvent): Pair<Note, NoteEvent> {
         if (exists) throw IllegalStateException("An existing note cannot be created again ($event)")
-        if (event.noteId.isBlank()) throw IllegalArgumentException("Invalid note id $event")
+        if (event.aggId.isBlank()) throw IllegalArgumentException("Invalid aggregate id $event")
         return copy(
-                noteId = event.noteId,
+                aggId = event.aggId,
                 revision = event.revision,
+                path = event.path,
                 title = event.title,
+                content = event.content,
                 exists = true
         ) to event
     }
 
-    private fun applyDeleted(event: NoteDeletedEvent): Pair<Note, Event?> {
+    private fun applyDeleted(event: NoteDeletedEvent): Pair<Note, NoteEvent?> {
         return if (exists) {
             copy(
                     exists = false,
@@ -131,14 +143,21 @@ class Note private constructor(
         }
     }
 
-    private fun applyTitleChanged(event: TitleChangedEvent): Pair<Note, Event?> {
+    private fun applyMoved(event: MovedEvent): Pair<Note, NoteEvent?> {
+        return if (path == event.path) noChanges() else copy(
+                revision = event.revision,
+                path = event.path
+        ) to event
+    }
+
+    private fun applyTitleChanged(event: TitleChangedEvent): Pair<Note, NoteEvent?> {
         return if (title == event.title) noChanges() else copy(
                 revision = event.revision,
                 title = event.title
         ) to event
     }
 
-    private fun applyUndeleted(event: NoteUndeletedEvent): Pair<Note, Event?> {
+    private fun applyUndeleted(event: NoteUndeletedEvent): Pair<Note, NoteEvent?> {
         return if (!exists) {
             copy(
                     exists = true,
@@ -149,7 +168,7 @@ class Note private constructor(
         }
     }
 
-    private fun noChanges(): Pair<Note, Event?> {
+    private fun noChanges(): Pair<Note, NoteEvent?> {
         return Pair(this, null)
     }
 
@@ -164,7 +183,8 @@ class Note private constructor(
         fun deserialize(
                 revision: Int,
                 exists: Boolean,
-                noteId: String,
+                aggId: String,
+                path: Path,
                 title: String,
                 content: String,
                 attachments: Map<String, ByteArray>,
@@ -173,7 +193,8 @@ class Note private constructor(
             return Note(
                     revision = revision,
                     exists = exists,
-                    noteId = noteId,
+                    aggId = aggId,
+                    path = path,
                     title = title,
                     content = content,
                     attachments = attachments,

@@ -25,7 +25,7 @@ class CommandService(private val commandProcessor: CommandProcessor, private val
                         else -> Command.PostCommandResponse.Status.SUCCESS
                     })
                     .setNewEventId(event?.eventId ?: 0)
-                    .setNoteId(event?.noteId ?: "")
+                    .setAggregateId(event?.aggId ?: "")
                     .setNewRevision(event?.revision ?: 0)
                     .build()
             responseObserver.onNext(response)

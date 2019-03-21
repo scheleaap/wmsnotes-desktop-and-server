@@ -14,8 +14,8 @@ message GetEventsRequest {
 message GetEventsResponse {
     int32 event_id = 1;
 
-    // The id of the note to which the note applies
-    string note_id = 2;
+    // The id of the aggregate to which the event applies
+    string aggregate_id = 2;
 
     int32 revision = 3;
 
@@ -27,10 +27,15 @@ message GetEventsResponse {
         AttachmentDeletedEvent attachment_deleted = 14;
         ContentChangedEvent content_changed = 15;
         TitleChangedEvent title_changed = 16;
+        MovedEvent moved = 17;
+        FolderCreatedEvent folder_created = 18;
+        FolderDeletedEvent folder_deleted = 19;
     }
 
     message NoteCreatedEvent {
-        string title = 1;
+        string path = 1;
+        string title = 2;
+        string content = 3;
     }
 
     message NoteDeletedEvent {
@@ -54,5 +59,15 @@ message GetEventsResponse {
 
     message TitleChangedEvent {
         string title = 1;
+    }
+
+    message MovedEvent {
+        string path = 1;
+    }
+
+    message FolderCreatedEvent {
+    }
+
+    message FolderDeletedEvent {
     }
 }

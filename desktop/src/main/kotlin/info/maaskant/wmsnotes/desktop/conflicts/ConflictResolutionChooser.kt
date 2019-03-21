@@ -1,12 +1,8 @@
 package info.maaskant.wmsnotes.desktop.conflicts
 
-import com.github.thomasnield.rxkotlinfx.actionEvents
 import info.maaskant.wmsnotes.desktop.util.Messages
-import info.maaskant.wmsnotes.model.projection.Note
-import info.maaskant.wmsnotes.model.projection.NoteProjector
-import io.reactivex.subjects.BehaviorSubject
+import info.maaskant.wmsnotes.model.note.Note
 import javafx.geometry.Orientation
-import javafx.scene.control.ButtonBar
 import javafx.scene.layout.Priority
 import tornadofx.*
 
@@ -16,9 +12,9 @@ class ConflictResolutionChooser : Fragment() {
 
 //    private val synchronizer: Synchronizer by di()
 
-    val noteId: String by param()
-    private val windowTitle = "Conflict Resolution of note $noteId"
-//    private val conflictData = synchronizer.getConflictData(noteId)
+    val aggId: String by param()
+    private val windowTitle = "Conflict Resolution of note $aggId"
+//    private val conflictData = synchronizer.getConflictData(aggId)
 //    private val localNote = NoteProjector.project(conflictData.base, conflictData.localConflictingEvents)
 //    private val remoteNote = NoteProjector.project(conflictData.base, conflictData.remoteConflictingEvents)
 //

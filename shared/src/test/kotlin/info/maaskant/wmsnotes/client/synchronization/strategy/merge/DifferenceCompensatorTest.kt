@@ -1,24 +1,24 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.ExistenceDifference.ExistenceType.*
-import info.maaskant.wmsnotes.model.*
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 
 internal class DifferenceCompensatorTest {
-    private val noteId = "note"
+    private val aggId = "note"
     private val attachmentName = "att"
     private val attachmentContent1 = "data".toByteArray()
     private val attachmentContent2 = "different".toByteArray()
 
     @TestFactory
     fun existence(): List<DynamicTest> {
-        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId)
-        val noteDeletedEvent = NoteDeletedEvent(eventId = 0, noteId = noteId, revision = 0)
-        val noteUndeletedEvent = NoteUndeletedEvent(eventId = 0, noteId = noteId, revision = 0)
+        val noteCreatedEvent = NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 0, path = Path(), title = aggId, content = "")
+        val noteDeletedEvent = NoteDeletedEvent(eventId = 0, aggId = aggId, revision = 0)
+        val noteUndeletedEvent = NoteUndeletedEvent(eventId = 0, aggId = aggId, revision = 0)
         val items = listOf(
                 Triple(
                         ExistenceDifference(EXISTS, DELETED),
@@ -67,7 +67,7 @@ internal class DifferenceCompensatorTest {
                 val compensator = DifferenceCompensator()
 
                 // When
-                val events = compensator.compensate(noteId = noteId, differences = setOf(difference), target = target)
+                val events = compensator.compensate(aggId = aggId, differences = setOf(difference), target = target)
 
                 // Then
                 assertThat(events).isEqualTo(DifferenceCompensator.CompensatingEvents(
@@ -80,28 +80,38 @@ internal class DifferenceCompensatorTest {
 
     @TestFactory
     fun `other differences`(): List<DynamicTest> {
-        val attachmentAddedEvent = AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = attachmentContent1)
-        val attachmentDeletedEvent = AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName)
+        val attachmentAddedEvent = AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = 0, name = attachmentName, content = attachmentContent1)
+        val attachmentDeletedEvent = AttachmentDeletedEvent(eventId = 0, aggId = aggId, revision = 0, name = attachmentName)
         val items = listOf(
                 Triple(
+                        PathDifference(Path("left"), Path("right")),
+                        DifferenceCompensator.Target.LEFT,
+                        listOf(MovedEvent(eventId = 0, aggId = aggId, revision = 0, path = Path("left")))
+                ),
+                Triple(
+                        PathDifference(Path("left"), Path("right")),
+                        DifferenceCompensator.Target.RIGHT,
+                        listOf(MovedEvent(eventId = 0, aggId = aggId, revision = 0, path = Path("right")))
+                ),
+                Triple(
                         ContentDifference("left", "right"),
                         DifferenceCompensator.Target.LEFT,
-                        listOf(ContentChangedEvent(eventId = 0, noteId = noteId, revision = 0, content = "left"))
+                        listOf(ContentChangedEvent(eventId = 0, aggId = aggId, revision = 0, content = "left"))
                 ),
                 Triple(
                         ContentDifference("left", "right"),
                         DifferenceCompensator.Target.RIGHT,
-                        listOf(ContentChangedEvent(eventId = 0, noteId = noteId, revision = 0, content = "right"))
+                        listOf(ContentChangedEvent(eventId = 0, aggId = aggId, revision = 0, content = "right"))
                 ),
                 Triple(
                         TitleDifference("left", "right"),
                         DifferenceCompensator.Target.LEFT,
-                        listOf(TitleChangedEvent(eventId = 0, noteId = noteId, revision = 0, title = "left"))
+                        listOf(TitleChangedEvent(eventId = 0, aggId = aggId, revision = 0, title = "left"))
                 ),
                 Triple(
                         TitleDifference("left", "right"),
                         DifferenceCompensator.Target.RIGHT,
-                        listOf(TitleChangedEvent(eventId = 0, noteId = noteId, revision = 0, title = "right"))
+                        listOf(TitleChangedEvent(eventId = 0, aggId = aggId, revision = 0, title = "right"))
                 ),
                 Triple(
                         AttachmentDifference(attachmentName, attachmentContent1, null),
@@ -127,16 +137,16 @@ internal class DifferenceCompensatorTest {
                         AttachmentDifference(attachmentName, attachmentContent1, attachmentContent2),
                         DifferenceCompensator.Target.LEFT,
                         listOf(
-                                AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName),
-                                AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = attachmentContent1)
+                                AttachmentDeletedEvent(eventId = 0, aggId = aggId, revision = 0, name = attachmentName),
+                                AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = 0, name = attachmentName, content = attachmentContent1)
                         )
                 ),
                 Triple(
                         AttachmentDifference(attachmentName, attachmentContent1, attachmentContent2),
                         DifferenceCompensator.Target.RIGHT,
                         listOf(
-                                AttachmentDeletedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName),
-                                AttachmentAddedEvent(eventId = 0, noteId = noteId, revision = 0, name = attachmentName, content = attachmentContent2)
+                                AttachmentDeletedEvent(eventId = 0, aggId = aggId, revision = 0, name = attachmentName),
+                                AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = 0, name = attachmentName, content = attachmentContent2)
                         )
                 )
         )
@@ -146,7 +156,7 @@ internal class DifferenceCompensatorTest {
                 val compensator = DifferenceCompensator()
 
                 // When
-                val events = compensator.compensate(noteId = noteId, differences = setOf(difference), target = target)
+                val events = compensator.compensate(aggId = aggId, differences = setOf(difference), target = target)
 
                 // Then
                 assertThat(events).isEqualTo(DifferenceCompensator.CompensatingEvents(
@@ -164,7 +174,7 @@ internal class DifferenceCompensatorTest {
         val compensator = DifferenceCompensator()
 
         // When
-        val events = compensator.compensate(noteId = noteId, differences = differences, target = DifferenceCompensator.Target.RIGHT)
+        val events = compensator.compensate(aggId = aggId, differences = differences, target = DifferenceCompensator.Target.RIGHT)
 
         // Then
         val eventClasses = events.leftEvents.map { it::class }
@@ -181,7 +191,7 @@ internal class DifferenceCompensatorTest {
         val compensator = DifferenceCompensator()
 
         // When
-        val events = compensator.compensate(noteId = noteId, differences = differences, target = DifferenceCompensator.Target.RIGHT)
+        val events = compensator.compensate(aggId = aggId, differences = differences, target = DifferenceCompensator.Target.RIGHT)
 
         // Then
         val eventClasses = events.leftEvents.map { it::class }
@@ -201,7 +211,7 @@ internal class DifferenceCompensatorTest {
         val compensator = DifferenceCompensator()
 
         // When
-        val events = compensator.compensate(noteId = noteId, differences = differences, target = DifferenceCompensator.Target.LEFT)
+        val events = compensator.compensate(aggId = aggId, differences = differences, target = DifferenceCompensator.Target.LEFT)
 
         // Then
         val eventClasses = events.rightEvents.map { it::class }
@@ -222,7 +232,7 @@ internal class DifferenceCompensatorTest {
         val compensator = DifferenceCompensator()
 
         // When
-        val events = compensator.compensate(noteId = noteId, differences = differences, target = DifferenceCompensator.Target.LEFT)
+        val events = compensator.compensate(aggId = aggId, differences = differences, target = DifferenceCompensator.Target.LEFT)
 
         // Then
         val eventClasses = events.rightEvents.map { it::class }
@@ -243,13 +253,13 @@ internal class DifferenceCompensatorTest {
         val compensator = DifferenceCompensator()
 
         // When
-        val events = compensator.compensate(noteId = noteId, differences = differences, target = DifferenceCompensator.Target.RIGHT)
+        val events = compensator.compensate(aggId = aggId, differences = differences, target = DifferenceCompensator.Target.RIGHT)
 
         // Then
         assertThat(events.leftEvents).isEqualTo(listOf(
-                NoteCreatedEvent(eventId = 0, noteId = noteId, revision = 0, title = noteId),
-                ContentChangedEvent(eventId = 0, noteId = noteId, revision = 0, content = "text"),
-                TitleChangedEvent(eventId = 0, noteId = noteId, revision = 0, title = "title")
+                NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 0, path = Path(), title = aggId, content = ""),
+                ContentChangedEvent(eventId = 0, aggId = aggId, revision = 0, content = "text"),
+                TitleChangedEvent(eventId = 0, aggId = aggId, revision = 0, title = "title")
         ))
     }
 }

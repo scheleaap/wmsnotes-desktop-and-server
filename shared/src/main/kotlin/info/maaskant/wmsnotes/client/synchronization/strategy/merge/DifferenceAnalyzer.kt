@@ -1,7 +1,8 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import au.com.console.kassava.kotlinEquals
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.note.Note
 import java.util.*
 
 class DifferenceAnalyzer {
@@ -9,6 +10,7 @@ class DifferenceAnalyzer {
         val differences: MutableSet<Difference> = mutableSetOf()
 
         differences += compareExistence(left, right)
+        differences += comparePath(left, right)
         differences += compareTitle(left, right)
         differences += compareContent(left, right)
         differences += compareAttachments(left, right)
@@ -44,6 +46,13 @@ class DifferenceAnalyzer {
         }
     }
 
+    private fun comparePath(left: Note, right: Note): Set<Difference> =
+            if (left.path != right.path) {
+                setOf(PathDifference(left.path, right.path))
+            } else {
+                emptySet()
+            }
+
     private fun compareTitle(left: Note, right: Note): Set<Difference> =
             if (left.title != right.title) {
                 setOf(TitleDifference(left.title, right.title))
@@ -71,6 +80,8 @@ data class ExistenceDifference(val left: ExistenceType, val right: ExistenceType
         DELETED
     }
 }
+
+data class PathDifference(val left: Path, val right: Path) : Difference()
 
 data class TitleDifference(val left: String, val right: String) : Difference() {
     override fun equals(other: Any?) = kotlinEquals(

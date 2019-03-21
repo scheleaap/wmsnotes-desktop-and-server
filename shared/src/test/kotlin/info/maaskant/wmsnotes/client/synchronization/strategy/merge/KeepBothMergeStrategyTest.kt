@@ -3,7 +3,7 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.DifferenceCompensator.CompensatingEvents
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.note.Note
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -12,8 +12,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class KeepBothMergeStrategyTest {
-    private val noteId = "note"
-    private val newNoteId = "new-note"
+    private val aggId = "note"
+    private val newAggId = "new-note"
 
     private val differenceAnalyzer: DifferenceAnalyzer = mockk()
     private val differenceCompensator: DifferenceCompensator = mockk()
@@ -35,21 +35,21 @@ internal class KeepBothMergeStrategyTest {
         val remoteEvent1: Event = mockk()
         val remoteEvent2: Event = mockk()
         val remoteEvents = listOf(remoteEvent1, remoteEvent2)
-        val baseNote: Note = createExistingNote(noteId)
-        val localNote: Note = createExistingNote(noteId)
-        val remoteNote: Note = createExistingNote(noteId)
+        val baseNote: Note = createExistingNote(aggId)
+        val localNote: Note = createExistingNote(aggId)
+        val remoteNote: Note = createExistingNote(aggId)
         val compensatingEvent1: Event = mockk()
         val compensatingEvent2: Event = mockk()
         val compensatingEvent3: Event = mockk()
         val compensatingEvent4: Event = mockk()
-        givenCompensatingEvents(noteId, givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
+        givenCompensatingEvents(aggId, givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
                 leftEvents = listOf(compensatingEvent1, compensatingEvent2),
                 rightEvents = emptyList()
         ))
         val differences1: Set<Difference> = givenDifferences(Note(), localNote)
         every {
             differenceCompensator.compensate(
-                    noteId = newNoteId,
+                    aggId = newAggId,
                     differences = differences1,
                     target = DifferenceCompensator.Target.RIGHT
             )
@@ -69,10 +69,10 @@ internal class KeepBothMergeStrategyTest {
         ))
     }
 
-    private fun createStrategy() = KeepBothMergeStrategy(differenceAnalyzer, differenceCompensator) { newNoteId }
+    private fun createStrategy() = KeepBothMergeStrategy(differenceAnalyzer, differenceCompensator) { newAggId }
 
-    private fun givenCompensatingEvents(noteId: String, differences: Set<Difference>, target: DifferenceCompensator.Target, compensatingEvents: CompensatingEvents): CompensatingEvents {
-        every { differenceCompensator.compensate(noteId, differences, target = target) }.returns(compensatingEvents)
+    private fun givenCompensatingEvents(aggId: String, differences: Set<Difference>, target: DifferenceCompensator.Target, compensatingEvents: CompensatingEvents): CompensatingEvents {
+        every { differenceCompensator.compensate(aggId, differences, target = target) }.returns(compensatingEvents)
         return compensatingEvents
     }
 
@@ -83,9 +83,9 @@ internal class KeepBothMergeStrategyTest {
     }
 
     companion object {
-        internal fun createExistingNote(noteId: String): Note {
+        internal fun createExistingNote(aggId: String): Note {
             val note: Note = mockk()
-            every { note.noteId }.returns(noteId)
+            every { note.aggId }.returns(aggId)
             every { note.revision }.returns(5)
             every { note.exists }.returns(true)
             every { note.title }.returns("projected title")

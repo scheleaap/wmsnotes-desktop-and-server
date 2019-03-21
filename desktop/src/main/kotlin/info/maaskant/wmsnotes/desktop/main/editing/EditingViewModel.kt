@@ -3,7 +3,7 @@ package info.maaskant.wmsnotes.desktop.main.editing
 import com.vladsch.flexmark.ast.Node
 import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
 import info.maaskant.wmsnotes.desktop.main.editing.preview.Renderer
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.utilities.Optional
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
@@ -50,11 +50,13 @@ class EditingViewModel @Inject constructor(
         navigationViewModel.setNavigationAllowed(isDirty().map { !it })
 
         Observables.combineLatest(
+                // The first stream represents whether the model has switched to something else than a note
                 navigationViewModel.selectionSwitchingProcess
                         .subscribeOn(scheduler)
                         .filter { it !is NavigationViewModel.SelectionSwitchingProcessNotification.Loading }
-                        .map { it is NavigationViewModel.SelectionSwitchingProcessNotification.Nothing }
+                        .map { it !is NavigationViewModel.SelectionSwitchingProcessNotification.Note }
                 ,
+                // The second stream represents whether the model is loading
                 navigationViewModel.selectionSwitchingProcess
                         .subscribeOn(scheduler)
                         .filter { it is NavigationViewModel.SelectionSwitchingProcessNotification.Loading }
@@ -71,6 +73,7 @@ class EditingViewModel @Inject constructor(
                         is NavigationViewModel.SelectionSwitchingProcessNotification.Loading -> throw IllegalArgumentException()
                         NavigationViewModel.SelectionSwitchingProcessNotification.Nothing -> Optional<Note>()
                         is NavigationViewModel.SelectionSwitchingProcessNotification.Note -> Optional(it.note)
+                        is NavigationViewModel.SelectionSwitchingProcessNotification.Folder -> Optional<Note>()
                     }
                 }
                 .subscribe(::setNote) { logger.warn("Error", it) }
@@ -92,14 +95,16 @@ class EditingViewModel @Inject constructor(
         this.isEnabledSubject.onNext(enabled)
     }
 
-    final fun getNote(): Observable<Optional<Note>> = noteSubject
+    final fun getNote(): Observable<Optional<Note>> = noteSubject.distinctUntilChanged()
 
     @Synchronized
     private fun setNote(note: Optional<Note>) {
-        if (noteValue?.noteId == note.value?.noteId || !isDirtyValue) {
-            if (!isDirtyValue) {
+        if (noteValue?.aggId == note.value?.aggId || !isDirtyValue) {
+            if (noteValue == null && note.value == null) {
+                setText(note, false)
+            } else if (!isDirtyValue) {
                 setText(note, true)
-            } else if (noteValue != null && noteValue?.noteId == note.value?.noteId && textValue == note.value?.content) {
+            } else if (noteValue != null && noteValue?.aggId == note.value?.aggId && textValue == note.value?.content) {
                 setDirty(false)
                 setText(note, false)
             }
@@ -123,7 +128,7 @@ class EditingViewModel @Inject constructor(
 
     @Synchronized
     fun setText(text: String) {
-        val isSameAsNoteContent = text == noteValue?.content
+        val isSameAsNoteContent = text == noteValue?.content ?: ""
         if (!isSameAsNoteContent && !isEnabledValue) {
             throw IllegalStateException("Cannot set text if editing is not allowed (\"$text\")")
         }

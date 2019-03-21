@@ -1,16 +1,18 @@
 package info.maaskant.wmsnotes.model
 
+import info.maaskant.wmsnotes.model.CommandHandler.Result.*
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import info.maaskant.wmsnotes.model.projection.Note
-import info.maaskant.wmsnotes.model.projection.NoteProjector
+import info.maaskant.wmsnotes.utilities.Optional
 import io.mockk.*
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 internal class CommandProcessorTest {
 
     private val eventStore: EventStore = mockk()
-    private val projector: NoteProjector = mockk()
-    private val commandToEventMapper: CommandToEventMapper = mockk()
+    private val commandHandler1: CommandHandler = mockk()
+    private val commandHandler2: CommandHandler = mockk()
 
     private lateinit var commandProcessor: CommandProcessor
 
@@ -18,34 +20,48 @@ internal class CommandProcessorTest {
     fun init() {
         clearMocks(
                 eventStore,
-                projector,
-                commandToEventMapper
+                commandHandler2
         )
 
         val eventSlot = slot<Event>()
         every { eventStore.appendEvent(capture(eventSlot)) }.answers { eventSlot.captured }
-
-        commandProcessor = CommandProcessor(eventStore, projector, commandToEventMapper)
+        every { commandHandler1.handle(any()) }.returns(NotHandled)
+        every { commandHandler2.handle(any()) }.returns(NotHandled)
+        commandProcessor = CommandProcessor(eventStore, commandHandler1, commandHandler2)
     }
 
     @Test
-    fun default() {
+    fun `default, 1`() {
         // Given
         val command: Command = mockk()
         val event1: Event = createEvent("note", 15)
-        val note1: Note = mockk()
-        val event2: Event = createEvent("note", 15)
-        val note2: Note = mockk()
-        every { commandToEventMapper.map(command) }.returns(event1)
-        every { projector.project("note", 14) }.returns(note1)
-        every { note1.apply(event1) }.returns(note2 to event2)
+        val event2: Event = createEvent("note", 16)
+        every { commandHandler1.handle(command) }.returns(Handled(Optional(event1)))
+        every { commandHandler2.handle(command) }.returns(Handled(Optional(event2)))
 
         // When
         commandProcessor.blockingProcessCommand(command)
 
         // Then
         verify {
-            eventStore.appendEvent(event2)
+            eventStore.appendEvent(event1)
+        }
+    }
+
+    @Test
+    fun `default, 2`() {
+        // Given
+        val command: Command = mockk()
+        val event: Event = createEvent("note", 16)
+        every { commandHandler1.handle(command) }.returns(NotHandled)
+        every { commandHandler2.handle(command) }.returns(Handled(Optional(event)))
+
+        // When
+        commandProcessor.blockingProcessCommand(command)
+
+        // Then
+        verify {
+            eventStore.appendEvent(event)
         }
     }
 
@@ -53,11 +69,7 @@ internal class CommandProcessorTest {
     fun `no event returned by aggregate`() {
         // Given
         val command: Command = mockk()
-        val event1: Event = createEvent("note", 15)
-        val note1: Note = mockk()
-        every { commandToEventMapper.map(command) }.returns(event1)
-        every { projector.project("note", 14) }.returns(note1)
-        every { note1.apply(event1) }.returns(note1 to null)
+        every { commandHandler2.handle(command) }.returns(Handled(Optional()))
 
         // When
         commandProcessor.blockingProcessCommand(command)
@@ -68,11 +80,24 @@ internal class CommandProcessorTest {
         }
     }
 
-    private fun createEvent(noteId: String, revision: Int): Event {
+    @Test
+    fun `command not handled`() {
+        // Given
+        val command: Command = mockk()
+
+        // When / then
+        assertThrows<IllegalArgumentException> {
+            commandProcessor.blockingProcessCommand(command)
+        }
+        verify {
+            eventStore.appendEvent(any()) wasNot Called
+        }
+    }
+
+    private fun createEvent(aggId: String, revision: Int): Event {
         val event: Event = mockk()
-        every { event.noteId }.returns(noteId)
+        every { event.aggId }.returns(aggId)
         every { event.revision }.returns(revision)
         return event
     }
-
 }

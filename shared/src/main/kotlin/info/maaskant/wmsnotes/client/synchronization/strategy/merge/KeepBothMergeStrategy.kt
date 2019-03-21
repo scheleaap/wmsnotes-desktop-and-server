@@ -2,14 +2,13 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.projection.Note
-import java.util.*
+import info.maaskant.wmsnotes.model.note.Note
 import javax.inject.Inject
 
 class KeepBothMergeStrategy @Inject constructor(
         private val differenceAnalyzer: DifferenceAnalyzer,
         private val differenceCompensator: DifferenceCompensator,
-        private val noteIdGenerator: () -> String
+        private val aggregateIdGenerator: () -> String
 ) : MergeStrategy {
     override fun merge(
             localEvents: List<Event>,
@@ -19,13 +18,13 @@ class KeepBothMergeStrategy @Inject constructor(
             remoteNote: Note
     ): MergeResult {
         val (compensatingLocalEvents, _) = differenceCompensator.compensate(
-                noteId = baseNote.noteId,
+                aggId = baseNote.aggId,
                 differences = differenceAnalyzer.compare(left = localNote, right = remoteNote),
                 target = DifferenceCompensator.Target.RIGHT
         )
-        val newNoteId = noteIdGenerator()
+        val newAggregateId = aggregateIdGenerator()
         val (eventsForNewNote, _) = differenceCompensator.compensate(
-                noteId = newNoteId,
+                aggId = newAggregateId,
                 differences = differenceAnalyzer.compare(left = Note(), right = localNote),
                 target = DifferenceCompensator.Target.RIGHT
         )

@@ -35,7 +35,7 @@ import org.fxmisc.richtext.MultiChangeBuilder;
 
 import java.util.*;
 
-import static info.maaskant.wmsnotes.desktop.main.editing.editor.SmartFormatAddon.*;
+import static info.maaskant.wmsnotes.desktop.main.editing.editor.SmartFormatAddon.Companion;
 
 /**
  * Smart Markdown text formatting methods.

@@ -1,7 +1,11 @@
 package info.maaskant.wmsnotes.client.api
 
 import com.google.protobuf.ByteString
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
+import info.maaskant.wmsnotes.model.folder.DeleteFolderCommand
+import info.maaskant.wmsnotes.model.folder.Folder
+import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -22,50 +26,68 @@ internal class GrpcCommandMapperTest {
     @TestFactory
     fun test(): List<DynamicTest> {
         val items = mapOf(
-                CreateNoteCommand(noteId = "note", title = "Title") to Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                CreateNoteCommand(aggId = "note", path = Path("el1", "el2"), title = "Title", content = "Text") to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = "note"
                     createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
+                        path = Path("el1", "el2").toString()
                         title = "Title"
+                        content = "Text"
                     }.build()
                 }.build(),
-                DeleteNoteCommand(noteId = "note", lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                DeleteNoteCommand(aggId = "note", lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = "note"
                     lastRevision = 1
                     deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
                 }.build(),
-                UndeleteNoteCommand(noteId = "note", lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                UndeleteNoteCommand(aggId = "note", lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = "note"
                     lastRevision = 1
                     undeleteNote = Command.PostCommandRequest.UndeleteNoteCommand.newBuilder().build()
                 }.build(),
-                AddAttachmentCommand(noteId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()) to Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                AddAttachmentCommand(aggId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()) to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = "note"
                     lastRevision = 1
                     addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
                         name = "att"
                         content = ByteString.copyFrom("data".toByteArray())
                     }.build()
                 }.build(),
-                DeleteAttachmentCommand(noteId = "note", lastRevision = 1, name = "att") to Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                DeleteAttachmentCommand(aggId = "note", lastRevision = 1, name = "att") to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = "note"
                     lastRevision = 1
                     deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
                         name = "att"
                     }.build()
                 }.build(),
-                ChangeContentCommand(noteId = "note", lastRevision = 1, content = "data") to Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                ChangeContentCommand(aggId = "note", lastRevision = 1, content = "Text") to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = "note"
                     lastRevision = 1
                     changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().apply {
-                        content = "data"
+                        content = "Text"
                     }.build()
                 }.build(),
-                ChangeTitleCommand(noteId = "note", lastRevision = 1, title = "Title") to Command.PostCommandRequest.newBuilder().apply {
-                    noteId = "note"
+                ChangeTitleCommand(aggId = "note", lastRevision = 1, title = "Title") to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = "note"
                     lastRevision = 1
                     changeTitle = Command.PostCommandRequest.ChangeTitleCommand.newBuilder().apply {
                         title = "Title"
                     }.build()
+                }.build(),
+                MoveCommand(aggId = "note", lastRevision = 1, path = Path("el1", "el2")) to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = "note"
+                    lastRevision = 1
+                    move = Command.PostCommandRequest.MoveCommand.newBuilder().apply {
+                        path = Path("el1", "el2").toString()
+                    }.build()
+                }.build(),
+                CreateFolderCommand(path = Path("el1", "el2"), lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = Path("el1", "el2").toString()
+                    createFolder = Command.PostCommandRequest.CreateFolderCommand.newBuilder().build()
+                }.build(),
+                DeleteFolderCommand(path = Path("el1", "el2"), lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = Path("el1", "el2").toString()
+                    lastRevision = 1
+                    deleteFolder = Command.PostCommandRequest.DeleteFolderCommand.newBuilder().build()
                 }.build()
                 // Add more classes here
         )

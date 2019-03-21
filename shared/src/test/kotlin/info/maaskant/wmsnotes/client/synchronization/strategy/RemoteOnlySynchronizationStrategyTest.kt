@@ -9,7 +9,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 internal class RemoteOnlySynchronizationStrategyTest {
-    private val noteId = "note"
+    private val aggId = "note"
 
     @Test
     fun `only remote events`() {
@@ -21,7 +21,7 @@ internal class RemoteOnlySynchronizationStrategyTest {
         val strategy = RemoteOnlySynchronizationStrategy()
 
         // When
-        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
         assertThat(result).isEqualTo(Solution(listOf(
@@ -51,7 +51,7 @@ internal class RemoteOnlySynchronizationStrategyTest {
         val strategy = RemoteOnlySynchronizationStrategy()
 
         // When
-        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
         assertThat(result).isEqualTo(NoSolution)
@@ -65,7 +65,7 @@ internal class RemoteOnlySynchronizationStrategyTest {
         val strategy = RemoteOnlySynchronizationStrategy()
 
         // When
-        val result = strategy.resolve(noteId = noteId, localEvents = localEvents, remoteEvents = remoteEvents)
+        val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
         assertThat(result).isEqualTo(Solution(emptyList()))

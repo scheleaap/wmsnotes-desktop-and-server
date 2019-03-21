@@ -17,17 +17,17 @@ data class ManualMergeStrategyState internal constructor(
         val conflicts: Map<String, ConflictData?>,
         val solutions: Map<String, Solution?>
 ) {
-    fun addConflict(noteId: String, conflictData: ConflictData) =
-            this.copy(conflicts = conflicts + (noteId to conflictData))
+    fun addConflict(aggId: String, conflictData: ConflictData) =
+            this.copy(conflicts = conflicts + (aggId to conflictData))
 
-    fun addSolution(noteId: String, solution: Solution) =
-            this.copy(solutions = solutions + (noteId to solution))
+    fun addSolution(aggId: String, solution: Solution) =
+            this.copy(solutions = solutions + (aggId to solution))
 
-    fun removeConflict(noteId: String) =
-            this.copy(conflicts = conflicts - noteId)
+    fun removeConflict(aggId: String) =
+            this.copy(conflicts = conflicts - aggId)
 
-    fun removeSolution(noteId: String) =
-            this.copy(solutions = solutions - noteId)
+    fun removeSolution(aggId: String) =
+            this.copy(solutions = solutions - aggId)
 
     companion object {
         fun create(

@@ -14,10 +14,10 @@ interface SynchronizationStrategy {
     /**
      * Attempts to find [CompensatingAction]s for a set of local and remote events.
      *
-     * @param noteId The id of the note all events belong to.
+     * @param aggId The id of the note all events belong to.
      * @return A [ResolutionResult.Solution] or [ResolutionResult.NoSolution]
      */
-    fun resolve(noteId: String, localEvents: List<Event>, remoteEvents: List<Event>): ResolutionResult
+    fun resolve(aggId: String, localEvents: List<Event>, remoteEvents: List<Event>): ResolutionResult
 
     sealed class ResolutionResult {
         object NoSolution : ResolutionResult()

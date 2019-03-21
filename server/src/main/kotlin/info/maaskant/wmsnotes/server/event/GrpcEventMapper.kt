@@ -1,7 +1,9 @@
 package info.maaskant.wmsnotes.server.event
 
 import com.google.protobuf.ByteString
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
+import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
+import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import org.springframework.stereotype.Service
 import javax.inject.Inject
@@ -13,14 +15,16 @@ class GrpcEventMapper @Inject constructor() {
     fun toGrpcGetEventsResponse(event: info.maaskant.wmsnotes.model.Event): Event.GetEventsResponse {
         val builder = Event.GetEventsResponse.newBuilder()
                 .setEventId(event.eventId)
-                .setNoteId(event.noteId)
+                .setAggregateId(event.aggId)
                 .setRevision(event.revision)
 
         @Suppress("UNUSED_VARIABLE")
         val a: Any = when (event) { // Assign to variable to force a compilation error if 'when' expression is not exhaustive.
-            is info.maaskant.wmsnotes.model.NoteCreatedEvent -> builder.apply {
+            is NoteCreatedEvent -> builder.apply {
                 noteCreated = Event.GetEventsResponse.NoteCreatedEvent.newBuilder().apply {
+                    path = event.path.toString()
                     title = event.title
+                    content = event.content
                 }.build()
             }
             is NoteDeletedEvent -> builder.apply {
@@ -50,6 +54,20 @@ class GrpcEventMapper @Inject constructor() {
                     title = event.title
                 }.build()
             }
+            is MovedEvent -> builder.apply {
+                moved = Event.GetEventsResponse.MovedEvent.newBuilder().apply {
+                    path = event.path.toString()
+                }.build()
+            }
+            is FolderCreatedEvent -> builder.apply {
+                aggregateId = event.path.toString()
+                folderCreated = Event.GetEventsResponse.FolderCreatedEvent.newBuilder().build()
+            }
+            is FolderDeletedEvent -> builder.apply {
+                aggregateId = event.path.toString()
+                folderDeleted = Event.GetEventsResponse.FolderDeletedEvent.newBuilder().build()
+            }
+            else -> IllegalArgumentException()
         }
         return builder.build()
     }

@@ -62,16 +62,16 @@ class FileEventStore @Inject constructor(
         }
     }
 
-    override fun getEventsOfNote(noteId: String, afterRevision: Int?): Observable<Event> {
+    override fun getEventsOfAggregate(aggId: String, afterRevision: Int?): Observable<Event> {
         return Observable.create { emitter ->
-            logger.debug("Loading all events of note $noteId")
+            logger.debug("Loading all events of note $aggId")
             try {
                 val afterRevisionFileName: String? = if (afterRevision != null) {
                     "%010d".format(afterRevision)
                 } else {
                     null
                 }
-                noteDirectoryPath(noteId)
+                noteDirectoryPath(aggId)
                         .walkTopDown()
                         .filter { it.isFile }
                         .sortedBy { it.name }
@@ -92,8 +92,8 @@ class FileEventStore @Inject constructor(
 
         val eventFilePath = eventFilePath(eventWithId)
         if (eventWithId.revision != 1) {
-            val previousEventFilePath = eventFilePath(eventWithId.noteId, eventWithId.revision - 1)
-            if (!previousEventFilePath.exists()) throw IllegalArgumentException("Previous revision of note ${eventWithId.noteId} does not exist ($previousEventFilePath)")
+            val previousEventFilePath = eventFilePath(eventWithId.aggId, eventWithId.revision - 1)
+            if (!previousEventFilePath.exists()) throw IllegalArgumentException("Previous revision of note ${eventWithId.aggId} does not exist ($previousEventFilePath)")
         }
         if (eventFilePath.exists()) throw IllegalArgumentException("Event $eventWithId already exists ($eventFilePath)")
 
@@ -106,8 +106,8 @@ class FileEventStore @Inject constructor(
 
     override fun getEventUpdates(): Observable<Event> = newEventSubject
 
-    private fun eventFilePath(noteId: String, revision: Int): File = rootDirectory.resolve(noteId).resolve("%010d".format(revision))
-    private fun eventFilePath(e: Event): File = eventFilePath(noteId = e.noteId, revision = e.revision)
-    private fun noteDirectoryPath(noteId: String) = rootDirectory.resolve(noteId)
+    private fun eventFilePath(aggId: String, revision: Int): File = rootDirectory.resolve(aggId).resolve("%010d".format(revision))
+    private fun eventFilePath(e: Event): File = eventFilePath(aggId = e.aggId, revision = e.revision)
+    private fun noteDirectoryPath(aggId: String) = rootDirectory.resolve(aggId)
 
 }

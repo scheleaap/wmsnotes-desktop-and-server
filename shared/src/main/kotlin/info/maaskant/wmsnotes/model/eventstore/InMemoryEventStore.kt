@@ -24,20 +24,20 @@ class InMemoryEventStore : EventStore {
                 .doOnSubscribe { logger.debug("Loading all events after event id $afterEventId") }
     }
 
-    override fun getEventsOfNote(noteId: String, afterRevision: Int?): Observable<Event> {
+    override fun getEventsOfAggregate(aggId: String, afterRevision: Int?): Observable<Event> {
         return events
                 .values
-                .filter { it.noteId == noteId }
+                .filter { it.aggId == aggId }
                 .filter { afterRevision == null || it.revision > afterRevision }
                 .toObservable()
-                .doOnSubscribe { logger.debug("Loading all events of note $noteId") }
+                .doOnSubscribe { logger.debug("Loading all events of note $aggId") }
     }
 
     override fun appendEvent(event: Event): Event {
         if (event.eventId != 0) throw IllegalArgumentException()
         if (event.eventId in events) throw IllegalArgumentException()
         if (event.revision < 0) throw IllegalArgumentException()
-        val lastRevisionOfNote = getLastRevisionOfNote(event.noteId)
+        val lastRevisionOfNote = getLastRevisionOfAggregate(event.aggId)
         if (lastRevisionOfNote == null && event.revision != 1) {
             throw IllegalArgumentException()
         } else if (lastRevisionOfNote != null && event.revision != lastRevisionOfNote + 1) {
@@ -51,10 +51,10 @@ class InMemoryEventStore : EventStore {
 
     override fun getEventUpdates(): Observable<Event> = newEventSubject
 
-    private fun getLastRevisionOfNote(noteId: String): Int? {
+    private fun getLastRevisionOfAggregate(aggId: String): Int? {
         return events
                 .values
-                .filter { it.noteId == noteId }
+                .filter { it.aggId == aggId }
                 .sortedBy { it.revision }
                 .lastOrNull()
                 ?.revision

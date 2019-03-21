@@ -45,8 +45,8 @@ class MainView : View() {
                         is NavigationViewModel.Selection.NoteSelection -> " ${selection.title}"
                         is NavigationViewModel.Selection.FolderSelection -> " ${selection.title}"
                     }
-                    val dirtyText = if (isDirty) "*" else ""
-                    title = "$applicationTitle$nodeTitle$dirtyText"
+                    val dirtyMarker = if (isDirty) "*" else ""
+                    title = "$applicationTitle$nodeTitle$dirtyMarker"
                 }
     }
 }

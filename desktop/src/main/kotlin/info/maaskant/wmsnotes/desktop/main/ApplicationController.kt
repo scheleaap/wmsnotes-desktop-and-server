@@ -1,14 +1,17 @@
 package info.maaskant.wmsnotes.desktop.main
 
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
+import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import org.springframework.stereotype.Component
-import tornadofx.*
 import java.io.File
+import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,9 +26,14 @@ class ApplicationController @Inject constructor(
     private val logger by logger()
 
     // TODO: Replace with SerializedSubject
-    final val selectNote: Subject<NavigationViewModel.Selection> = PublishSubject.create()
+    // Folder
+    final val createFolder: Subject<Unit> = PublishSubject.create()
+    final val deleteCurrentFolder: Subject<Unit> = PublishSubject.create()
+    // Note
+    final val selectNote: Subject<NavigationViewModel.SelectionRequest> = PublishSubject.create()
     final val createNote: Subject<Unit> = PublishSubject.create()
     final val deleteCurrentNote: Subject<Unit> = PublishSubject.create()
+    final val renameCurrentNote: Subject<Unit> = PublishSubject.create()
     final val addAttachmentToCurrentNote: Subject<File> = PublishSubject.create()
     final val deleteAttachmentFromCurrentNote: Subject<String> = PublishSubject.create()
     final val saveContent: Subject<Unit> = PublishSubject.create()
@@ -33,22 +41,34 @@ class ApplicationController @Inject constructor(
     private var i: Int = 1
 
     init {
+        // Folder
+        createFolder
+                .subscribeOn(Schedulers.computation())
+                .map { CreateFolderCommand(path = navigationViewModel.currentPathValue.child("Folder ${i++}"), lastRevision = 0) }
+                .subscribe(commandProcessor.commands)
+
+        // Note
         selectNote.subscribe(navigationViewModel.selectionRequest)
         createNote
                 .subscribeOn(Schedulers.computation())
-                .map { CreateNoteCommand(null, "New Note ${i++}") }
+                .map { CreateNoteCommand(aggId = null, path = navigationViewModel.currentPathValue, title = "Note ${i++}", content = "") }
                 .subscribe(commandProcessor.commands)
         deleteCurrentNote
                 .subscribeOn(Schedulers.computation())
                 .filter { navigationViewModel.currentNoteValue != null }
-                .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.noteId, navigationViewModel.currentNoteValue!!.revision) }
+                .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision) }
+                .subscribe(commandProcessor.commands)
+        renameCurrentNote
+                .subscribeOn(Schedulers.computation())
+                .filter { navigationViewModel.currentNoteValue != null }
+                .map { ChangeTitleCommand(navigationViewModel.currentNoteValue!!.aggId, navigationViewModel.currentNoteValue!!.revision, "random title " + LocalDateTime.now().toString()) }
                 .subscribe(commandProcessor.commands)
         addAttachmentToCurrentNote
                 .subscribeOn(Schedulers.computation())
                 .filter { navigationViewModel.currentNoteValue != null }
                 .map {
                     AddAttachmentCommand(
-                            noteId = navigationViewModel.currentNoteValue!!.noteId,
+                            aggId = navigationViewModel.currentNoteValue!!.aggId,
                             lastRevision = navigationViewModel.currentNoteValue!!.revision,
                             name = it.name,
                             content = it.readBytes()
@@ -60,7 +80,7 @@ class ApplicationController @Inject constructor(
                 .filter { navigationViewModel.currentNoteValue != null }
                 .map {
                     DeleteAttachmentCommand(
-                            noteId = navigationViewModel.currentNoteValue!!.noteId,
+                            aggId = navigationViewModel.currentNoteValue!!.aggId,
                             lastRevision = navigationViewModel.currentNoteValue!!.revision,
                             name = it
                     )
@@ -72,12 +92,12 @@ class ApplicationController @Inject constructor(
                 .map {
                     if (editingViewModel.isDirty().blockingFirst() == false) throw IllegalStateException()
                     ChangeContentCommand(
-                            noteId = navigationViewModel.currentNoteValue!!.noteId,
+                            aggId = navigationViewModel.currentNoteValue!!.aggId,
                             lastRevision = navigationViewModel.currentNoteValue!!.revision,
                             content = editingViewModel.getText()
                     )
                 }
-                .doOnNext { logger.debug("Saving content of note ${it.noteId}") }
+                .doOnNext { logger.debug("Saving content of note ${it.aggId}") }
                 .subscribe(commandProcessor.commands)
     }
 

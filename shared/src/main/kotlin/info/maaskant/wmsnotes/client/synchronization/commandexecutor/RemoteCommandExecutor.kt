@@ -32,14 +32,14 @@ class RemoteCommandExecutor @Inject constructor(
                         .let { response ->
                             if (response.status == PostCommandResponse.Status.SUCCESS) {
                                 val result = if (response.newEventId != 0) {
-                                    if (response.noteId.isNotEmpty() && response.newRevision != 0) {
+                                    if (response.aggregateId.isNotEmpty() && response.newRevision != 0) {
                                         CommandExecutor.ExecutionResult.Success(newEventMetadata = CommandExecutor.EventMetadata(
                                                 eventId = response.newEventId,
-                                                noteId = response.noteId,
+                                                aggId = response.aggregateId,
                                                 revision = response.newRevision
                                         ))
                                     } else {
-                                        logger.warn("Executing command remotely returned success, but response was incomplete: $command -> (${response.status}, ${response.newEventId}, ${response.noteId}, ${response.newRevision})")
+                                        logger.warn("Executing command remotely returned success, but response was incomplete: $command -> (${response.status}, ${response.newEventId}, ${response.aggregateId}, ${response.newRevision})")
                                         CommandExecutor.ExecutionResult.Failure
                                     }
                                 } else {

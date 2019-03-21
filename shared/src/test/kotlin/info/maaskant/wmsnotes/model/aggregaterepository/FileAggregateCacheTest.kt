@@ -1,6 +1,6 @@
-package info.maaskant.wmsnotes.model.projection.cache
+package info.maaskant.wmsnotes.model.aggregaterepository
 
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.mockk.clearMocks
 import io.mockk.every
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import java.io.File
 import java.util.*
 
-internal class FileNoteCacheTest : NoteCacheTest() {
+internal class FileAggregateCacheTest : AggregateCacheTest() {
     val data: ByteArray = "DATA".toByteArray()
 
     private lateinit var tempDir: File
@@ -37,9 +37,27 @@ internal class FileNoteCacheTest : NoteCacheTest() {
         c.put(note)
 
         // Then
-        val expectedFile = tempDir.resolve(noteId).resolve("0000000002")
+        val expectedFile = tempDir.resolve(aggId).resolve("0000000002")
         assertThat(expectedFile).exists()
         assertThat(expectedFile.readBytes()).isEqualTo(noteSerializer.serialize(note))
+    }
+
+    @Test
+    fun `put, do not replace if file exists`() {
+        // Given
+        val note: Note = noteAfterEvent2
+        val c = createInstance()
+        val aggregateDir = tempDir.resolve(aggId)
+        val revisionFile = aggregateDir.resolve("0000000002")
+        aggregateDir.mkdirs()
+        revisionFile.writeBytes(data)
+
+        // When
+        c.put(note)
+
+        // Then
+        assertThat(revisionFile).exists()
+        assertThat(revisionFile.readBytes()).isEqualTo(data)
     }
 
     @Test
@@ -50,15 +68,15 @@ internal class FileNoteCacheTest : NoteCacheTest() {
         c.put(note)
 
         // When
-        c.remove(note.noteId, note.revision)
+        c.remove(note.aggId, note.revision)
 
         // Then
-        val expectedFile = tempDir.resolve(noteId).resolve("0000000002")
+        val expectedFile = tempDir.resolve(aggId).resolve("0000000002")
         assertThat(expectedFile).doesNotExist()
     }
 
-    override fun createInstance(): NoteCache {
-        return FileNoteCache(tempDir, noteSerializer)
+    override fun createInstance(): AggregateCache<Note> {
+        return FileAggregateCache(tempDir, noteSerializer)
     }
 
     override fun givenANote(note: Note): Note {

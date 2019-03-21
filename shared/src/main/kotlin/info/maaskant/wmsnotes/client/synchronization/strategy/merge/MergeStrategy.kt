@@ -1,7 +1,7 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.projection.Note
+import info.maaskant.wmsnotes.model.note.Note
 
 interface MergeStrategy {
     fun merge(

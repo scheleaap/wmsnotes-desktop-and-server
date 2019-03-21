@@ -11,7 +11,7 @@ interface CommandExecutor {
         data class Success(val newEventMetadata: EventMetadata?) : ExecutionResult()
     }
 
-    data class EventMetadata(val eventId: Int, val noteId: String, val revision: Int) {
-        constructor (event: Event) : this(event.eventId, event.noteId, event.revision)
+    data class EventMetadata(val eventId: Int, val aggId: String, val revision: Int) {
+        constructor (event: Event) : this(event.eventId, event.aggId, event.revision)
     }
 }
