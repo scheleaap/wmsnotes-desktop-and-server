@@ -24,7 +24,7 @@ class InMemoryEventStore : EventStore {
                 .doOnSubscribe { logger.debug("Loading all events after event id $afterEventId") }
     }
 
-    override fun getEventsOfNote(aggId: String, afterRevision: Int?): Observable<Event> {
+    override fun getEventsOfAggregate(aggId: String, afterRevision: Int?): Observable<Event> {
         return events
                 .values
                 .filter { it.aggId == aggId }

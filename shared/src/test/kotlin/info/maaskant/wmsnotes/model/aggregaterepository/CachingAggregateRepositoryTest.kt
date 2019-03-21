@@ -47,7 +47,7 @@ internal class CachingAggregateRepositoryTest {
         every { aggregateCache.get(aggId, noteAfterEvent1.revision) }.returns(null)
         every { aggregateCache.get(aggId, noteAfterEvent2.revision) }.returns(null)
         every { aggregateCache.getLatest(aggId, noteAfterEvent2.revision) }.returns(null)
-        every { eventStore.getEventsOfNote(aggId, afterRevision = null) }.returns(Observable.just(event1, event2, event3))
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = null) }.returns(Observable.just(event1, event2, event3))
         val p = CachingAggregateRepository(eventStore, aggregateCache, emptyNote)
 
         // When
@@ -64,7 +64,7 @@ internal class CachingAggregateRepositoryTest {
         every { aggregateCache.get(aggId, noteAfterEvent1.revision) }.returns(noteAfterEvent1)
         every { aggregateCache.get(aggId, noteAfterEvent2.revision) }.returns(null)
         every { aggregateCache.getLatest(aggId, noteAfterEvent2.revision) }.returns(noteAfterEvent1)
-        every { eventStore.getEventsOfNote(aggId, afterRevision = noteAfterEvent1.revision) }.returns(Observable.just(event2, event3))
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = noteAfterEvent1.revision) }.returns(Observable.just(event2, event3))
         val p = CachingAggregateRepository(eventStore, aggregateCache, emptyNote)
 
         // When
@@ -83,8 +83,8 @@ internal class CachingAggregateRepositoryTest {
         every { aggregateCache.get(aggId, noteAfterEvent3.revision) }.returns(noteAfterEvent3)
         every { aggregateCache.getLatest(aggId, lastRevision = null) }.returns(noteAfterEvent3)
         every { aggregateCache.getLatest(aggId, lastRevision = noteAfterEvent2.revision) }.returns(noteAfterEvent2)
-        every { eventStore.getEventsOfNote(aggId, afterRevision = noteAfterEvent2.revision) }.returns(Observable.just(event3))
-        every { eventStore.getEventsOfNote(aggId, afterRevision = noteAfterEvent3.revision) }.returns(Observable.empty())
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = noteAfterEvent2.revision) }.returns(Observable.just(event3))
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = noteAfterEvent3.revision) }.returns(Observable.empty())
         val p = CachingAggregateRepository(eventStore, aggregateCache, emptyNote)
 
         // When
@@ -99,8 +99,8 @@ internal class CachingAggregateRepositoryTest {
         // Given
         val events = createHotObservable()
         every { aggregateCache.getLatest(aggId, lastRevision = null) }.returns(null)
-        every { eventStore.getEventsOfNote(aggId, afterRevision = null) }.returns(Observable.just(event1, event2))
-        every { eventStore.getEventsOfNoteWithUpdates(aggId, afterRevision = noteAfterEvent2.revision) }.returns(events)
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = null) }.returns(Observable.just(event1, event2))
+        every { eventStore.getEventsOfAggregateWithUpdates(aggId, afterRevision = noteAfterEvent2.revision) }.returns(events)
         val p = CachingAggregateRepository(eventStore, aggregateCache, emptyNote)
 
         // When
@@ -122,8 +122,8 @@ internal class CachingAggregateRepositoryTest {
         // Given
         val events = createHotObservable()
         every { aggregateCache.getLatest(aggId, lastRevision = null) }.returns(noteAfterEvent1)
-        every { eventStore.getEventsOfNote(aggId, afterRevision = noteAfterEvent1.revision) }.returns(Observable.just(event2))
-        every { eventStore.getEventsOfNoteWithUpdates(aggId, afterRevision = noteAfterEvent2.revision) }.returns(events)
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = noteAfterEvent1.revision) }.returns(Observable.just(event2))
+        every { eventStore.getEventsOfAggregateWithUpdates(aggId, afterRevision = noteAfterEvent2.revision) }.returns(events)
         val p = CachingAggregateRepository(eventStore, aggregateCache, emptyNote)
 
         // When
@@ -141,8 +141,8 @@ internal class CachingAggregateRepositoryTest {
         // Given
         val events = createHotObservable()
         every { aggregateCache.getLatest(aggId, lastRevision = null) }.returns(noteAfterEvent2)
-        every { eventStore.getEventsOfNote(aggId, afterRevision = noteAfterEvent2.revision) }.returns(Observable.empty())
-        every { eventStore.getEventsOfNoteWithUpdates(aggId, afterRevision = noteAfterEvent2.revision) }.returns(events)
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = noteAfterEvent2.revision) }.returns(Observable.empty())
+        every { eventStore.getEventsOfAggregateWithUpdates(aggId, afterRevision = noteAfterEvent2.revision) }.returns(events)
         val p = CachingAggregateRepository(eventStore, aggregateCache, emptyNote)
 
         // When

@@ -123,7 +123,7 @@ internal abstract class EventStoreTest {
         }
 
         // When
-        val observer = r.getEventsOfNote("note-1").test()
+        val observer = r.getEventsOfAggregate("note-1").test()
         r.appendEvent(eventsIn[3])
 
         // Then
@@ -152,7 +152,7 @@ internal abstract class EventStoreTest {
         }
 
         // When
-        val observer = r.getEventsOfNote("note-1", afterRevision = 1).test()
+        val observer = r.getEventsOfAggregate("note-1", afterRevision = 1).test()
         r.appendEvent(eventsIn[4])
 
         // Then
@@ -182,7 +182,7 @@ internal abstract class EventStoreTest {
         }
 
         // When
-        val observer = r.getEventsOfNoteWithUpdates("note-1").test()
+        val observer = r.getEventsOfAggregateWithUpdates("note-1").test()
         r.appendEvent(eventsIn[3])
 
         // Then
@@ -213,7 +213,7 @@ internal abstract class EventStoreTest {
         }
 
         // When
-        val observer = r.getEventsOfNoteWithUpdates("note-1", afterRevision = 1).test()
+        val observer = r.getEventsOfAggregateWithUpdates("note-1", afterRevision = 1).test()
         r.appendEvent(eventsIn[4])
 
         // Then
