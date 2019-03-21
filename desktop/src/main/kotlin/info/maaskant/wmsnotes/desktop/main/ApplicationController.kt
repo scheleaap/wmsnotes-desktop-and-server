@@ -27,8 +27,7 @@ class ApplicationController @Inject constructor(
 
     // TODO: Replace with SerializedSubject
     // Folder
-    final val createFolder: Subject<Unit> = PublishSubject.create()
-    final val deleteCurrentFolder: Subject<Unit> = PublishSubject.create()
+    final val createFolder: Subject<String> = PublishSubject.create()
     // Note
     final val selectNote: Subject<NavigationViewModel.SelectionRequest> = PublishSubject.create()
     final val createNote: Subject<Unit> = PublishSubject.create()
@@ -44,7 +43,7 @@ class ApplicationController @Inject constructor(
         // Folder
         createFolder
                 .subscribeOn(Schedulers.computation())
-                .map { CreateFolderCommand(path = navigationViewModel.currentPathValue.child("Folder ${i++}"), lastRevision = 0) }
+                .map { CreateFolderCommand(path = navigationViewModel.currentPathValue.child(it), lastRevision = 0) }
                 .subscribe(commandProcessor.commands)
 
         // Note

@@ -10,8 +10,10 @@ import info.maaskant.wmsnotes.desktop.util.*
 import info.maaskant.wmsnotes.utilities.logger
 import javafx.application.Platform
 import javafx.geometry.Orientation
+import javafx.scene.control.TextInputDialog
 import org.controlsfx.control.ToggleSwitch
 import tornadofx.*
+import java.util.*
 
 class MenuAndToolbarView : View() {
 
@@ -31,7 +33,20 @@ class MenuAndToolbarView : View() {
 
     private val createFolderAction = StatelessAction(messageKey = "menu.file.createFolder", graphic = FontAwesomeIconView(FontAwesomeIcon.FOLDER_ALT).apply { size = largerIconSize },
             accelerator = "Shortcut+N") {
-        applicationController.createFolder.onNext(Unit)
+        val defaultFolderTitle = Messages["NewFolderDialog.defaultFolderTitle"]
+        TextInputDialog(defaultFolderTitle).apply {
+            title = Messages["NewFolderDialog.title"]
+            contentText = Messages["NewFolderDialog.contentText"]
+        }
+                .showAndWait()
+                .flatMap {
+                    if (it.isNotBlank()) {
+                        Optional.of(it)
+                    } else {
+                        Optional.empty()
+                    }
+                }
+                .ifPresent { applicationController.createFolder.onNext(it) }
     }
     private val createNoteAction = StatelessAction(messageKey = "menu.file.createNote", graphic = FontAwesomeIconView(FontAwesomeIcon.FILE_TEXT_ALT).apply { size = largerIconSize },
             accelerator = "Shortcut+N") {
