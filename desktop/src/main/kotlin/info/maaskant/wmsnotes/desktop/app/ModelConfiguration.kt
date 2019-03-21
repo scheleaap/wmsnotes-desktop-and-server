@@ -34,7 +34,7 @@ class ModelConfiguration {
 
     @Bean
     @Singleton
-    fun noteEventSerializer(kryoPool: Pool<Kryo>): Serializer<Event> = KryoEventSerializer(kryoPool)
+    fun eventSerializer(kryoPool: Pool<Kryo>): Serializer<Event> = KryoEventSerializer(kryoPool)
 
     @Bean
     @Singleton
@@ -96,7 +96,6 @@ class ModelConfiguration {
                 NoopAggregateCache()
             }
 
-
     @Bean
     @Singleton
     fun folderRepository(eventStore: EventStore, cache: AggregateCache<Folder>): AggregateRepository<Folder> =
@@ -114,5 +113,4 @@ class ModelConfiguration {
     @Bean
     @Singleton
     fun noteSerializer(kryoPool: Pool<Kryo>): Serializer<Note> = KryoNoteSerializer(kryoPool)
-
 }
