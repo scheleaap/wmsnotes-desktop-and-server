@@ -22,6 +22,8 @@ message PostCommandRequest {
         ChangeContentCommand change_content = 15;
         ChangeTitleCommand change_title = 16;
         MoveCommand move = 17;
+        CreateFolderCommand create_folder = 18;
+        DeleteFolderCommand delete_folder = 19;
     }
 
     message CreateNoteCommand {
@@ -55,6 +57,12 @@ message PostCommandRequest {
 
     message MoveCommand {
         string path = 1;
+    }
+
+    message CreateFolderCommand {
+    }
+
+    message DeleteFolderCommand {
     }
 }
 

@@ -1,6 +1,8 @@
 package info.maaskant.wmsnotes.client.api
 
 import com.google.protobuf.ByteString
+import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
+import info.maaskant.wmsnotes.model.folder.DeleteFolderCommand
 import info.maaskant.wmsnotes.model.folder.FolderCommand
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
@@ -8,7 +10,7 @@ import javax.inject.Inject
 
 class GrpcCommandMapper @Inject constructor() {
     fun toGrpcPostCommandRequest(command: info.maaskant.wmsnotes.model.Command): Command.PostCommandRequest {
-        return when (command) { // Assign to variable to force a compilation error if 'when' expression is not exhaustive.
+        return when (command) {
             is NoteCommand -> mapNoteCommand(command)
             is FolderCommand -> mapFolderCommand(command)
             else -> throw IllegalArgumentException()
@@ -16,7 +18,19 @@ class GrpcCommandMapper @Inject constructor() {
     }
 
     private fun mapFolderCommand(command: FolderCommand): Command.PostCommandRequest {
-        TODO()
+        val builder = Command.PostCommandRequest.newBuilder()
+        when (command) {
+            is CreateFolderCommand -> builder.apply {
+                aggregateId = command.path.toString()
+                createFolder = Command.PostCommandRequest.CreateFolderCommand.newBuilder().build()
+            }
+            is DeleteFolderCommand -> builder.apply {
+                aggregateId = command.path.toString()
+                lastRevision = command.lastRevision
+                deleteFolder = Command.PostCommandRequest.DeleteFolderCommand.newBuilder().build()
+            }
+        }
+        return builder.build()
     }
 
     private fun mapNoteCommand(command: NoteCommand): Command.PostCommandRequest {

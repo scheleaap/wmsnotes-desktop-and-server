@@ -2,6 +2,8 @@ package info.maaskant.wmsnotes.server.command
 
 import com.google.protobuf.ByteString
 import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
+import info.maaskant.wmsnotes.model.folder.DeleteFolderCommand
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import org.assertj.core.api.Assertions.assertThat
@@ -37,15 +39,25 @@ internal class GrpcCommandMapperTest {
     fun `missing aggregate id`(): List<DynamicTest> {
         val requests = listOf(
                 Command.PostCommandRequest.newBuilder().apply {
-                    // aggId
+                    // aggregateId
                     createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
                         title = "Title"
                     }.build()
                 }.build(),
                 Command.PostCommandRequest.newBuilder().apply {
-                    // aggId
+                    // aggregateId
                     lastRevision = 1
                     deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
+                }.build(),
+                Command.PostCommandRequest.newBuilder().apply {
+                    // aggregateId
+                    lastRevision = 1
+                    createFolder = Command.PostCommandRequest.CreateFolderCommand.newBuilder().build()
+                }.build(),
+                Command.PostCommandRequest.newBuilder().apply {
+                    // aggregateId
+                    lastRevision = 1
+                    deleteFolder = Command.PostCommandRequest.DeleteFolderCommand.newBuilder().build()
                 }.build()
                 // There's no need to add a check for every command.
         )
@@ -118,7 +130,17 @@ internal class GrpcCommandMapperTest {
                     move = Command.PostCommandRequest.MoveCommand.newBuilder().apply {
                         path = Path("el1", "el2").toString()
                     }.build()
-                }.build() to MoveCommand(aggId = "note", lastRevision = 1, path = Path("el1", "el2"))
+                }.build() to MoveCommand(aggId = "note", lastRevision = 1, path = Path("el1", "el2")),
+                Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = Path("el1", "el2").toString()
+                    lastRevision = 1
+                    createFolder = Command.PostCommandRequest.CreateFolderCommand.newBuilder().build()
+                }.build() to CreateFolderCommand(path = Path("el1", "el2"), lastRevision = 1),
+                Command.PostCommandRequest.newBuilder().apply {
+                    aggregateId = Path("el1", "el2").toString()
+                    lastRevision = 1
+                    deleteFolder = Command.PostCommandRequest.DeleteFolderCommand.newBuilder().build()
+                }.build() to DeleteFolderCommand(path = Path("el1", "el2"), lastRevision = 1)
                 // Add more classes here
         )
         return items.map { (request, expectedCommand) ->

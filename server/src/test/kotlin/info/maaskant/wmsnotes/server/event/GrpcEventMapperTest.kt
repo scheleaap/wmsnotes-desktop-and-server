@@ -2,6 +2,8 @@ package info.maaskant.wmsnotes.server.event
 
 import com.google.protobuf.ByteString
 import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
+import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import org.assertj.core.api.Assertions.assertThat
@@ -93,6 +95,20 @@ internal class GrpcEventMapperTest {
                     moved = Event.GetEventsResponse.MovedEvent.newBuilder().apply {
                         path = Path("el1", "el2").toString()
                     }.build()
+                }.build(),
+                FolderCreatedEvent(eventId = 1, revision = 1, path = Path("el1", "el2"))
+                        to Event.GetEventsResponse.newBuilder().apply {
+                    eventId = 1
+                    aggregateId = Path("el1", "el2").toString()
+                    revision = 1
+                    folderCreated = Event.GetEventsResponse.FolderCreatedEvent.newBuilder().build()
+                }.build(),
+                FolderDeletedEvent(eventId = 1, revision = 1, path = Path("el1", "el2"))
+                        to Event.GetEventsResponse.newBuilder().apply {
+                    eventId = 1
+                    aggregateId = Path("el1", "el2").toString()
+                    revision = 1
+                    folderDeleted = Event.GetEventsResponse.FolderDeletedEvent.newBuilder().build()
                 }.build()
                 // Add more classes here
         )

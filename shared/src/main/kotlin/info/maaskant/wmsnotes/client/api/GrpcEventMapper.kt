@@ -1,6 +1,8 @@
 package info.maaskant.wmsnotes.client.api
 
 import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
+import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import javax.inject.Inject
@@ -62,7 +64,16 @@ class GrpcEventMapper @Inject constructor() {
                         aggId = aggregateId,
                         path = Path.from(moved.path)
                 )
-
+                Event.GetEventsResponse.EventCase.FOLDER_CREATED -> FolderCreatedEvent(
+                        eventId = eventId,
+                        revision = revision,
+                        path = Path.from(aggregateId)
+                )
+                Event.GetEventsResponse.EventCase.FOLDER_DELETED -> FolderDeletedEvent(
+                        eventId = eventId,
+                        revision = revision,
+                        path = Path.from(aggregateId)
+                )
             }
         }
     }

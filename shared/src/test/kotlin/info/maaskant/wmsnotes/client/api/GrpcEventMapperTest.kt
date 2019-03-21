@@ -2,6 +2,8 @@ package info.maaskant.wmsnotes.client.api
 
 import com.google.protobuf.ByteString
 import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
+import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Event
 import org.assertj.core.api.Assertions.assertThat
@@ -54,7 +56,7 @@ internal class GrpcEventMapperTest {
                         content = ByteString.copyFrom("data".toByteArray())
                     }.build()
                 }.build() to AttachmentAddedEvent(eventId = 1, aggId = "note", revision = 1, name = "att", content = "data".toByteArray()),
-                // TODO Investigate why this fails
+                // No idea why this fails
 //                Event.GetEventsResponse.newBuilder().apply {
 //                    eventId = 1
 //                    aggregateId = "note"
@@ -86,7 +88,19 @@ internal class GrpcEventMapperTest {
                     moved = Event.GetEventsResponse.MovedEvent.newBuilder().apply {
                         path = Path("el1", "el2").toString()
                     }.build()
-                }.build() to MovedEvent(eventId = 1, aggId = "note", revision = 1, path = Path("el1", "el2"))
+                }.build() to MovedEvent(eventId = 1, aggId = "note", revision = 1, path = Path("el1", "el2")),
+                Event.GetEventsResponse.newBuilder().apply {
+                    eventId = 1
+                    aggregateId = Path("el1", "el2").toString()
+                    revision = 1
+                    folderCreated = Event.GetEventsResponse.FolderCreatedEvent.newBuilder().build()
+                }.build() to FolderCreatedEvent(eventId = 1, revision = 1, path = Path("el1", "el2")),
+                Event.GetEventsResponse.newBuilder().apply {
+                    eventId = 1
+                    aggregateId = Path("el1", "el2").toString()
+                    revision = 1
+                    folderDeleted = Event.GetEventsResponse.FolderDeletedEvent.newBuilder().build()
+                }.build() to FolderDeletedEvent(eventId = 1, revision = 1, path = Path("el1", "el2"))
                 // Add more classes here
         )
         return items.map { (event, expectedResponse) ->

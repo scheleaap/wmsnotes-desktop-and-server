@@ -28,6 +28,8 @@ message GetEventsResponse {
         ContentChangedEvent content_changed = 15;
         TitleChangedEvent title_changed = 16;
         MovedEvent moved = 17;
+        FolderCreatedEvent folder_created = 18;
+        FolderDeletedEvent folder_deleted = 19;
     }
 
     message NoteCreatedEvent {
@@ -61,5 +63,11 @@ message GetEventsResponse {
 
     message MovedEvent {
         string path = 1;
+    }
+
+    message FolderCreatedEvent {
+    }
+
+    message FolderDeletedEvent {
     }
 }

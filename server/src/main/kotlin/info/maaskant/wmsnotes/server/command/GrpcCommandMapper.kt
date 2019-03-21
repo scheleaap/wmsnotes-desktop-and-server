@@ -1,6 +1,8 @@
 package info.maaskant.wmsnotes.server.command
 
 import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
+import info.maaskant.wmsnotes.model.folder.DeleteFolderCommand
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import org.springframework.stereotype.Service
@@ -38,7 +40,6 @@ class GrpcCommandMapper {
                     lastRevision = request.lastRevision,
                     name = request.deleteAttachment.name.also { if (it.isEmpty()) throw BadRequestException("Field 'name' not set") }
             )
-
             Command.PostCommandRequest.CommandCase.CHANGE_CONTENT -> ChangeContentCommand(
                     aggId = request.aggregateId,
                     lastRevision = request.lastRevision,
@@ -54,7 +55,14 @@ class GrpcCommandMapper {
                     lastRevision = request.lastRevision,
                     path = Path.from(request.move.path)
             )
-
+            Command.PostCommandRequest.CommandCase.CREATE_FOLDER -> CreateFolderCommand(
+                    path = Path.from(request.aggregateId),
+                    lastRevision = request.lastRevision
+            )
+            Command.PostCommandRequest.CommandCase.DELETE_FOLDER -> DeleteFolderCommand(
+                    path = Path.from(request.aggregateId),
+                    lastRevision = request.lastRevision
+            )
         }
     }
 }

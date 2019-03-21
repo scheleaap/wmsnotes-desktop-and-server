@@ -59,8 +59,14 @@ class GrpcEventMapper @Inject constructor() {
                     path = event.path.toString()
                 }.build()
             }
-            is FolderCreatedEvent -> TODO()
-            is FolderDeletedEvent -> TODO()
+            is FolderCreatedEvent -> builder.apply {
+                aggregateId = event.path.toString()
+                folderCreated = Event.GetEventsResponse.FolderCreatedEvent.newBuilder().build()
+            }
+            is FolderDeletedEvent -> builder.apply {
+                aggregateId = event.path.toString()
+                folderDeleted = Event.GetEventsResponse.FolderDeletedEvent.newBuilder().build()
+            }
             else -> IllegalArgumentException()
         }
         return builder.build()
