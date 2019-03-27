@@ -19,6 +19,8 @@ import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
+private typealias New = Pair<TreeIndexState, List<TreeIndex.Change>>
+
 class TreeIndex @Inject constructor(
         eventStore: EventStore,
         initialState: TreeIndexState?,
@@ -47,57 +49,63 @@ class TreeIndex @Inject constructor(
         source
                 .subscribeOn(scheduler)
                 .subscribe({
-                    when (it) {
-                        is NoteCreatedEvent -> handleNoteCreated(it)
-                        is NoteDeletedEvent -> handleNoteDeleted(it)
-                        is NoteUndeletedEvent -> handleNoteUndeleted(it)
-                        is FolderCreatedEvent -> handleFolderCreated(it)
-                        is FolderDeletedEvent -> handleFolderDeleted(it)
-                        is TitleChangedEvent -> handleTitleChanged(it)
-                        else -> {
-                        }
+                    val (newState, newChanges) = when (it) {
+                        is NoteCreatedEvent -> handleNoteCreated(state, it)
+                        is NoteDeletedEvent -> handleNoteDeleted(state, it)
+                        is NoteUndeletedEvent -> handleNoteUndeleted(state, it)
+                        is FolderCreatedEvent -> handleFolderCreated(state, it)
+                        is FolderDeletedEvent -> handleFolderDeleted(state, it)
+                        is TitleChangedEvent -> handleTitleChanged(state, it)
+                        else -> state to emptyList()
                     }
+                    if (state != newState) {
+                        updateState(newState)
+                    }
+                    newChanges.forEach { changes.onNext(it) }
+
                 }, { logger.warn("Error", it) })
     }
 
-    private fun addAutomaticallyGeneratedFoldersIfNecessary(path: Path): String? {
-        if (path.elements.isNotEmpty()) {
+    private fun addAutomaticallyGeneratedFoldersIfNecessary(state: TreeIndexState, changes: List<Change>, path: Path): Triple<String?, TreeIndexState, List<Change>> {
+        return if (path.elements.isNotEmpty()) {
             val aggId = aggId(path)
             if (!state.isNodeInFolder(aggId, path)) {
-                val parentAggId = addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
+                val (parentAggId, newState, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, changes, path.parent())
                 logger.debug("Adding automatically generated folder $path to index")
                 val folder = folder(aggId, parentAggId = parentAggId, path = path)
-                updateState(state.addAutoFolder(folder))
-                changes.onNext(NodeAdded(folder))
+                Triple(aggId, newState.addAutoFolder(folder), newChanges + NodeAdded(folder))
+            } else {
+                Triple(aggId, state, changes)
             }
-            return aggId
         } else {
-            return null
+            Triple(null, state, changes)
         }
     }
 
-    private fun addFolder(aggId: String, path: Path) {
-        if (path.elements.isNotEmpty()) {
+    private fun addFolder(state: TreeIndexState, aggId: String, path: Path): New {
+        return if (path.elements.isNotEmpty()) {
             if (!state.isNodeInFolder(aggId, path)) {
-                val parentAggId = addAutomaticallyGeneratedFoldersIfNecessary(path = path.parent())
+                val (parentAggId, newState, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, emptyList(), path = path.parent())
                 logger.debug("Adding folder $path to index")
                 val folder = folder(aggId, parentAggId = parentAggId, path = path)
-                updateState(state.addNormalFolder(folder))
-                changes.onNext(NodeAdded(folder))
+                newState.addNormalFolder(folder) to newChanges + NodeAdded(folder)
             } else {
                 logger.debug("Adding folder $path to index")
-                updateState(state.markFolderAsNormal(aggId))
+                state.markFolderAsNormal(aggId) to emptyList()
             }
+        } else {
+            state to emptyList()
         }
     }
 
-    private fun addNote(aggId: String, path: Path, title: String) {
-        if (!state.isNodeInFolder(aggId, path)) {
-            val parentAggId = addAutomaticallyGeneratedFoldersIfNecessary(path = path)
+    private fun addNote(state: TreeIndexState, aggId: String, path: Path, title: String): New {
+        return if (!state.isNodeInFolder(aggId, path)) {
+            val (parentAggId, newState, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, emptyList(), path = path)
             logger.debug("Adding note $aggId to index")
             val note = Note(aggId = aggId, parentAggId = parentAggId, path = path, title = title)
-            updateState(state.addNote(note))
-            changes.onNext(NodeAdded(note))
+            newState.addNote(note) to newChanges + NodeAdded(note)
+        } else {
+            state to emptyList()
         }
     }
 
@@ -118,65 +126,81 @@ class TreeIndex @Inject constructor(
                 }
     }
 
-    private fun handleFolderCreated(it: FolderCreatedEvent) =
-            addFolder(aggId = it.aggId, path = it.path)
+    private fun handleFolderCreated(state: TreeIndexState, it: FolderCreatedEvent) =
+            addFolder(state, aggId = it.aggId, path = it.path)
 
-    private fun handleFolderDeleted(it: FolderDeletedEvent) =
-            removeFolder(it.path)
+    private fun handleFolderDeleted(state: TreeIndexState, it: FolderDeletedEvent) =
+            removeFolder(state, it.path)
 
-    private fun handleNoteCreated(it: NoteCreatedEvent) =
-            addNote(aggId = it.aggId, path = it.path, title = it.title)
+    private fun handleNoteCreated(state: TreeIndexState, it: NoteCreatedEvent) =
+            addNote(state, aggId = it.aggId, path = it.path, title = it.title)
 
-    private fun handleNoteDeleted(it: NoteDeletedEvent) =
-            removeNote(it.aggId)
+    private fun handleNoteDeleted(state: TreeIndexState, it: NoteDeletedEvent) =
+            removeNote(state, it.aggId)
 
-    private fun handleNoteUndeleted(it: NoteUndeletedEvent) =
-            state.notes[it.aggId]?.let { addNote(aggId = it.aggId, path = it.path, title = it.title) }
+    private fun handleNoteUndeleted(state: TreeIndexState, it: NoteUndeletedEvent): New =
+            state.notes[it.aggId]?.let { addNote(state, aggId = it.aggId, path = it.path, title = it.title) }
+                    ?: state to emptyList()
 
-    private fun handleTitleChanged(it: TitleChangedEvent) {
+    private fun handleTitleChanged(state: TreeIndexState, it: TitleChangedEvent): New {
         val oldNote = state.getNote(aggId = it.aggId)
         val newNote = Note(aggId = oldNote.aggId, parentAggId = oldNote.parentAggId, path = oldNote.path, title = it.title)
-        updateState(state.replaceNote(newNote))
-        changes.onNext(TitleChanged(it.aggId, it.title))
+        return state.replaceNote(newNote) to listOf(TitleChanged(it.aggId, it.title))
     }
 
-    private fun removeAutomaticallyGeneratedFoldersIfNecessary(path: Path) {
+    private fun removeAutomaticallyGeneratedFoldersIfNecessary(state: TreeIndexState, changes: List<Change>, path: Path): New {
         val aggId = aggId(path)
-        if (state.isAutoFolder(aggId) && path.elements.isNotEmpty()) {
+        return if (state.isAutoFolder(aggId) && path.elements.isNotEmpty()) {
             val children = state.foldersWithChildren.get(path)
             if (children.size == 1 && aggId in children) {
                 logger.debug("Removing automatically generated folder $path from index")
-                updateState(state.removeAutoFolder(aggId))
-                changes.onNext(NodeRemoved(aggId))
-                removeAutomaticallyGeneratedFoldersIfNecessary(path.parent())
+                removeAutomaticallyGeneratedFoldersIfNecessary(
+                        state.removeAutoFolder(aggId),
+                        changes + NodeRemoved(aggId),
+                        path.parent()
+                )
+            } else {
+                state to changes
             }
+        } else {
+            state to changes
         }
     }
 
-    private fun removeFolder(path: Path) {
-        if (path.elements.isNotEmpty()) {
+    private fun removeFolder(state: TreeIndexState, path: Path): New {
+        return if (path.elements.isNotEmpty()) {
             val aggId = aggId(path)
             val children = state.foldersWithChildren.get(path)
             if (children.size == 1 && aggId in children) {
                 logger.debug("Removing folder $path from index")
-                updateState(state.removeNormalFolder(aggId))
-                changes.onNext(NodeRemoved(aggId))
-                removeAutomaticallyGeneratedFoldersIfNecessary(path.parent())
+                removeAutomaticallyGeneratedFoldersIfNecessary(
+                        state.removeNormalFolder(aggId),
+                        listOf(NodeRemoved(aggId)),
+                        path.parent()
+                )
             } else {
-                updateState(state.markFolderAsAuto(aggId))
+                state.markFolderAsAuto(aggId) to emptyList()
             }
+        } else {
+            state to emptyList()
         }
     }
 
-    private fun removeNote(aggId: String) {
-        if (aggId in state.notes) {
+    private fun removeNote(state: TreeIndexState, aggId: String): New {
+        return if (aggId in state.notes) {
             val path = state.getNote(aggId).path
             if (state.isNodeInFolder(aggId, path)) {
                 logger.debug("Removing note $aggId from index")
-                updateState(state.removeNote(aggId))
-                changes.onNext(NodeRemoved(aggId))
-                removeAutomaticallyGeneratedFoldersIfNecessary(path)
+                removeAutomaticallyGeneratedFoldersIfNecessary(
+                        state.removeNote(aggId),
+                        listOf(NodeRemoved(aggId)),
+                        path
+                )
+            } else {
+                state to emptyList()
             }
+        } else {
+            state to emptyList()
         }
     }
 
