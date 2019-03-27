@@ -31,7 +31,7 @@ Besides the technologies mentioned above, the project also uses:
 
 The Markdown editing and previewing panes have been gratefully taken from [Markdown Writer FX](https://github.com/JFormDesigner/markdown-writer-fx).
 
-## Event Sourcing anc CQRS
+## Event Sourcing and CQRS
 
 Here are some good articles on event sourcing:
 * Design of an CQRS/ES system: https://hackernoon.com/1-year-of-event-sourcing-and-cqrs-fb9033ccd1c6 (contains links to other good resources as well)
