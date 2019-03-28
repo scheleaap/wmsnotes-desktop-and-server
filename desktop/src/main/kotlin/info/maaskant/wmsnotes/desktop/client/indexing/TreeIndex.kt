@@ -73,7 +73,7 @@ class TreeIndex @Inject constructor(
                 val (parentAggId, newState, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, changes, path.parent())
                 logger.debug("Adding automatically generated folder $path to index")
                 val folder = folder(aggId, parentAggId = parentAggId, path = path)
-                Triple(aggId, newState.addAutoFolder(folder), newChanges + NodeAdded(folder))
+                Triple(aggId, newState.addAutoFolder(folder), newChanges + NodeAdded(folder, folderIndex = 0))
             } else {
                 Triple(aggId, state, changes)
             }
@@ -85,10 +85,12 @@ class TreeIndex @Inject constructor(
     private fun addFolder(state: TreeIndexState, aggId: String, path: Path): New {
         return if (path.elements.isNotEmpty()) {
             if (!state.isNodeInFolder(aggId, path.parent())) {
-                val (parentAggId, newState, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, emptyList(), path = path.parent())
+                val (parentAggId, newState1, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, emptyList(), path = path.parent())
                 logger.debug("Adding folder $path to index")
                 val folder = folder(aggId, parentAggId = parentAggId, path = path)
-                newState.addNormalFolder(folder) to newChanges + NodeAdded(folder)
+                val newState2 = newState1.addNormalFolder(folder)
+                val folderIndex = calculateFolderIndex(newState2, path.parent(), aggId)
+                newState2 to newChanges + NodeAdded(folder, folderIndex = folderIndex)
             } else {
                 logger.debug("Adding folder $path to index")
                 state.markFolderAsNormal(aggId) to emptyList()
@@ -100,10 +102,12 @@ class TreeIndex @Inject constructor(
 
     private fun addNote(state: TreeIndexState, aggId: String, path: Path, title: String): New {
         return if (!state.isNodeInFolder(aggId, path)) {
-            val (parentAggId, newState, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, emptyList(), path = path)
+            val (parentAggId, newState1, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, emptyList(), path = path)
             logger.debug("Adding note $aggId to index")
             val note = Note(aggId = aggId, parentAggId = parentAggId, path = path, title = title)
-            newState.addNote(note) to newChanges + NodeAdded(note)
+            val newState2 = newState1.addNote(note)
+            val folderIndex = calculateFolderIndex(newState2, path, aggId)
+            newState2 to newChanges + NodeAdded(note, folderIndex = folderIndex)
         } else {
             state to emptyList()
         }
@@ -114,15 +118,25 @@ class TreeIndex @Inject constructor(
     fun getExistingNodesAsChanges(): Observable<Change> {
         return state.foldersWithChildren.entries().toObservable()
                 .map { (_, aggId) ->
-                    if (aggId in state.notes) {
-                        NodeAdded(state.notes.getValue(aggId))
-                    } else if (aggId in state.folders) {
-                        NodeAdded(state.folders.getValue(aggId))
-                    } else {
-                        throw IllegalStateException("Unknown aggregate '$aggId'")
+                    val (node: Node, folderIndex: Int) = when (aggId) {
+                        in state.notes -> {
+                            val note = state.notes.getValue(aggId)
+                            val folderIndex = calculateFolderIndex(state, note.path, aggId)
+                            note to folderIndex
+                        }
+                        in state.folders -> {
+                            val folder = state.folders.getValue(aggId)
+                            val folderIndex = calculateFolderIndex(state, folder.path.parent(), aggId)
+                            folder to folderIndex
+                        }
+                        else -> throw IllegalStateException("Unknown aggregate '$aggId'")
                     }
+                    NodeAdded(node, folderIndex = folderIndex)
                 }
     }
+
+    private fun calculateFolderIndex(state: TreeIndexState, path: Path, aggId: String) =
+            state.foldersWithChildren[path].indexOf(aggId)
 
     private fun handleFolderCreated(state: TreeIndexState, it: FolderCreatedEvent) =
             addFolder(state, aggId = it.aggId, path = it.path)
@@ -210,7 +224,7 @@ class TreeIndex @Inject constructor(
     override fun getStateUpdates(): Observable<TreeIndexState> = stateUpdates
 
     sealed class Change {
-        data class NodeAdded(val metadata: Node) : Change()
+        data class NodeAdded(val metadata: Node, val folderIndex: Int) : Change()
         data class NodeRemoved(val aggId: String) : Change()
         data class TitleChanged(val aggId: String, val title: String) : Change()
     }
