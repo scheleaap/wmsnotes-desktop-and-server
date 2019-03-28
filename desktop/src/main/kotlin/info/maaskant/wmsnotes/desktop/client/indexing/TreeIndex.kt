@@ -69,7 +69,7 @@ class TreeIndex @Inject constructor(
     private fun addAutomaticallyGeneratedFoldersIfNecessary(state: TreeIndexState, changes: List<Change>, path: Path): Triple<String?, TreeIndexState, List<Change>> {
         return if (path.elements.isNotEmpty()) {
             val aggId = aggId(path)
-            if (!state.isNodeInFolder(aggId, path)) {
+            if (!state.isNodeInFolder(aggId, path.parent())) {
                 val (parentAggId, newState, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, changes, path.parent())
                 logger.debug("Adding automatically generated folder $path to index")
                 val folder = folder(aggId, parentAggId = parentAggId, path = path)
@@ -84,7 +84,7 @@ class TreeIndex @Inject constructor(
 
     private fun addFolder(state: TreeIndexState, aggId: String, path: Path): New {
         return if (path.elements.isNotEmpty()) {
-            if (!state.isNodeInFolder(aggId, path)) {
+            if (!state.isNodeInFolder(aggId, path.parent())) {
                 val (parentAggId, newState, newChanges) = addAutomaticallyGeneratedFoldersIfNecessary(state, emptyList(), path = path.parent())
                 logger.debug("Adding folder $path to index")
                 val folder = folder(aggId, parentAggId = parentAggId, path = path)
@@ -113,15 +113,13 @@ class TreeIndex @Inject constructor(
 
     fun getExistingNodesAsChanges(): Observable<Change> {
         return state.foldersWithChildren.entries().toObservable()
-                .map { (path, aggId) ->
+                .map { (_, aggId) ->
                     if (aggId in state.notes) {
                         NodeAdded(state.notes.getValue(aggId))
+                    } else if (aggId in state.folders) {
+                        NodeAdded(state.folders.getValue(aggId))
                     } else {
-                        if (path.elements.size > 1) {
-                            NodeAdded(folder(aggId, parentAggId = aggId(path.parent()), path = path))
-                        } else {
-                            NodeAdded(folder(aggId, parentAggId = null, path = path))
-                        }
+                        throw IllegalStateException("Unknown aggregate '$aggId'")
                     }
                 }
     }
@@ -152,7 +150,7 @@ class TreeIndex @Inject constructor(
         val aggId = aggId(path)
         return if (state.isAutoFolder(aggId) && path.elements.isNotEmpty()) {
             val children = state.foldersWithChildren.get(path)
-            if (children.size == 1 && aggId in children) {
+            if (children.isEmpty()) {
                 logger.debug("Removing automatically generated folder $path from index")
                 removeAutomaticallyGeneratedFoldersIfNecessary(
                         state.removeAutoFolder(aggId),
@@ -171,7 +169,7 @@ class TreeIndex @Inject constructor(
         return if (path.elements.isNotEmpty()) {
             val aggId = aggId(path)
             val children = state.foldersWithChildren.get(path)
-            if (children.size == 1 && aggId in children) {
+            if (children.isEmpty()) {
                 logger.debug("Removing folder $path from index")
                 removeAutomaticallyGeneratedFoldersIfNecessary(
                         state.removeNormalFolder(aggId),

@@ -14,6 +14,7 @@ import javax.inject.Inject
 data class TreeIndexState(
         val isInitialized: Boolean,
         val foldersWithChildren: ImmutableListMultimap<Path, String> = ImmutableListMultimap.of(),
+        val folders: Map<String, Folder> = emptyMap(),
         val notes: Map<String, Note> = emptyMap(),
         val autoFolders: Set<String> = emptySet()
 ) {
@@ -22,8 +23,9 @@ data class TreeIndexState(
     private fun addFolder(folder: Folder) = copy(
             foldersWithChildren = ImmutableListMultimap.builder<Path, String>()
                     .putAll(foldersWithChildren)
-                    .put(folder.path, folder.aggId)
-                    .build()
+                    .put(folder.path.parent(), folder.aggId)
+                    .build(),
+            folders = folders + (folder.aggId to folder)
     )
 
     fun addAutoFolder(folder: Folder) =
@@ -63,7 +65,10 @@ data class TreeIndexState(
                     builder.put(it)
                 }
         val foldersWithChildren = builder.build()
-        return copy(foldersWithChildren = foldersWithChildren)
+        return copy(
+                foldersWithChildren = foldersWithChildren,
+                folders = folders - aggId
+        )
     }
 
     fun removeAutoFolder(aggId: String) =
@@ -89,7 +94,8 @@ data class TreeIndexState(
 class KryoTreeIndexStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) : KryoSerializer<TreeIndexState>(
         kryoPool,
         Registration(TreeIndexState::class.java, KryoTreeIndexStateSerializer(), 81),
-        Registration(Note::class.java, KryoNoteSerializer(), 82)
+        Registration(Folder::class.java, KryoFolderSerializer(), 82),
+        Registration(Note::class.java, KryoNoteSerializer(), 83)
 ) {
 
     private class KryoTreeIndexStateSerializer : Serializer<TreeIndexState>() {
@@ -98,6 +104,9 @@ class KryoTreeIndexStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) : K
             output.writeImmutableListMultimap(it.foldersWithChildren) { path, aggId ->
                 output.writeString(path.toString())
                 output.writeString(aggId)
+            }
+            output.writeMap(it.folders) { _, folder ->
+                kryo.writeObject(output, folder)
             }
             output.writeMap(it.notes) { _, note ->
                 kryo.writeObject(output, note)
@@ -114,8 +123,12 @@ class KryoTreeIndexStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) : K
                 val aggId = input.readString()
                 path to aggId
             }
+            val folders = input.readMap {
+                val folder = kryo.readObject(input, Folder::class.java)
+                folder.aggId to folder
+            }
             val notes = input.readMap {
-                val note = kryo.readObject(input, Note::class.java) as Note
+                val note = kryo.readObject(input, Note::class.java)
                 note.aggId to note
             }
             val autoFolders = input.readSet {
@@ -124,9 +137,27 @@ class KryoTreeIndexStateSerializer @Inject constructor(kryoPool: Pool<Kryo>) : K
             return TreeIndexState(
                     isInitialized = isInitialized,
                     foldersWithChildren = foldersWithChildren,
+                    folders = folders,
                     notes = notes,
                     autoFolders = autoFolders
             )
+        }
+    }
+
+    private class KryoFolderSerializer : Serializer<Folder>() {
+        override fun write(kryo: Kryo, output: Output, it: Folder) {
+            output.writeString(it.aggId)
+            output.writeString(it.parentAggId)
+            output.writeString(it.path.toString())
+            output.writeString(it.title)
+        }
+
+        override fun read(kryo: Kryo, input: Input, clazz: Class<out Folder>): Folder {
+            val aggId = input.readString()
+            val parentAggId = input.readString()
+            val path = Path.from(input.readString())
+            val title = input.readString()
+            return Folder(aggId = aggId, parentAggId = parentAggId, path = path, title = title)
         }
     }
 
