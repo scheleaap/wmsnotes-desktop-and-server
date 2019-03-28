@@ -23,6 +23,7 @@ private typealias New = Pair<TreeIndexState, List<TreeIndex.Change>>
 
 class TreeIndex @Inject constructor(
         eventStore: EventStore,
+        private val sortingStrategy: Comparator<Node>,
         initialState: TreeIndexState?,
         scheduler: Scheduler
 ) : StateProducer<TreeIndexState> {
@@ -116,27 +117,37 @@ class TreeIndex @Inject constructor(
     fun getChanges(): Observable<Change> = changes
 
     fun getExistingNodesAsChanges(): Observable<Change> {
-        return state.foldersWithChildren.entries().toObservable()
-                .map { (_, aggId) ->
-                    val (node: Node, folderIndex: Int) = when (aggId) {
-                        in state.notes -> {
-                            val note = state.notes.getValue(aggId)
-                            val folderIndex = calculateFolderIndex(state, note.path, aggId)
-                            note to folderIndex
-                        }
-                        in state.folders -> {
-                            val folder = state.folders.getValue(aggId)
-                            val folderIndex = calculateFolderIndex(state, folder.path.parent(), aggId)
-                            folder to folderIndex
-                        }
-                        else -> throw IllegalStateException("Unknown aggregate '$aggId'")
-                    }
-                    NodeAdded(node, folderIndex = folderIndex)
+        return state.foldersWithChildren.asMap().keys.asSequence()
+                .flatMap { path ->
+                    state.foldersWithChildren[path]
+                            .map { aggId ->
+                                when (aggId) {
+                                    in state.notes -> state.notes.getValue(aggId)
+                                    in state.folders -> state.folders.getValue(aggId)
+                                    else -> throw IllegalStateException("Unknown aggregate '$aggId'")
+                                }
+                            }
+                            .sortedWith(sortingStrategy)
+                            .withIndex()
+                            .asSequence()
                 }
+                .map { NodeAdded(it.value, folderIndex = it.index) }
+                .toObservable()
     }
 
-    private fun calculateFolderIndex(state: TreeIndexState, path: Path, aggId: String) =
-            state.foldersWithChildren[path].indexOf(aggId)
+    private fun calculateFolderIndex(state: TreeIndexState, path: Path, aggId: String): Int {
+        return state.foldersWithChildren[path]
+                .map { aggId2 ->
+                    when (aggId2) {
+                        in state.notes -> state.notes.getValue(aggId2)
+                        in state.folders -> state.folders.getValue(aggId2)
+                        else -> throw IllegalStateException("Unknown aggregate '$aggId2'")
+                    }
+                }
+                .sortedWith(sortingStrategy)
+                .map { it.aggId }
+                .indexOf(aggId)
+    }
 
     private fun handleFolderCreated(state: TreeIndexState, it: FolderCreatedEvent) =
             addFolder(state, aggId = it.aggId, path = it.path)

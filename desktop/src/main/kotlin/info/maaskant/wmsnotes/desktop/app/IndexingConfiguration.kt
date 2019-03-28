@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.desktop.app
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
+import info.maaskant.wmsnotes.desktop.client.indexing.DefaultNodeSortingStrategy
 import info.maaskant.wmsnotes.desktop.client.indexing.KryoTreeIndexStateSerializer
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndexState
@@ -33,6 +34,7 @@ class IndexingConfiguration {
     fun treeIndex(eventStore: EventStore, stateRepository: StateRepository<TreeIndexState>): TreeIndex {
         return TreeIndex(
                 eventStore,
+                DefaultNodeSortingStrategy(),
                 stateRepository.load(),
                 Schedulers.io()
         ).apply {
