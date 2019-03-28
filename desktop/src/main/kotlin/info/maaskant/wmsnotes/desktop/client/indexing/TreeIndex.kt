@@ -166,9 +166,12 @@ class TreeIndex @Inject constructor(
                     ?: state to emptyList()
 
     private fun handleTitleChanged(state: TreeIndexState, it: TitleChangedEvent): New {
-        val oldNote = state.getNote(aggId = it.aggId)
-        val newNote = Note(aggId = oldNote.aggId, parentAggId = oldNote.parentAggId, path = oldNote.path, title = it.title)
-        return state.replaceNote(newNote) to listOf(TitleChanged(it.aggId, it.title))
+        val oldNote: Note = state.getNote(aggId = it.aggId)
+        val newNote: Note = Note(aggId = oldNote.aggId, parentAggId = oldNote.parentAggId, path = oldNote.path, title = it.title)
+        val newState = state.replaceNote(newNote)
+        val oldFolderIndex = calculateFolderIndex(state, oldNote.path, it.aggId)
+        val newFolderIndex = calculateFolderIndex(newState, oldNote.path, it.aggId)
+        return newState to listOf(TitleChanged(it.aggId, title = it.title, oldFolderIndex = oldFolderIndex, newFolderIndex = newFolderIndex))
     }
 
     private fun removeAutomaticallyGeneratedFoldersIfNecessary(state: TreeIndexState, changes: List<Change>, path: Path): New {
@@ -237,7 +240,7 @@ class TreeIndex @Inject constructor(
     sealed class Change {
         data class NodeAdded(val metadata: Node, val folderIndex: Int) : Change()
         data class NodeRemoved(val aggId: String) : Change()
-        data class TitleChanged(val aggId: String, val title: String) : Change()
+        data class TitleChanged(val aggId: String, val title: String, val oldFolderIndex: Int, val newFolderIndex: Int) : Change()
     }
 
     companion object {

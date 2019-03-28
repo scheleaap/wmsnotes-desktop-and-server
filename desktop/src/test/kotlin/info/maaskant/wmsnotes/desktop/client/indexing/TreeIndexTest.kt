@@ -458,26 +458,36 @@ internal class TreeIndexTest {
         val path = Path(folderTitle)
         val folderAggId = aggId(path)
         val event1 = folderCreatedEvent(path)
-        val event2 = noteCreatedEvent(aggId1, path, title)
-        val event3 = TitleChangedEvent(eventId = 0, aggId = aggId1, revision = 0, title = "different")
+        val event2 = noteCreatedEvent(aggId1, path, "Title 1")
+        val event3 = noteCreatedEvent(aggId2, path, "Title 2")
+        val event4 = TitleChangedEvent(eventId = 0, aggId = aggId2, revision = 0, title = "Title 0")
+        val node2 = Note(aggId = aggId1, parentAggId = folderAggId, path = path, title = "Title 1")
+        val node3a = Note(aggId = aggId2, parentAggId = folderAggId, path = path, title = "Title 2")
+        val node3b = Note(aggId = aggId2, parentAggId = folderAggId, path = path, title = "Title 0")
+        every { sortingStrategy.compare(node2, node3a) }.returns(-1)
+        every { sortingStrategy.compare(node3a, node2) }.returns(1)
+        every { sortingStrategy.compare(node2, node3b) }.returns(1)
+        every { sortingStrategy.compare(node3b, node2) }.returns(-1)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
+        eventUpdatesSubject.onNext(event3)
         val changeObserver = index.getChanges().test()
 
         // When
-        eventUpdatesSubject.onNext(event3)
+        eventUpdatesSubject.onNext(event4)
         val initializationObserver = index.getExistingNodesAsChanges().test()
 
         // Then
         changeObserver.assertNoErrors()
         assertThat(changeObserver.values().toList()).isEqualTo(listOf(
-                TitleChanged(aggId1, "different")
+                TitleChanged(aggId2, "Title 0", 1, 0)
         ))
         initializationObserver.assertNoErrors()
         assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
                 NodeAdded(Folder(aggId = folderAggId, parentAggId = null, path = path, title = folderTitle), folderIndex = 0),
-                NodeAdded(Note(aggId = aggId1, parentAggId = folderAggId, path = path, title = "different"), folderIndex = 0)
+                NodeAdded(node3b, folderIndex = 0),
+                NodeAdded(node2, folderIndex = 1)
         ))
     }
 
@@ -496,7 +506,7 @@ internal class TreeIndexTest {
         val event1 = folderCreatedEvent(folder1Path)
         val event2 = noteCreatedEvent(aggId1, folder1Path, title)
         val event3 = folderCreatedEvent(folder2Path)
-        val event4= folderCreatedEvent(folder3Path)
+        val event4 = folderCreatedEvent(folder3Path)
         val node1 = Folder(aggId = folder1AggId, parentAggId = null, path = folder1Path, title = folder1Title)
         val node2 = Note(aggId = aggId1, parentAggId = folder1AggId, path = folder1Path, title = title)
         val node3 = Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title)

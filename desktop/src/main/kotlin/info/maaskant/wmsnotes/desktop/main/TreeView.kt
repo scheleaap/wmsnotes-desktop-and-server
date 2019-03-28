@@ -58,18 +58,18 @@ class TreeView : View() {
                     when (it) {
                         is TreeIndex.Change.NodeAdded -> {
                             when (it.metadata) {
-                                is Folder -> addFolder(it.metadata)
-                                is Note -> addNote(it.metadata)
+                                is Folder -> addFolder(it.metadata, it.folderIndex)
+                                is Note -> addNote(it.metadata, it.folderIndex)
                             }
                         }
                         is TreeIndex.Change.NodeRemoved -> removeNode(it.aggId)
-                        is TreeIndex.Change.TitleChanged -> changeTitle(it.aggId, it.title)
+                        is TreeIndex.Change.TitleChanged -> changeTitle(it.aggId, it.title, it.oldFolderIndex, it.newFolderIndex)
                     }
                 }, { logger.warn("Error", it) })
 
     }
 
-    private fun addFolder(folder: Folder) {
+    private fun addFolder(folder: Folder, folderIndex: Int) {
         logger.debug("Adding folder ${folder.aggId}")
         val parentTreeItem: TreeItem<NotebookNode> = if (folder.parentAggId != null) {
             treeItemReferences[folder.parentAggId]!!
@@ -79,10 +79,10 @@ class TreeView : View() {
         val node = NotebookNode(aggId = folder.aggId, type = FOLDER, path = folder.path, title = folder.title)
         val treeItem = TreeItem(node)
         treeItemReferences[folder.aggId] = treeItem
-        parentTreeItem += treeItem
+        parentTreeItem.children.add(folderIndex, treeItem)
     }
 
-    private fun addNote(note: Note) {
+    private fun addNote(note: Note, folderIndex: Int) {
         logger.debug("Adding note ${note.aggId}")
         val parentTreeItem: TreeItem<NotebookNode> = if (note.parentAggId != null) {
             treeItemReferences[note.parentAggId]!!
@@ -92,21 +92,32 @@ class TreeView : View() {
         val node = NotebookNode(aggId = note.aggId, type = NOTE, path = note.path, title = note.title)
         val treeItem = TreeItem(node)
         treeItemReferences[note.aggId] = treeItem
-        parentTreeItem += treeItem
+        parentTreeItem.children.add(folderIndex, treeItem)
     }
 
-    private fun changeTitle(aggId: String, title: String) {
+    private fun changeTitle(aggId: String, title: String, oldFolderIndex: Int, newFolderIndex: Int) {
         logger.debug("Changing title of note $aggId")
         val treeItem: TreeItem<NotebookNode> = treeItemReferences[aggId]!!
         val oldNode = treeItem.value
         val newNode = NotebookNode(oldNode.aggId, type = oldNode.type, path = oldNode.path, title = title)
         treeItem.value = newNode
+        if (oldFolderIndex != newFolderIndex) {
+            // Disabled reselection, as this can inadvertently change a note's content (if a folder is selected briefly)
+//            val reselect = root.selectionModel.selectedItem == treeItem
+            val parentTreeItem = treeItem.parent
+            parentTreeItem.children.removeAt(oldFolderIndex)
+            parentTreeItem.children.add(newFolderIndex, treeItem)
+//            if (reselect) {
+//                root.selectionModel.select(treeItem)
+//            }
+        }
     }
 
     private fun removeNode(aggId: String) {
         logger.debug("Removing node $aggId")
         val treeItem = treeItemReferences.remove(aggId)
         rootNode.children.remove(treeItem)
+        TODO("This is not implemented correctly")
     }
 
     data class NotebookNode(val aggId: String, val type: Type, val path: Path, val title: String) {
