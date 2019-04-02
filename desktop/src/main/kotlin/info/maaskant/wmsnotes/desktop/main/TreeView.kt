@@ -6,6 +6,7 @@ import info.maaskant.wmsnotes.desktop.client.indexing.Folder
 import info.maaskant.wmsnotes.desktop.client.indexing.Note
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Companion.asNodeAddedEvents
+import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndexEvent
 import info.maaskant.wmsnotes.desktop.main.TreeView.NotebookNode.Type.FOLDER
 import info.maaskant.wmsnotes.desktop.main.TreeView.NotebookNode.Type.NOTE
 import info.maaskant.wmsnotes.model.CommandProcessor
@@ -52,19 +53,19 @@ class TreeView : View() {
     init {
         Observable.concat(
                 treeIndex.getNodes().compose(asNodeAddedEvents()),
-                treeIndex.getChanges()
+                treeIndex.getEvents()
         )
                 .observeOnFx()
                 .subscribe({
                     when (it) {
-                        is TreeIndex.Change.NodeAdded -> {
+                        is TreeIndexEvent.NodeAdded -> {
                             when (it.node) {
                                 is Folder -> addFolder(it.node, it.folderIndex)
                                 is Note -> addNote(it.node, it.folderIndex)
                             }
                         }
-                        is TreeIndex.Change.NodeRemoved -> removeNode(it.node.aggId)
-                        is TreeIndex.Change.TitleChanged -> changeTitle(it.node.aggId, it.node.title, it.oldFolderIndex, it.newFolderIndex)
+                        is TreeIndexEvent.NodeRemoved -> removeNode(it.node.aggId)
+                        is TreeIndexEvent.TitleChanged -> changeTitle(it.node.aggId, it.node.title, it.oldFolderIndex, it.newFolderIndex)
                     }
                 }, { logger.warn("Error", it) })
 

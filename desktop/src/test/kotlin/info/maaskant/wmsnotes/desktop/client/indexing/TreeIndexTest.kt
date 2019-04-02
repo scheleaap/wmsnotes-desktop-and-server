@@ -1,7 +1,6 @@
 package info.maaskant.wmsnotes.desktop.client.indexing
 
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Change.*
+import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndexEvent.*
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore
@@ -54,7 +53,7 @@ internal class TreeIndexTest {
     }
 
     @Test
-    fun `getChanges should only return new events`() {
+    fun `getEvents should only return new events`() {
         // Given
         val event1 = noteCreatedEvent(aggId1, rootPath, title)
         val event2 = noteCreatedEvent(aggId2, rootPath, title)
@@ -62,7 +61,7 @@ internal class TreeIndexTest {
 
         // When
         eventUpdatesSubject.onNext(event1)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
         eventUpdatesSubject.onNext(event2)
 
         // Then
@@ -78,14 +77,14 @@ internal class TreeIndexTest {
         val event = noteCreatedEvent(aggId1, rootPath, title)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event)
 
         // Then
         observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
+        assertThat(observer.values().toList()).isEqualTo(emptyList<TreeIndexEvent>())
     }
 
     @Test
@@ -97,7 +96,7 @@ internal class TreeIndexTest {
         val event1 = noteCreatedEvent(aggId1, folderPath, title)
         val event2 = folderCreatedEvent(folderPath)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event1)
@@ -120,7 +119,7 @@ internal class TreeIndexTest {
         val event1 = folderCreatedEvent(folderPath)
         val event2 = noteCreatedEvent(aggId1, folderPath, title)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event1)
@@ -142,7 +141,7 @@ internal class TreeIndexTest {
         val event3 = noteUndeletedEvent(aggId1)
         val node = Note(aggId = aggId1, parentAggId = null, path = rootPath, title = title)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event1)
@@ -163,14 +162,14 @@ internal class TreeIndexTest {
         // Given
         val event = noteDeletedEvent(aggId1)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event)
 
         // Then
         observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
+        assertThat(observer.values().toList()).isEqualTo(emptyList<TreeIndexEvent>())
     }
 
     @Test
@@ -181,14 +180,14 @@ internal class TreeIndexTest {
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event2)
 
         // Then
         observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
+        assertThat(observer.values().toList()).isEqualTo(emptyList<TreeIndexEvent>())
     }
 
     @Test
@@ -196,14 +195,14 @@ internal class TreeIndexTest {
         // Given
         val event = noteUndeletedEvent(aggId1)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event)
 
         // Then
         observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
+        assertThat(observer.values().toList()).isEqualTo(emptyList<TreeIndexEvent>())
     }
 
     @Test
@@ -216,14 +215,14 @@ internal class TreeIndexTest {
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
         eventUpdatesSubject.onNext(event3)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event3)
 
         // Then
         observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
+        assertThat(observer.values().toList()).isEqualTo(emptyList<TreeIndexEvent>())
     }
 
     @Test
@@ -242,7 +241,7 @@ internal class TreeIndexTest {
         val node2 = Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title)
         val node3 = Note(aggId = aggId1, parentAggId = folder2AggId, path = folder2Path, title = title)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val changeObserver = index.getChanges().test()
+        val eventObserver = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event1)
@@ -251,8 +250,8 @@ internal class TreeIndexTest {
         val initializationObserver = index.getNodes().test()
 
         // Then
-        changeObserver.assertNoErrors()
-        assertThat(changeObserver.values().toList()).isEqualTo(listOf(
+        eventObserver.assertNoErrors()
+        assertThat(eventObserver.values().toList()).isEqualTo(listOf(
                 NodeAdded(node1, folderIndex = 0),
                 NodeAdded(node2, folderIndex = 0),
                 NodeAdded(node3, folderIndex = 0),
@@ -285,7 +284,7 @@ internal class TreeIndexTest {
         val node1 = Folder(aggId = folder1AggId, parentAggId = null, path = folder1Path, title = folder1Title)
         val node2 = Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event1)
@@ -322,7 +321,7 @@ internal class TreeIndexTest {
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event3)
@@ -346,7 +345,7 @@ internal class TreeIndexTest {
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event3)
@@ -370,7 +369,7 @@ internal class TreeIndexTest {
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event3)
@@ -397,7 +396,7 @@ internal class TreeIndexTest {
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event3)
@@ -423,7 +422,7 @@ internal class TreeIndexTest {
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
         eventUpdatesSubject.onNext(event3)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event4)
@@ -442,14 +441,14 @@ internal class TreeIndexTest {
         val event = folderCreatedEvent(Path("el"))
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
         eventUpdatesSubject.onNext(event)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event)
 
         // Then
         observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
+        assertThat(observer.values().toList()).isEqualTo(emptyList<TreeIndexEvent>())
     }
 
     @Test
@@ -457,14 +456,14 @@ internal class TreeIndexTest {
         // Given
         val event = folderCreatedEvent(Path())
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val observer = index.getChanges().test()
+        val observer = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event)
 
         // Then
         observer.assertNoErrors()
-        assertThat(observer.values().toList()).isEqualTo(emptyList<Change>())
+        assertThat(observer.values().toList()).isEqualTo(emptyList<TreeIndexEvent>())
     }
 
     @Test
@@ -488,15 +487,15 @@ internal class TreeIndexTest {
         eventUpdatesSubject.onNext(event1)
         eventUpdatesSubject.onNext(event2)
         eventUpdatesSubject.onNext(event3)
-        val changeObserver = index.getChanges().test()
+        val eventObserver = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event4)
         val initializationObserver = index.getNodes().test()
 
         // Then
-        changeObserver.assertNoErrors()
-        assertThat(changeObserver.values().toList()).isEqualTo(listOf(
+        eventObserver.assertNoErrors()
+        assertThat(eventObserver.values().toList()).isEqualTo(listOf(
                 TitleChanged(node3b, 1, 0)
         ))
         initializationObserver.assertNoErrors()
@@ -529,7 +528,7 @@ internal class TreeIndexTest {
         val node4 = Folder(aggId = folder3AggId, parentAggId = null, path = folder3Path, title = folder3Title)
         every { sortingStrategy.compare(any(), any()) }.returns(0)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val changeObserver = index.getChanges().test()
+        val eventObserver = index.getEvents().test()
 
         // When
         eventUpdatesSubject.onNext(event1)
@@ -539,8 +538,8 @@ internal class TreeIndexTest {
         val initializationObserver = index.getNodes().test()
 
         // Then
-        changeObserver.assertNoErrors()
-        assertThat(changeObserver.values().toList()).isEqualTo(listOf(
+        eventObserver.assertNoErrors()
+        assertThat(eventObserver.values().toList()).isEqualTo(listOf(
                 NodeAdded(node1, folderIndex = 0),
                 NodeAdded(node2, folderIndex = 0),
                 NodeAdded(node3, folderIndex = 1),
@@ -570,7 +569,7 @@ internal class TreeIndexTest {
         val node2 = Note(aggId = aggId1, parentAggId = folder1AggId, path = folder1Path, title = title)
         val node3 = Folder(aggId = folder2AggId, parentAggId = folder1AggId, path = folder2Path, title = folder2Title)
         val index = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler)
-        val changeObserver = index.getChanges(filterByFolder = folder1Path).test()
+        val eventObserver = index.getEvents(filterByFolder = folder1Path).test()
 
         // When
         eventUpdatesSubject.onNext(event1)
@@ -579,8 +578,8 @@ internal class TreeIndexTest {
         val initializationObserver = index.getNodes(filterByFolder = folder1Path).test()
 
         // Then
-        changeObserver.assertNoErrors()
-        assertThat(changeObserver.values().toList()).isEqualTo(listOf(
+        eventObserver.assertNoErrors()
+        assertThat(eventObserver.values().toList()).isEqualTo(listOf(
                 NodeAdded(node2, folderIndex = 0),
                 NodeAdded(node3, folderIndex = 1)
         ))
