@@ -42,6 +42,9 @@ data class TreeIndexState(
             notes = notes + (note.aggId to note)
     )
 
+    fun getFolder(aggId: String) =
+            folders.getValue(aggId)
+
     fun getNote(aggId: String) =
             notes.getValue(aggId)
 

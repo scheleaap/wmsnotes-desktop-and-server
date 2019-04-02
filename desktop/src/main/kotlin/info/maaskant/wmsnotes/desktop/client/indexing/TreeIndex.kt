@@ -115,16 +115,43 @@ class TreeIndex @Inject constructor(
         }
     }
 
-    fun getChanges(): Observable<Change> = changes
+    private fun calculateFolderIndex(state: TreeIndexState, path: Path, aggId: String): Int {
+        return state.foldersWithChildren[path]
+                .map { aggId2 ->
+                    when (aggId2) {
+                        in state.notes -> state.getNote(aggId2)
+                        in state.folders -> state.getFolder(aggId2)
+                        else -> throw IllegalStateException("Unknown aggregate '$aggId2'")
+                    }
+                }
+                .sortedWith(sortingStrategy)
+                .map { it.aggId }
+                .indexOf(aggId)
+    }
 
-    fun getNodes(): Observable<IndexedValue<Node>> {
-        return state.foldersWithChildren.asMap().keys.asSequence()
+    fun getChanges(filterByFolder: Path? = null): Observable<Change> =
+            changes
+                    .filter {
+                        filterByFolder == null || when (it) {
+                            is NodeAdded -> getParentPath(it.node) == filterByFolder
+                            is NodeRemoved -> getParentPath(it.node) == filterByFolder
+                            is TitleChanged -> getParentPath(it.node) == filterByFolder
+                        }
+                    }
+
+    fun getNodes(filterByFolder: Path? = null): Observable<IndexedValue<Node>> {
+        val keySequence = if (filterByFolder == null) {
+            state.foldersWithChildren.asMap().keys.asSequence()
+        } else {
+            sequenceOf(filterByFolder)
+        }
+        return keySequence
                 .flatMap { path ->
                     state.foldersWithChildren[path]
                             .map { aggId ->
                                 when (aggId) {
-                                    in state.notes -> state.notes.getValue(aggId)
-                                    in state.folders -> state.folders.getValue(aggId)
+                                    in state.notes -> state.getNote(aggId)
+                                    in state.folders -> state.getFolder(aggId)
                                     else -> throw IllegalStateException("Unknown aggregate '$aggId'")
                                 }
                             }
@@ -135,18 +162,11 @@ class TreeIndex @Inject constructor(
                 .toObservable()
     }
 
-    private fun calculateFolderIndex(state: TreeIndexState, path: Path, aggId: String): Int {
-        return state.foldersWithChildren[path]
-                .map { aggId2 ->
-                    when (aggId2) {
-                        in state.notes -> state.notes.getValue(aggId2)
-                        in state.folders -> state.folders.getValue(aggId2)
-                        else -> throw IllegalStateException("Unknown aggregate '$aggId2'")
-                    }
-                }
-                .sortedWith(sortingStrategy)
-                .map { it.aggId }
-                .indexOf(aggId)
+    private fun getParentPath(node: Node): Path {
+        return when (node) {
+            is Folder -> node.path.parent()
+            is Note -> node.path
+        }
     }
 
     private fun handleFolderCreated(state: TreeIndexState, it: FolderCreatedEvent) =
@@ -171,7 +191,7 @@ class TreeIndex @Inject constructor(
         val newState = state.replaceNote(newNote)
         val oldFolderIndex = calculateFolderIndex(state, oldNote.path, it.aggId)
         val newFolderIndex = calculateFolderIndex(newState, oldNote.path, it.aggId)
-        return newState to listOf(TitleChanged(it.aggId, title = it.title, oldFolderIndex = oldFolderIndex, newFolderIndex = newFolderIndex))
+        return newState to listOf(TitleChanged(newNote, oldFolderIndex = oldFolderIndex, newFolderIndex = newFolderIndex))
     }
 
     private fun removeAutomaticallyGeneratedFoldersIfNecessary(state: TreeIndexState, changes: List<Change>, path: Path): New {
@@ -180,9 +200,10 @@ class TreeIndex @Inject constructor(
             val children = state.foldersWithChildren.get(path)
             if (children.isEmpty()) {
                 logger.debug("Removing automatically generated folder $path from index")
+                val folder = state.getFolder(aggId)
                 removeAutomaticallyGeneratedFoldersIfNecessary(
                         state.removeAutoFolder(aggId),
-                        changes + NodeRemoved(aggId),
+                        changes + NodeRemoved(folder),
                         path.parent()
                 )
             } else {
@@ -199,9 +220,10 @@ class TreeIndex @Inject constructor(
             val children = state.foldersWithChildren.get(path)
             if (children.isEmpty()) {
                 logger.debug("Removing folder $path from index")
+                val folder = state.getFolder(aggId)
                 removeAutomaticallyGeneratedFoldersIfNecessary(
                         state.removeNormalFolder(aggId),
-                        listOf(NodeRemoved(aggId)),
+                        listOf(NodeRemoved(folder)),
                         path.parent()
                 )
             } else {
@@ -214,13 +236,13 @@ class TreeIndex @Inject constructor(
 
     private fun removeNote(state: TreeIndexState, aggId: String): New {
         return if (aggId in state.notes) {
-            val path = state.getNote(aggId).path
-            if (state.isNodeInFolder(aggId, path)) {
+            val note = state.getNote(aggId)
+            if (state.isNodeInFolder(aggId, note.path)) {
                 logger.debug("Removing note $aggId from index")
                 removeAutomaticallyGeneratedFoldersIfNecessary(
                         state.removeNote(aggId),
-                        listOf(NodeRemoved(aggId)),
-                        path
+                        listOf(NodeRemoved(note)),
+                        note.path
                 )
             } else {
                 state to emptyList()
@@ -238,9 +260,9 @@ class TreeIndex @Inject constructor(
     override fun getStateUpdates(): Observable<TreeIndexState> = stateUpdates
 
     sealed class Change {
-        data class NodeAdded(val metadata: Node, val folderIndex: Int) : Change()
-        data class NodeRemoved(val aggId: String) : Change()
-        data class TitleChanged(val aggId: String, val title: String, val oldFolderIndex: Int, val newFolderIndex: Int) : Change()
+        data class NodeAdded(val node: Node, val folderIndex: Int) : Change()
+        data class NodeRemoved(val node: Node) : Change()
+        data class TitleChanged(val node: Node, val oldFolderIndex: Int, val newFolderIndex: Int) : Change()
     }
 
     companion object {

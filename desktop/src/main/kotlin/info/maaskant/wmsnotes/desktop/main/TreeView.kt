@@ -58,13 +58,13 @@ class TreeView : View() {
                 .subscribe({
                     when (it) {
                         is TreeIndex.Change.NodeAdded -> {
-                            when (it.metadata) {
-                                is Folder -> addFolder(it.metadata, it.folderIndex)
-                                is Note -> addNote(it.metadata, it.folderIndex)
+                            when (it.node) {
+                                is Folder -> addFolder(it.node, it.folderIndex)
+                                is Note -> addNote(it.node, it.folderIndex)
                             }
                         }
-                        is TreeIndex.Change.NodeRemoved -> removeNode(it.aggId)
-                        is TreeIndex.Change.TitleChanged -> changeTitle(it.aggId, it.title, it.oldFolderIndex, it.newFolderIndex)
+                        is TreeIndex.Change.NodeRemoved -> removeNode(it.node.aggId)
+                        is TreeIndex.Change.TitleChanged -> changeTitle(it.node.aggId, it.node.title, it.oldFolderIndex, it.newFolderIndex)
                     }
                 }, { logger.warn("Error", it) })
 
