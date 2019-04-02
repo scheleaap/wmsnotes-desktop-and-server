@@ -5,6 +5,7 @@ import com.github.thomasnield.rxkotlinfx.observeOnFx
 import info.maaskant.wmsnotes.desktop.client.indexing.Folder
 import info.maaskant.wmsnotes.desktop.client.indexing.Note
 import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex
+import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Companion.asNodeAddedEvents
 import info.maaskant.wmsnotes.desktop.main.TreeView.NotebookNode.Type.FOLDER
 import info.maaskant.wmsnotes.desktop.main.TreeView.NotebookNode.Type.NOTE
 import info.maaskant.wmsnotes.model.CommandProcessor
@@ -50,7 +51,7 @@ class TreeView : View() {
 
     init {
         Observable.concat(
-                treeIndex.getExistingNodesAsChanges(),
+                treeIndex.getNodes().compose(asNodeAddedEvents()),
                 treeIndex.getChanges()
         )
                 .observeOnFx()

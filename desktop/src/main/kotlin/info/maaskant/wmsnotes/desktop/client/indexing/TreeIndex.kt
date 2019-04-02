@@ -13,6 +13,7 @@ import info.maaskant.wmsnotes.model.note.TitleChangedEvent
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.reactivex.Observable
+import io.reactivex.ObservableTransformer
 import io.reactivex.Scheduler
 import io.reactivex.rxkotlin.toObservable
 import io.reactivex.subjects.BehaviorSubject
@@ -116,7 +117,7 @@ class TreeIndex @Inject constructor(
 
     fun getChanges(): Observable<Change> = changes
 
-    fun getExistingNodesAsChanges(): Observable<Change> {
+    fun getNodes(): Observable<IndexedValue<Node>> {
         return state.foldersWithChildren.asMap().keys.asSequence()
                 .flatMap { path ->
                     state.foldersWithChildren[path]
@@ -131,7 +132,6 @@ class TreeIndex @Inject constructor(
                             .withIndex()
                             .asSequence()
                 }
-                .map { NodeAdded(it.value, folderIndex = it.index) }
                 .toObservable()
     }
 
@@ -244,6 +244,10 @@ class TreeIndex @Inject constructor(
     }
 
     companion object {
+        fun asNodeAddedEvents(): ObservableTransformer<IndexedValue<Node>, NodeAdded> {
+            return ObservableTransformer { it.map { it2 -> NodeAdded(it2.value, folderIndex = it2.index) } }
+        }
+
         private fun folder(aggId: String, parentAggId: String?, path: Path) =
                 Folder(aggId = aggId, parentAggId = parentAggId, path = path, title = path.elements.last())
     }
