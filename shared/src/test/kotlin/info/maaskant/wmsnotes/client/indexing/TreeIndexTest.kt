@@ -1,6 +1,6 @@
-package info.maaskant.wmsnotes.desktop.client.indexing
+package info.maaskant.wmsnotes.client.indexing
 
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndexEvent.*
+import info.maaskant.wmsnotes.client.indexing.TreeIndexEvent.*
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.eventstore.EventStore

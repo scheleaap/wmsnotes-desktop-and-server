@@ -2,14 +2,13 @@ package info.maaskant.wmsnotes.desktop.main
 
 import com.github.thomasnield.rxkotlinfx.events
 import com.github.thomasnield.rxkotlinfx.observeOnFx
-import info.maaskant.wmsnotes.desktop.client.indexing.Folder
-import info.maaskant.wmsnotes.desktop.client.indexing.Note
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex.Companion.asNodeAddedEvents
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndexEvent
+import info.maaskant.wmsnotes.client.indexing.Folder
+import info.maaskant.wmsnotes.client.indexing.Note
+import info.maaskant.wmsnotes.client.indexing.TreeIndex
+import info.maaskant.wmsnotes.client.indexing.TreeIndex.Companion.asNodeAddedEvents
+import info.maaskant.wmsnotes.client.indexing.TreeIndexEvent
 import info.maaskant.wmsnotes.desktop.main.TreeView.NotebookNode.Type.FOLDER
 import info.maaskant.wmsnotes.desktop.main.TreeView.NotebookNode.Type.NOTE
-import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
@@ -23,8 +22,6 @@ class TreeView : View() {
     private val logger by logger()
 
     private val applicationController: ApplicationController by di()
-
-    private val commandProcessor: CommandProcessor by di()
 
     private val treeIndex: TreeIndex by di()
 
@@ -60,8 +57,8 @@ class TreeView : View() {
                     when (it) {
                         is TreeIndexEvent.NodeAdded -> {
                             when (it.node) {
-                                is Folder -> addFolder(it.node, it.folderIndex)
-                                is Note -> addNote(it.node, it.folderIndex)
+                                is Folder -> addFolder(it.node as Folder, it.folderIndex)
+                                is Note -> addNote(it.node as Note, it.folderIndex)
                             }
                         }
                         is TreeIndexEvent.NodeRemoved -> removeNode(it.node.aggId)
@@ -74,7 +71,7 @@ class TreeView : View() {
     private fun addFolder(folder: Folder, folderIndex: Int) {
         logger.debug("Adding folder ${folder.aggId}")
         val parentTreeItem: TreeItem<NotebookNode> = if (folder.parentAggId != null) {
-            treeItemReferences[folder.parentAggId]!!
+            treeItemReferences[folder.parentAggId!!]!!
         } else {
             rootNode
         }
@@ -87,7 +84,7 @@ class TreeView : View() {
     private fun addNote(note: Note, folderIndex: Int) {
         logger.debug("Adding note ${note.aggId}")
         val parentTreeItem: TreeItem<NotebookNode> = if (note.parentAggId != null) {
-            treeItemReferences[note.parentAggId]!!
+            treeItemReferences[note.parentAggId!!]!!
         } else {
             rootNode
         }

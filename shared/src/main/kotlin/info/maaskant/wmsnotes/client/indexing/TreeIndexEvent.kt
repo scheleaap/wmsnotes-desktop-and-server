@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.desktop.client.indexing
+package info.maaskant.wmsnotes.client.indexing
 
 sealed class TreeIndexEvent {
     data class NodeAdded(val node: Node, val folderIndex: Int) : TreeIndexEvent()

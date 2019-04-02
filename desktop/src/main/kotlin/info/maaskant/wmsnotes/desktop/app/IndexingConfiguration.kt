@@ -2,10 +2,10 @@ package info.maaskant.wmsnotes.desktop.app
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
-import info.maaskant.wmsnotes.desktop.client.indexing.DefaultNodeSortingStrategy
-import info.maaskant.wmsnotes.desktop.client.indexing.KryoTreeIndexStateSerializer
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndex
-import info.maaskant.wmsnotes.desktop.client.indexing.TreeIndexState
+import info.maaskant.wmsnotes.client.indexing.DefaultNodeSortingStrategy
+import info.maaskant.wmsnotes.client.indexing.KryoTreeIndexStateSerializer
+import info.maaskant.wmsnotes.client.indexing.TreeIndex
+import info.maaskant.wmsnotes.client.indexing.TreeIndexState
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.persistence.FileStateRepository
 import info.maaskant.wmsnotes.utilities.persistence.StateRepository

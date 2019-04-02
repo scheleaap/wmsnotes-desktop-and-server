@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.desktop.client.indexing
+package info.maaskant.wmsnotes.client.indexing
 
 class DefaultNodeSortingStrategy : Comparator<Node> {
     override fun compare(o1: Node, o2: Node): Int =

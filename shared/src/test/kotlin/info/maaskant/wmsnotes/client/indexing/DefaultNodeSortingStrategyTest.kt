@@ -1,5 +1,9 @@
-package info.maaskant.wmsnotes.desktop.client.indexing
+package info.maaskant.wmsnotes.client.indexing
 
+import info.maaskant.wmsnotes.client.indexing.DefaultNodeSortingStrategy
+import info.maaskant.wmsnotes.client.indexing.Folder
+import info.maaskant.wmsnotes.client.indexing.Node
+import info.maaskant.wmsnotes.client.indexing.Note
 import info.maaskant.wmsnotes.model.Path
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

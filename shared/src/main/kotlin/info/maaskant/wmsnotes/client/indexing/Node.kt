@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.desktop.client.indexing
+package info.maaskant.wmsnotes.client.indexing
 
 import au.com.console.kassava.kotlinEquals
 import au.com.console.kassava.kotlinToString
