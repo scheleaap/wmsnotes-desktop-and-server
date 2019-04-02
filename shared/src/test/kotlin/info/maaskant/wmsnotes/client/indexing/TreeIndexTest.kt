@@ -591,7 +591,7 @@ internal class TreeIndexTest {
     }
 
     @Test
-    fun initialize() {
+    fun `initialize from getEvents()`() {
         // Given
         val event = noteCreatedEvent(aggId1, rootPath, title)
         every { eventStore.getEvents() }.returns(Observable.just(event))
@@ -614,7 +614,7 @@ internal class TreeIndexTest {
     }
 
     @Test
-    fun `read state`() {
+    fun `initialize from state`() {
         // Given
         val event = noteCreatedEvent(aggId1, rootPath, title)
         val index1 = TreeIndex(eventStore, sortingStrategy, treeIndexState, scheduler) // This instance is supposed to save the state
