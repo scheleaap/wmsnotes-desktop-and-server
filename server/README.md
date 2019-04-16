@@ -1,6 +1,6 @@
 # WMS Notes Server
 
-The server component for WMS Notes, a hierarchical or tree-based note-taking application.
+The server component for WMS Notes, a hierarchical (tree-based) note-taking application.
 For general information about WMS Notes, read the main [README](../README.md).
 
 

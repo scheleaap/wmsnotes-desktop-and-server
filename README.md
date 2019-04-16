@@ -1,6 +1,6 @@
 # WMS Notes [![Build Status](https://travis-ci.org/scheleaap/wmsnotes-desktop-and-server.svg?branch=master)](https://travis-ci.org/scheleaap/wmsnotes-desktop-and-server)
 
-WMS Notes is a *hierarchical* or *tree-based* note-taking application.
+WMS Notes is a *hierarchical* (tree-based) note-taking application.
 
 Features:
 * A hierarchy of notes and folders

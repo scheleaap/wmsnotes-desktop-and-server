@@ -1,6 +1,6 @@
 # WMS Notes Desktop
 
-The desktop application for WMS Notes, a hierarchical or tree-based note-taking application.
+The desktop application for WMS Notes, a hierarchical (tree-based) note-taking application.
 For general information about WMS Notes, read the main [README](../README.md).
 
 
