@@ -34,16 +34,19 @@ import com.vladsch.flexmark.html.IndependentAttributeProviderFactory
 import com.vladsch.flexmark.html.renderer.AttributablePart
 import com.vladsch.flexmark.html.renderer.LinkResolverContext
 import com.vladsch.flexmark.util.html.Attributes
+import com.vladsch.flexmark.util.options.DataHolder
 
 /**
  * flexmark-java preview.
  */
-class FlexmarkPreviewRenderer : Renderer {
+class FlexmarkPreviewRenderer(options: DataHolder) : Renderer {
+    private val renderer = HtmlRenderer.builder(options)
+            // .extensions(MarkdownExtensions.getFlexmarkExtensions())
+            .attributeProviderFactory(MyAttributeProvider.Factory())
+            .build()
+
     override fun render(astRoot: Node): String {
-        val builder = HtmlRenderer.builder()
-        // .extensions(MarkdownExtensions.getFlexmarkExtensions())
-        builder.attributeProviderFactory(MyAttributeProvider.Factory())
-        return builder.build().render(astRoot)
+        return renderer.render(astRoot)
     }
 
     private class MyAttributeProvider : AttributeProvider {

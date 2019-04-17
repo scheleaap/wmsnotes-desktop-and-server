@@ -100,9 +100,11 @@ public class MarkdownEditorPane {
             EditingViewModel editingViewModel,
             ApplicationController applicationController,
             Options options,
-            ApplicationViewState applicationViewState
+            ApplicationViewState applicationViewState,
+            Parser parser
     ) {
         this.options = options;
+        this.parser = parser;
 
         textArea = new MarkdownTextArea();
         textArea.setWrapText(true);
@@ -351,11 +353,6 @@ public class MarkdownEditorPane {
     }
 
     private Node parseMarkdown(String text) {
-        if (parser == null) {
-            parser = Parser.builder()
-                    // .extensions(MarkdownExtensions.getFlexmarkExtensions(options.getMarkdownRenderer()))
-                    .build();
-        }
         return parser.parse(text);
     }
 
