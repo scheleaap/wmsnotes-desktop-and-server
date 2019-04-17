@@ -4,7 +4,7 @@ data class Path(val elements: List<String>) {
     constructor(vararg elements: String) : this(elements.toList())
 
     init {
-        if (!elements.isEmpty()) {
+        if (elements.isNotEmpty()) {
             elements
                     .firstOrNull { it.isBlank() || it.contains('/') }
                     ?.let {

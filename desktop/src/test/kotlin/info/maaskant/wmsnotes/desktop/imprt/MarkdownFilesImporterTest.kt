@@ -1,10 +1,11 @@
 package info.maaskant.wmsnotes.desktop.imprt
 
+import info.maaskant.wmsnotes.desktop.imprt.MarkdownFilesImporter.*
 import info.maaskant.wmsnotes.model.CommandProcessor
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.CreateNoteCommand
-import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import io.mockk.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -13,11 +14,11 @@ import java.time.Clock
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-@Disabled("Tests written while traveling, code to be implemented next")
 internal class MarkdownFilesImporterTest {
-    private val aggId = "note"
-    private val clock: Clock = Clock.fixed(ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 7, ZoneId.of("UTC")).toInstant(), ZoneId.of("UTC"))
+    private val zone = ZoneId.of("UTC")
+    private val clock: Clock = Clock.fixed(ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 7, zone).toInstant(), zone)
     private val importFolderName: String = "Import of 2001-02-03 04:05:06"
+    private val basePath = Path("p")
 
     private lateinit var tempDir: File
     private var commandProcessor: CommandProcessor = mockk()
@@ -28,121 +29,145 @@ internal class MarkdownFilesImporterTest {
         clearMocks(
                 commandProcessor
         )
-        every { commandProcessor.blockingProcessCommand(CreateNoteCommand(aggId = null, path = any(), title = any(), content = any())) }.returns(NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = Path("el"), title = "", content = ""))
+//        every { commandProcessor.blockingProcessCommand(CreateNoteCommand(aggId = null, path = any(), title = any(), content = any())) }.returns(NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = Path("el"), title = "", content = ""))
         every { commandProcessor.commands.onNext(any()) }.just(Runs)
     }
 
     @Test
-    fun `empty file`() {
+    fun `load, empty file`() {
         // Given
-        createMd(filename = "Title.md")
+        createFile(filename = "Title.md")
         val importer = createInstance()
 
         // When
-        importer.import(tempDir)
+        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
 
         // Then
-        verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName), title = "Title", content = ""))
-        }
+        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
+                ImportableNode.Note(path = basePath, title = "Title", content = "")
+        ))
     }
 
     @Test
-    fun `file with content, no header`() {
+    fun `load, file with content`() {
         // Given
-        val content = "Data"
-        createMd(filename = "Title.md", content = content)
+        val content = "Content"
+        createFile(filename = "Title.md", content = content)
         val importer = createInstance()
 
         // When
-        importer.import(tempDir)
+        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
 
         // Then
-        verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName), title = "Title", content = content))
-        }
+        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
+                ImportableNode.Note(path = basePath, title = "Title", content = content)
+        ))
     }
 
     @Test
-    fun `file with content, header different from file name`() {
+    fun `load, multiple files with content`() {
         // Given
-        val content = "# Different\nData"
-        createMd(filename = "Title.md", content = content)
+        createFile(filename = "Title 1.md", content = "Content 1")
+        createFile(filename = "Title 2.md", content = "Content 2")
         val importer = createInstance()
 
         // When
-        importer.import(tempDir)
+        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
 
         // Then
-        verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName), title = "Title", content = content))
-        }
+        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
+                ImportableNode.Note(path = basePath, title = "Title 1", content = "Content 1"),
+                ImportableNode.Note(path = basePath, title = "Title 2", content = "Content 2")
+        ))
     }
 
+    @Disabled
     @Test
-    fun `file with content, header equal to file name`() {
+    fun `load, non-markdown files`() {
         // Given
-        val fileContent = "# Title\nData"
-        val importedContent = "Data"
-        createMd(filename = "Title.md", content = fileContent)
+        createFile(filename = "file.txt")
+        createFile(filename = "file.jpg", path = "foo/bar")
         val importer = createInstance()
 
         // When
-        importer.import(tempDir)
+        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
 
         // Then
-        verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName), title = "Title", content = importedContent))
-        }
+        assertThat(notes.toList().blockingGet().toSet()).isEmpty()
     }
 
     @Test
-    fun `convert line endings`() {
+    fun `load, folders`() {
         // Given
-        val fileContent = "Data\r\nBla\n"
-        val importedContent = "Data\nBla"
-        createMd(filename = "Title.md", content = fileContent)
+        createFile(filename = "Title 1.md", path = "foo")
+        createFile(filename = "Title 2.md", path = "foo/bar")
+        createFile(filename = "Title 3.md", path = "foo/baz")
         val importer = createInstance()
 
         // When
-        importer.import(tempDir)
+        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
 
         // Then
-        verify {
-            commandProcessor.commands.onNext(CreateNoteCommand(aggId = any(), path = any(), title = any(), content = importedContent))
-        }
+        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
+                ImportableNode.Note(path = basePath.child("foo"), title = "Title 1", content = ""),
+                ImportableNode.Note(path = basePath.child("foo").child("bar"), title = "Title 2", content = ""),
+                ImportableNode.Note(path = basePath.child("foo").child("baz"), title = "Title 3", content = ""),
+                ImportableNode.Folder(path = basePath.child("foo")),
+                ImportableNode.Folder(path = basePath.child("foo").child("bar")),
+                ImportableNode.Folder(path = basePath.child("foo").child("baz"))
+        ))
     }
 
     @Test
-    fun `folders`() {
-        TODO()
-//        // Given
-//        createMd(path = "el1/el2", filename = "Title.md")
-//        val importer = createInstance()
-//
-//        // When
-//        importer.import(tempDir)
-//
-//        // Then
-//        verifySequence {
-//            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = importFolderName, path = Path(importFolderName), title = importFolderName)),
-//            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = "$importFolderName/el1", path = Path(importFolderName, "el1"), title = "el1")),
-//            commandProcessor.commands.onNext(CreateFolderCommand(aggregateId = "$importFolderName/el1/el2", path = Path(importFolderName, "el1", "el2"), title = "el2")),
-//            commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName, "el1", "el2"), title = any(), content = any()))
-//        }
+    fun `load, convert line endings`() {
+        // Given
+        createFile(filename = "Title 1.md", content = "bla\r\nabc")
+        createFile(filename = "Title 2.md", content = "bla\nabc")
+        createFile(filename = "Title 3.md", content = "bla\rabc")
+        val importedContent = "bla\nabc"
+        val importer = createInstance()
+
+        // When
+        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
+
+        // Then
+        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
+                ImportableNode.Note(path = basePath, title = "Title 1", content = importedContent),
+                ImportableNode.Note(path = basePath, title = "Title 2", content = importedContent),
+                ImportableNode.Note(path = basePath, title = "Title 3", content = importedContent)
+        ))
     }
 
-    private fun createMd(filename: String, content: String = "", path: String = "") {
+    @Test
+    fun `generate base path`() {
+        // Given
+        val importer = createInstance()
+
+        // When
+        val basePath = importer.newBasePathForCurrentTime()
+
+        // Then
+        assertThat(basePath).isEqualTo(Path(importFolderName))
+    }
+
+    // TODO
+    // Test import method
+//    verify {
+//        commandProcessor.commands.onNext(CreateNoteCommand(aggId = null, path = Path(importFolderName), title = "Title", content = ""))
+//    }
+    // Test parent path generating method
+
+    private fun createFile(filename: String, content: String = "", path: String = "") {
         val dir = if (path == "") {
             tempDir
         } else {
             tempDir.resolve(path)
         }
+        dir.mkdirs()
         dir.resolve(filename).writeText(content)
     }
 
-
     private fun createInstance(): MarkdownFilesImporter {
-        return MarkdownFilesImporter(commandProcessor, clock)
+        return MarkdownFilesImporter(commandProcessor, clock, zone)
     }
 }
