@@ -114,9 +114,8 @@ class TreeView : View() {
 
     private fun removeNode(aggId: String) {
         logger.debug("Removing node $aggId")
-        val treeItem = treeItemReferences.remove(aggId)
-        rootNode.children.remove(treeItem)
-        TODO("This is not implemented correctly")
+        val treeItem = treeItemReferences.remove(aggId)!!
+        treeItem.parent.children.remove(treeItem)
     }
 
     data class NotebookNode(val aggId: String, val type: Type, val path: Path, val title: String) {
