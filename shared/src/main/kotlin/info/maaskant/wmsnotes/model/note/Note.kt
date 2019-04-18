@@ -20,8 +20,6 @@ class Note private constructor(
         val attachmentHashes: Map<String, String>
 ) : Aggregate<Note> {
 
-    private val nameReplacementPattern: Regex = Regex("""[\\\t /&]""")
-
     private val contentLength: Int = content.length
 
     constructor() : this(
@@ -173,12 +171,6 @@ class Note private constructor(
     }
 
     companion object {
-        private fun hash(content: ByteArray): String {
-            // The following does not work on Android:
-            // return DigestUtils.md5Hex(content)
-            // Source: https://stackoverflow.com/a/9284092
-            return String(Hex.encodeHex(DigestUtils.md5(content)))
-        }
 
         fun deserialize(
                 revision: Int,
@@ -200,6 +192,13 @@ class Note private constructor(
                     attachments = attachments,
                     attachmentHashes = attachmentHashes
             )
+        }
+
+        private fun hash(content: ByteArray): String {
+            // The following does not work on Android:
+            // return DigestUtils.md5Hex(content)
+            // Source: https://stackoverflow.com/a/9284092
+            return String(Hex.encodeHex(DigestUtils.md5(content)))
         }
     }
 }
