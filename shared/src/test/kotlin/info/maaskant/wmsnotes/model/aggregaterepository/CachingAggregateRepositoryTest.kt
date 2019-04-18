@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class CachingAggregateRepositoryTest {
-    private val aggId = "note"
+    private val aggId = "n-10000000-0000-0000-0000-000000000000"
 
     private val event1 = NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = Path("path"), title = "Title", content = "Text")
     private val event2 = AttachmentAddedEvent(eventId = 2, aggId = aggId, revision = 2, name = "att-1", content = "data1".toByteArray())

@@ -235,7 +235,7 @@ internal class DifferenceAnalyzerTest {
     }
 
     companion object {
-        private const val aggId = "note"
+        private val aggId = "n-10000000-0000-0000-0000-000000000000"
         private val path = Path("path")
         private const val title = "title"
         private const val content = "content"

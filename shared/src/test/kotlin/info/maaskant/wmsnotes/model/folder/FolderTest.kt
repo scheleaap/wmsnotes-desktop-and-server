@@ -1,7 +1,6 @@
 package info.maaskant.wmsnotes.model.folder
 
 import info.maaskant.wmsnotes.model.Path
-import info.maaskant.wmsnotes.model.note.Note
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
@@ -11,6 +10,16 @@ import org.junit.jupiter.api.assertThrows
 @Suppress("RemoveRedundantBackticks")
 internal class FolderTest {
     private val path = Path("el1", "el2")
+    private val pathDigest = "dbd167170df1ac9647c2c0d750ceb34e41a63741"
+
+    @Test
+    fun `aggregate id from path`() {
+        // When
+        val aggId = Folder.aggId(path)
+
+        // Then
+        assertThat(aggId).isEqualTo("f-$pathDigest")
+    }
 
     @TestFactory
     fun `wrong revision`(): List<DynamicTest> {
@@ -41,7 +50,7 @@ internal class FolderTest {
                 val folder = folderWithEvents(FolderCreatedEvent(eventId = 0, revision = 1, path = Path("original")))
 
                 // When / Then
-                assertThat(event.path).isNotEqualTo(folder.path) // Validate the test data
+                assertThat(event.aggId != folder.aggId || event.path != folder.path).isTrue() // Validate the test data
                 assertThrows<IllegalArgumentException> { folder.apply(event) }
             }
         }
@@ -94,6 +103,26 @@ internal class FolderTest {
         assertThat(folderAfter.aggId).isEqualTo(eventIn.aggId)
         assertThat(folderAfter.path).isEqualTo(eventIn.path)
         assertThat(folderAfter.title).isEqualTo(eventIn.path.elements.last())
+    }
+
+    @Test
+    fun `create first time, aggregate id does not start with prefix`() {
+        // Given
+        val folderBefore = Folder()
+        val eventIn = FolderCreatedEvent(eventId = 0, aggId = "x-$pathDigest", revision = 1, path = path)
+
+        // When / Then
+        assertThrows<IllegalArgumentException> { folderBefore.apply(eventIn) }
+    }
+
+    @Test
+    fun `create first time, aggregate id does not match path`() {
+        // Given
+        val folderBefore = Folder()
+        val eventIn = FolderCreatedEvent(eventId = 0, aggId = Folder.aggId(path) + "xx", revision = 1, path = path)
+
+        // When / Then
+        assertThrows<IllegalArgumentException> { folderBefore.apply(eventIn) }
     }
 
     @Test

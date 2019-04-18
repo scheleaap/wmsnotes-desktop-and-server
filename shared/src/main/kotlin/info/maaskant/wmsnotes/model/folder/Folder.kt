@@ -58,6 +58,8 @@ class Folder private constructor(
     }
 
     private fun applyCreated(event: FolderCreatedEvent): Pair<Folder, Event?> {
+        val expectedAggId = aggId(event.path)
+        if (revision == 0 && event.aggId != expectedAggId) throw IllegalArgumentException("The aggregate id of $event must be $expectedAggId")
         return if (!exists) {
             copy(
                     aggId = event.aggId,

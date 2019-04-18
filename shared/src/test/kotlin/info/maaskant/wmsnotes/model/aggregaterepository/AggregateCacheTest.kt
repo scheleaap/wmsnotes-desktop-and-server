@@ -6,16 +6,14 @@ import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.io.File
 
 internal abstract class AggregateCacheTest {
-    protected val aggId = "note"
+    protected val aggId = "n-10000000-0000-0000-0000-000000000000"
+    private val otherAggId = "n-20000000-0000-0000-0000-000000000000"
 
     protected val noteAfterEvent1 = Note().apply(NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = Path("path"), title = "Title", content = "Text")).component1()
     protected val noteAfterEvent2 = noteAfterEvent1.apply(AttachmentAddedEvent(eventId = 2, aggId = aggId, revision = 2, name = "att-1", content = "data1".toByteArray())).component1()
     protected val noteAfterEvent3 = noteAfterEvent2.apply(AttachmentAddedEvent(eventId = 3, aggId = aggId, revision = 3, name = "att-2", content = "data2".toByteArray())).component1()
-
-    private lateinit var tempDir: File
 
     open fun init() {
         givenANote(noteAfterEvent1)
@@ -60,7 +58,7 @@ internal abstract class AggregateCacheTest {
         c.put(noteIn)
 
         // When
-        val noteOut = c.get("other", noteIn.revision)
+        val noteOut = c.get(otherAggId, noteIn.revision)
 
         // Then
         assertThat(noteOut).isNull()
@@ -74,10 +72,10 @@ internal abstract class AggregateCacheTest {
         c.put(noteAfterEvent3)
         val otherNoteWithHigherRevision = givenANote(
                 Note()
-                        .apply(NoteCreatedEvent(eventId = 1, aggId = "other", revision = 1, path = Path("p"), title = "Title", content = "Text")).component1()
-                        .apply(AttachmentAddedEvent(eventId = 2, aggId = "other", revision = 2, name = "att-1", content = "data1".toByteArray())).component1()
-                        .apply(AttachmentAddedEvent(eventId = 3, aggId = "other", revision = 3, name = "att-2", content = "data2".toByteArray())).component1()
-                        .apply(AttachmentAddedEvent(eventId = 4, aggId = "other", revision = 4, name = "att-3", content = "data3".toByteArray())).component1()
+                        .apply(NoteCreatedEvent(eventId = 1, aggId = otherAggId, revision = 1, path = Path("p"), title = "Title", content = "Text")).component1()
+                        .apply(AttachmentAddedEvent(eventId = 2, aggId = otherAggId, revision = 2, name = "att-1", content = "data1".toByteArray())).component1()
+                        .apply(AttachmentAddedEvent(eventId = 3, aggId = otherAggId, revision = 3, name = "att-2", content = "data2".toByteArray())).component1()
+                        .apply(AttachmentAddedEvent(eventId = 4, aggId = otherAggId, revision = 4, name = "att-3", content = "data3".toByteArray())).component1()
         )
         c.put(otherNoteWithHigherRevision)
 

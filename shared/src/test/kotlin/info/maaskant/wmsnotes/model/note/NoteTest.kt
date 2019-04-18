@@ -11,9 +11,19 @@ import java.util.*
 @Suppress("RemoveRedundantBackticks")
 internal class NoteTest {
 
-    private val randomAggId = UUID.randomUUID().toString()
+    private val randomAggId = Note.randomAggId()
     private val binaryData = "data".toByteArray()
     private val dataHash = "8d777f385d3dfec8815d20f7496026dc"
+
+    @Test
+    fun `random aggregate id`() {
+        // When
+        val aggId = Note.randomAggId()
+
+        // Then
+        assertThat(aggId).startsWith("n-")
+        UUID.fromString(aggId.substring(startIndex = 2)) // Expected not to throw an exception
+    }
 
     @TestFactory
     fun `wrong revision`(): List<DynamicTest> {
@@ -40,6 +50,7 @@ internal class NoteTest {
 
     @TestFactory
     fun `wrong aggregate id`(): List<DynamicTest> {
+        val otherAggId = Note.randomAggId()
         return listOf(
                 NoteDeletedEvent(eventId = 0, aggId = randomAggId, revision = 2),
                 NoteUndeletedEvent(eventId = 0, aggId = randomAggId, revision = 2),
@@ -52,7 +63,7 @@ internal class NoteTest {
         ).map { event ->
             DynamicTest.dynamicTest(event::class.simpleName) {
                 // Given
-                val note = noteWithEvents(NoteCreatedEvent(eventId = 0, aggId = "original id", revision = 1, path = Path("el"), title = "Title", content = "Text"))
+                val note = noteWithEvents(NoteCreatedEvent(eventId = 0, aggId = otherAggId, revision = 1, path = Path("el"), title = "Title", content = "Text"))
 
                 // When / Then
                 assertThat(event.aggId).isNotEqualTo(note.aggId)
@@ -176,6 +187,26 @@ internal class NoteTest {
         // Given
         val noteBefore = Note()
         val eventIn = NoteCreatedEvent(eventId = 0, aggId = " \t", revision = 1, path = Path("el"), title = "Title", content = "Text")
+
+        // When / Then
+        assertThrows<IllegalArgumentException> { noteBefore.apply(eventIn) }
+    }
+
+    @Test
+    fun `create, aggregate id does not start with prefix`() {
+        // Given
+        val noteBefore = Note()
+        val eventIn = NoteCreatedEvent(eventId = 0, aggId = "x-" + UUID.randomUUID().toString(), revision = 1, path = Path("el"), title = "Title", content = "Text")
+
+        // When / Then
+        assertThrows<IllegalArgumentException> { noteBefore.apply(eventIn) }
+    }
+
+    @Test
+    fun `create, aggregate id does not end with UUID`() {
+        // Given
+        val noteBefore = Note()
+        val eventIn = NoteCreatedEvent(eventId = 0, aggId = "n-" + UUID.randomUUID().toString() + "xx", revision = 1, path = Path("el"), title = "Title", content = "Text")
 
         // When / Then
         assertThrows<IllegalArgumentException> { noteBefore.apply(eventIn) }

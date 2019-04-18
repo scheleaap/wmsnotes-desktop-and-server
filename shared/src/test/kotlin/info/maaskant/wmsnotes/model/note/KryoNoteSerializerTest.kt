@@ -6,7 +6,7 @@ import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.utilities.serialization.KryoSerializerTest
 
 internal class KryoNoteSerializerTest : KryoSerializerTest<Note>() {
-    private val aggId = "note"
+    private val aggId = "n-10000000-0000-0000-0000-000000000000"
 
     override val items: List<Note> = listOf(Note()
             .apply(NoteCreatedEvent(eventId = 1, aggId = aggId, revision = 1, path = Path("path"), title = "Title", content = "Text")).component1()

@@ -119,7 +119,10 @@ class Note private constructor(
 
     private fun applyCreated(event: NoteCreatedEvent): Pair<Note, NoteEvent> {
         if (exists) throw IllegalStateException("An existing note cannot be created again ($event)")
-        if (event.aggId.isBlank()) throw IllegalArgumentException("Invalid aggregate id $event")
+        if (event.aggId.isBlank()
+                || !event.aggId.startsWith("n-")
+                || !event.aggId.matches(aggIdPattern)
+        ) throw IllegalArgumentException("Invalid aggregate id $event")
         return copy(
                 aggId = event.aggId,
                 revision = event.revision,
@@ -171,6 +174,8 @@ class Note private constructor(
     }
 
     companion object {
+        private val aggIdPattern = Regex("""^n-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$""")
+        private val nameReplacementPattern = Regex("""[\\\t /&]""")
 
         fun deserialize(
                 revision: Int,
@@ -200,5 +205,8 @@ class Note private constructor(
             // Source: https://stackoverflow.com/a/9284092
             return String(Hex.encodeHex(DigestUtils.md5(content)))
         }
+
+        fun randomAggId(): String =
+                "n-" + UUID.randomUUID().toString()
     }
 }

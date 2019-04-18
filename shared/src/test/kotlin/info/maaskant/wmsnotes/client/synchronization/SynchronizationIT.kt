@@ -24,8 +24,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class SynchronizationIT {
-    private val aggId = "note"
-    private val newAggId = "new-note"
+    private val aggId = "n-10000000-0000-0000-0000-000000000000"
+    private val newAggId = "n-20000000-0000-0000-0000-000000000000"
 
     private lateinit var eventStore: EventStore
     private lateinit var localEvents: ModifiableEventRepository
