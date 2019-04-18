@@ -185,4 +185,10 @@ internal class PathTest {
             path.parent()
         }
     }
+
+    @Test
+    fun isRoot() {
+        assertThat(Path().isRoot).isEqualTo(true)
+        assertThat(Path("a").isRoot).isEqualTo(false)
+    }
 }

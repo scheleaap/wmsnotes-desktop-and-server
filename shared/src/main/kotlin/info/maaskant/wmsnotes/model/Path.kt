@@ -1,6 +1,8 @@
 package info.maaskant.wmsnotes.model
 
 data class Path(val elements: List<String>) {
+    val isRoot: Boolean = elements.isEmpty()
+
     constructor(vararg elements: String) : this(elements.toList())
 
     init {
@@ -13,8 +15,9 @@ data class Path(val elements: List<String>) {
         }
     }
 
-    override fun toString(): String =
-            elements.joinToString(separator = "/")
+    fun child(childElement: String): Path {
+        return Path(elements + childElement)
+    }
 
     fun parent(): Path =
             if (elements.isNotEmpty()) {
@@ -23,10 +26,8 @@ data class Path(val elements: List<String>) {
                 throw IllegalStateException("Root path does not have a parent")
             }
 
-    fun child(childElement: String): Path {
-        return Path(elements + childElement)
-    }
-
+    override fun toString(): String =
+            elements.joinToString(separator = "/")
 
     companion object {
         fun from(path: String): Path =
