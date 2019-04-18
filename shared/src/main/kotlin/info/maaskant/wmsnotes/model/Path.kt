@@ -1,5 +1,7 @@
 package info.maaskant.wmsnotes.model
 
+import kotlin.math.min
+
 data class Path(val elements: List<String>) {
     val isRoot: Boolean = elements.isEmpty()
 
@@ -17,6 +19,14 @@ data class Path(val elements: List<String>) {
 
     fun child(childElement: String): Path {
         return Path(elements + childElement)
+    }
+
+    fun isChildOf(other: Path): Boolean {
+        return if (this == other) {
+            false
+        } else {
+            elements.subList(0, min(other.elements.size, elements.size)) == other.elements
+        }
     }
 
     fun parent(): Path =

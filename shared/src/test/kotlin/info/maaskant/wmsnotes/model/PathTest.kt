@@ -191,4 +191,26 @@ internal class PathTest {
         assertThat(Path().isRoot).isEqualTo(true)
         assertThat(Path("a").isRoot).isEqualTo(false)
     }
+
+    @Test
+    fun isChildOf() {
+        val root = Path()
+        val path1 = Path("el1")
+        val path2 = Path("el1", "el2")
+        val path3 = Path("el1", "el2", "el3")
+
+        assertThat(root.isChildOf(root)).isEqualTo(false)
+
+        assertThat(path1.isChildOf(path1)).isEqualTo(false)
+        assertThat(path1.isChildOf(path2)).isEqualTo(false)
+        assertThat(path1.isChildOf(path3)).isEqualTo(false)
+
+        assertThat(path2.isChildOf(path1)).isEqualTo(true)
+        assertThat(path2.isChildOf(path2)).isEqualTo(false)
+        assertThat(path2.isChildOf(path3)).isEqualTo(false)
+
+        assertThat(path3.isChildOf(path1)).isEqualTo(true)
+        assertThat(path3.isChildOf(path2)).isEqualTo(true)
+        assertThat(path3.isChildOf(path3)).isEqualTo(false)
+    }
 }

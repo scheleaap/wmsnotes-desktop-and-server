@@ -25,26 +25,44 @@ class MarkdownFilesImporter @VisibleForTesting constructor(
     constructor(commandProcessor: CommandProcessor) :
             this(commandProcessor, Clock.systemDefaultZone(), ZoneId.systemDefault())
 
-    private fun folderPathFromFile(file: File, rootDirectory: File, basePath: Path): Path {
-        val fileSystemBasedPathString = file.canonicalPath.removePrefix(rootDirectory.canonicalPath).substring(1)
-        val pathElements = basePath.elements + fileSystemBasedPathString.split(File.separatorChar)
-        return Path(pathElements)
-    }
-
     fun load(rootDirectory: File, basePath: Path): Observable<in ImportableNode> {
         return rootDirectory.walkTopDown().toObservable()
                 .filter { isImportable(it, rootDirectory) }
-                .flatMap {
+                .flatMap { file ->
                     when {
-                        it.isFile -> Observable.just(ImportableNode.Note(
-                                path = notePathFromFile(it, rootDirectory, basePath),
-                                title = titleFromFile(it),
-                                content = contentFromFile(it)
-                        ))
-                        it.isDirectory -> Observable.just(ImportableNode.Folder(path = folderPathFromFile(it, rootDirectory, basePath)))
+                        file.isFile -> {
+                            val notePath = notePathFromFile(file, rootDirectory, basePath)
+                            Observable.concat(
+                                    Observable.just(ImportableNode.Note(
+                                            path = notePath,
+                                            title = titleFromFile(file),
+                                            content = contentFromFile(file)
+                                    )),
+                                    parentPathsOf(notePath).toObservable()
+                                            .filter { folderPath -> folderPath.isChildOf(basePath) || folderPath == basePath }
+                                            .map { ImportableNode.Folder(path = it) }
+                            )
+                        }
                         else -> Observable.empty()
                     }
                 }
+                .map { setOf(it) }
+                .scan(Pair(emptySet(), emptySet())) { previousResult: Pair<Set<Path>, Set<ImportableNode>>, it: Set<ImportableNode> ->
+                    // The pair's first element is a set of all paths for which a folder has been created already
+                    // The pair's second element is the current node to process, wrapped in a set. The reason for wrapping
+                    //  it in a set is that this allows us to return an empty set in case we want to filter out the node.
+                    //  This is a workaround because we cannot do scan() and flatMap() at the same time.
+                    when (val node: ImportableNode = it.first()) {
+                        is ImportableNode.Folder -> if (node.path in previousResult.first) {
+                            previousResult.first to emptySet()
+                        } else {
+                            previousResult.first + node.path to it
+                        }
+                        else -> previousResult.first to it
+                    }
+                }
+                .skip(1) // Skip the first, fake ImportableNode.Folder
+                .flatMap { it.second.toObservable() }
     }
 
     private fun contentFromFile(file: File) =
@@ -79,15 +97,23 @@ class MarkdownFilesImporter @VisibleForTesting constructor(
         }
     }
 
+    private fun parentPathsOf(path: Path): List<Path> {
+        return if (!path.isRoot) {
+            parentPathsOf(path.parent()) + path
+        } else {
+            listOf(path)
+        }
+    }
+
     private fun titleFromFile(file: File) =
             file.nameWithoutExtension
 
     sealed class ImportableNode {
-        data class Folder(val path: Path)
+        data class Folder(val path: Path) : ImportableNode()
         data class Note(
                 val path: Path,
                 val title: String,
                 val content: String
-        )
+        ) : ImportableNode()
     }
 }

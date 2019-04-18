@@ -18,7 +18,7 @@ internal class MarkdownFilesImporterTest {
     private val zone = ZoneId.of("UTC")
     private val clock: Clock = Clock.fixed(ZonedDateTime.of(2001, 2, 3, 4, 5, 6, 7, zone).toInstant(), zone)
     private val importFolderName: String = "Import of 2001-02-03 04:05:06"
-    private val basePath = Path("p")
+    private val basePath = Path("a", "b")
 
     private lateinit var tempDir: File
     private var commandProcessor: CommandProcessor = mockk()
@@ -40,10 +40,12 @@ internal class MarkdownFilesImporterTest {
         val importer = createInstance()
 
         // When
-        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
+        val nodes = importer.load(rootDirectory = tempDir, basePath = basePath).toList().blockingGet()
 
         // Then
-        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
+        assertThat(nodes).hasSize(2)
+        assertThat(nodes.toSet()).isEqualTo(setOf(
+                ImportableNode.Folder(path = basePath),
                 ImportableNode.Note(path = basePath, title = "Title", content = "")
         ))
     }
@@ -56,10 +58,12 @@ internal class MarkdownFilesImporterTest {
         val importer = createInstance()
 
         // When
-        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
+        val nodes = importer.load(rootDirectory = tempDir, basePath = basePath).toList().blockingGet()
 
         // Then
-        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
+        assertThat(nodes).hasSize(2)
+        assertThat(nodes.toSet()).isEqualTo(setOf(
+                ImportableNode.Folder(path = basePath),
                 ImportableNode.Note(path = basePath, title = "Title", content = content)
         ))
     }
@@ -72,16 +76,17 @@ internal class MarkdownFilesImporterTest {
         val importer = createInstance()
 
         // When
-        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
+        val nodes = importer.load(rootDirectory = tempDir, basePath = basePath).toList().blockingGet()
 
         // Then
-        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
+        assertThat(nodes).hasSize(3)
+        assertThat(nodes.toSet()).isEqualTo(setOf(
+                ImportableNode.Folder(path = basePath),
                 ImportableNode.Note(path = basePath, title = "Title 1", content = "Content 1"),
                 ImportableNode.Note(path = basePath, title = "Title 2", content = "Content 2")
         ))
     }
 
-    @Disabled
     @Test
     fun `load, non-markdown files`() {
         // Given
@@ -90,10 +95,10 @@ internal class MarkdownFilesImporterTest {
         val importer = createInstance()
 
         // When
-        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
+        val nodes = importer.load(rootDirectory = tempDir, basePath = basePath).toList().blockingGet()
 
         // Then
-        assertThat(notes.toList().blockingGet().toSet()).isEmpty()
+        assertThat(nodes).isEmpty()
     }
 
     @Test
@@ -105,16 +110,18 @@ internal class MarkdownFilesImporterTest {
         val importer = createInstance()
 
         // When
-        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
+        val nodes = importer.load(rootDirectory = tempDir, basePath = basePath).toList().blockingGet()
 
         // Then
-        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
-                ImportableNode.Note(path = basePath.child("foo"), title = "Title 1", content = ""),
-                ImportableNode.Note(path = basePath.child("foo").child("bar"), title = "Title 2", content = ""),
-                ImportableNode.Note(path = basePath.child("foo").child("baz"), title = "Title 3", content = ""),
+        assertThat(nodes).hasSize(7)
+        assertThat(nodes.toSet()).isEqualTo(setOf(
+                ImportableNode.Folder(path = basePath),
                 ImportableNode.Folder(path = basePath.child("foo")),
                 ImportableNode.Folder(path = basePath.child("foo").child("bar")),
-                ImportableNode.Folder(path = basePath.child("foo").child("baz"))
+                ImportableNode.Folder(path = basePath.child("foo").child("baz")),
+                ImportableNode.Note(path = basePath.child("foo"), title = "Title 1", content = ""),
+                ImportableNode.Note(path = basePath.child("foo").child("bar"), title = "Title 2", content = ""),
+                ImportableNode.Note(path = basePath.child("foo").child("baz"), title = "Title 3", content = "")
         ))
     }
 
@@ -128,10 +135,12 @@ internal class MarkdownFilesImporterTest {
         val importer = createInstance()
 
         // When
-        val notes = importer.load(rootDirectory = tempDir, basePath = basePath)
+        val nodes = importer.load(rootDirectory = tempDir, basePath = basePath).toList().blockingGet()
 
         // Then
-        assertThat(notes.toList().blockingGet().toSet()).isEqualTo(setOf(
+        assertThat(nodes).hasSize(4)
+        assertThat(nodes.toSet()).isEqualTo(setOf(
+                ImportableNode.Folder(path = basePath),
                 ImportableNode.Note(path = basePath, title = "Title 1", content = importedContent),
                 ImportableNode.Note(path = basePath, title = "Title 2", content = importedContent),
                 ImportableNode.Note(path = basePath, title = "Title 3", content = importedContent)
