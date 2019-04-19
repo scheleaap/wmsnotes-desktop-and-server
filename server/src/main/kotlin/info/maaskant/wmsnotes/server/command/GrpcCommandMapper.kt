@@ -56,8 +56,7 @@ class GrpcCommandMapper {
                     path = Path.from(request.move.path)
             )
             Command.PostCommandRequest.CommandCase.CREATE_FOLDER -> CreateFolderCommand(
-                    path = Path.from(request.aggregateId),
-                    lastRevision = request.lastRevision
+                    path = Path.from(request.aggregateId)
             )
             Command.PostCommandRequest.CommandCase.DELETE_FOLDER -> DeleteFolderCommand(
                     path = Path.from(request.aggregateId),

@@ -27,7 +27,7 @@ internal class EventToCommandMapperTest {
                 ContentChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, content = "Text") to ChangeContentCommand(aggId = aggId, lastRevision = lastRevision, content = "Text"),
                 TitleChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, title = "Title") to ChangeTitleCommand(aggId = aggId, lastRevision = lastRevision, title = "Title"),
                 MovedEvent(eventId = 0, aggId = aggId, revision = eventRevision, path = Path("el1", "el2")) to MoveCommand(aggId = aggId, lastRevision = lastRevision, path = Path("el1", "el2")),
-                FolderCreatedEvent(eventId = 1, revision = eventRevision, path = Path("el1", "el2")) to CreateFolderCommand(path = Path("el1", "el2"), lastRevision = lastRevision),
+                FolderCreatedEvent(eventId = 1, revision = eventRevision, path = Path("el1", "el2")) to CreateFolderCommand(path = Path("el1", "el2")),
                 FolderDeletedEvent(eventId = 1, revision = eventRevision, path = Path("el1", "el2")) to DeleteFolderCommand(path = Path("el1", "el2"), lastRevision = lastRevision)
                 // Add more classes here
         )
@@ -43,7 +43,7 @@ internal class EventToCommandMapperTest {
     fun `FolderCreatedEvent, lastRevision null`() {
         // Given
         val event = FolderCreatedEvent(eventId = 1, revision = 12, path = Path("el1", "el2"))
-        val expectedCommand = CreateFolderCommand(path = Path("el1", "el2"), lastRevision = 0)
+        val expectedCommand = CreateFolderCommand(path = Path("el1", "el2"))
 
         // When
         val actualCommand = EventToCommandMapper().map(event, lastRevision = null)

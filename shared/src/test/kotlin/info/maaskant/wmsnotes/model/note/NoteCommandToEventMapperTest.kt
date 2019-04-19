@@ -3,9 +3,7 @@ package info.maaskant.wmsnotes.model.note
 import info.maaskant.wmsnotes.model.Path
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-import java.util.*
 
 internal class NoteCommandToEventMapperTest {
     private val path = Path("el1", "el2")
@@ -31,22 +29,8 @@ internal class NoteCommandToEventMapperTest {
         )
         return pairs.map { (command, expectedEvent) ->
             DynamicTest.dynamicTest("${command::class.simpleName} to ${expectedEvent::class.simpleName}") {
-                assertThat(NoteCommandToEventMapper().map(command)).isEqualTo(expectedEvent)
+                assertThat(NoteCommandToEventMapper().map(command, lastRevision = 0)).isEqualTo(expectedEvent)
             }
         }
     }
-
-    @Test
-    fun `create, aggregate id null`() {
-        // Given
-        val command = CreateNoteCommand(null, path = path, title = title, content = content)
-
-        // When
-        val event = NoteCommandToEventMapper().map(command)
-
-        // Then
-        assertThat(event.aggId).startsWith("n-")
-        UUID.fromString(event.aggId.substring(startIndex = 2)) // Expected not to throw an exception
-    }
-
 }

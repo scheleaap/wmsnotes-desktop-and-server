@@ -1,13 +1,18 @@
 package info.maaskant.wmsnotes.model.folder
 
 import au.com.console.kassava.kotlinToString
+import com.google.common.annotations.VisibleForTesting
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.folder.Folder.Companion.aggId
 
-sealed class FolderEvent(eventId: Int, revision: Int, val path: Path) : Event(eventId, aggId(path), revision)
+sealed class FolderEvent @VisibleForTesting constructor(eventId: Int, aggId: String, revision: Int, val path: Path) : Event(eventId, aggId, revision) {
+    constructor(eventId: Int, revision: Int, path: Path) : this(eventId, aggId(path), revision, path)
+}
 
-class FolderCreatedEvent(eventId: Int, revision: Int, path: Path) : FolderEvent(eventId, revision, path) {
+class FolderCreatedEvent @VisibleForTesting constructor(eventId: Int, aggId: String, revision: Int, path: Path) : FolderEvent(eventId, aggId, revision, path) {
+    constructor(eventId: Int, revision: Int, path: Path) : this(eventId, aggId(path), revision, path)
+
     override fun copy(eventId: Int, revision: Int): FolderCreatedEvent =
             FolderCreatedEvent(
                     eventId = eventId,

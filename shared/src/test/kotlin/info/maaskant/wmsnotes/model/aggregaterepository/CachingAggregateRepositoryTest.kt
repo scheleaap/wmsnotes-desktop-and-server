@@ -26,14 +26,12 @@ internal class CachingAggregateRepositoryTest {
     private val noteAfterEvent2 = noteAfterEvent1.apply(event2).component1()
     private val noteAfterEvent3 = noteAfterEvent2.apply(event3).component1()
 
-    private val wrappedRepository: AggregateRepository<Note> = mockk()
     private val aggregateCache: AggregateCache<Note> = mockk()
     private val eventStore: EventStore = mockk()
 
     @BeforeEach
     fun init() {
         clearMocks(
-                wrappedRepository,
                 eventStore,
                 aggregateCache
         )
@@ -43,7 +41,6 @@ internal class CachingAggregateRepositoryTest {
     @Test
     fun `get, not present in cache`() {
         // Given
-        every { wrappedRepository.get(aggId, noteAfterEvent2.revision) }.returns(noteAfterEvent2)
         every { aggregateCache.get(aggId, noteAfterEvent1.revision) }.returns(null)
         every { aggregateCache.get(aggId, noteAfterEvent2.revision) }.returns(null)
         every { aggregateCache.getLatest(aggId, noteAfterEvent2.revision) }.returns(null)
@@ -60,7 +57,6 @@ internal class CachingAggregateRepositoryTest {
     @Test
     fun `get, old version present in cache`() {
         // Given
-        every { wrappedRepository.get(aggId, noteAfterEvent2.revision) }.throws(Exception())
         every { aggregateCache.get(aggId, noteAfterEvent1.revision) }.returns(noteAfterEvent1)
         every { aggregateCache.get(aggId, noteAfterEvent2.revision) }.returns(null)
         every { aggregateCache.getLatest(aggId, noteAfterEvent2.revision) }.returns(noteAfterEvent1)
@@ -77,7 +73,6 @@ internal class CachingAggregateRepositoryTest {
     @Test
     fun `get, too new version present in cache`() {
         // Given
-        every { wrappedRepository.get(aggId, noteAfterEvent2.revision) }.throws(Exception())
         every { aggregateCache.get(aggId, noteAfterEvent1.revision) }.returns(null)
         every { aggregateCache.get(aggId, noteAfterEvent2.revision) }.returns(null)
         every { aggregateCache.get(aggId, noteAfterEvent3.revision) }.returns(noteAfterEvent3)
@@ -89,6 +84,54 @@ internal class CachingAggregateRepositoryTest {
 
         // When
         val note = p.get(aggId, noteAfterEvent2.revision)
+
+        // Then
+        assertThat(note).isEqualTo(noteAfterEvent2)
+    }
+
+    @Test
+    fun `get latest, not present in cache`() {
+        // Given
+        every { aggregateCache.get(aggId, noteAfterEvent1.revision) }.returns(null)
+        every { aggregateCache.get(aggId, noteAfterEvent2.revision) }.returns(null)
+        every { aggregateCache.getLatest(aggId, lastRevision = null) }.returns(null)
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = null) }.returns(Observable.just(event1, event2))
+        val p = CachingAggregateRepository(eventStore, aggregateCache, emptyNote)
+
+        // When
+        val note = p.getLatest(aggId)
+
+        // Then
+        assertThat(note).isEqualTo(noteAfterEvent2)
+    }
+
+    @Test
+    fun `get latest, old version present in cache`() {
+        // Given
+        every { aggregateCache.get(aggId, noteAfterEvent1.revision) }.returns(noteAfterEvent1)
+        every { aggregateCache.get(aggId, noteAfterEvent2.revision) }.returns(null)
+        every { aggregateCache.getLatest(aggId) }.returns(noteAfterEvent1)
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = noteAfterEvent1.revision) }.returns(Observable.just(event2))
+        val p = CachingAggregateRepository(eventStore, aggregateCache, emptyNote)
+
+        // When
+        val note = p.getLatest(aggId)
+
+        // Then
+        assertThat(note).isEqualTo(noteAfterEvent2)
+    }
+
+    @Test
+    fun `get latest, latest version present in cache`() {
+        // Given
+        every { aggregateCache.get(aggId, noteAfterEvent1.revision) }.returns(noteAfterEvent1)
+        every { aggregateCache.get(aggId, noteAfterEvent2.revision) }.returns(noteAfterEvent2)
+        every { aggregateCache.getLatest(aggId) }.returns(noteAfterEvent2)
+        every { eventStore.getEventsOfAggregate(aggId, afterRevision = noteAfterEvent2.revision) }.returns(Observable.empty())
+        val p = CachingAggregateRepository(eventStore, aggregateCache, emptyNote)
+
+        // When
+        val note = p.getLatest(aggId)
 
         // Then
         assertThat(note).isEqualTo(noteAfterEvent2)

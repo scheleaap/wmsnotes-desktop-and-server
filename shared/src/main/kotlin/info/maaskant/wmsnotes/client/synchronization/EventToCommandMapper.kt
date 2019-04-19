@@ -19,7 +19,7 @@ class EventToCommandMapper @Inject constructor() {
 
     private fun map(source: FolderEvent, lastRevision: Int): FolderCommand {
         return when (source) {
-            is FolderCreatedEvent -> CreateFolderCommand(path = source.path, lastRevision = lastRevision)
+            is FolderCreatedEvent -> CreateFolderCommand(path = source.path)
             is FolderDeletedEvent -> DeleteFolderCommand(path = source.path, lastRevision = lastRevision)
         }
     }

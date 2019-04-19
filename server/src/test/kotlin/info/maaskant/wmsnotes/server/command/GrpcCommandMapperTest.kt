@@ -133,9 +133,8 @@ internal class GrpcCommandMapperTest {
                 }.build() to MoveCommand(aggId = "note", lastRevision = 1, path = Path("el1", "el2")),
                 Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = Path("el1", "el2").toString()
-                    lastRevision = 1
                     createFolder = Command.PostCommandRequest.CreateFolderCommand.newBuilder().build()
-                }.build() to CreateFolderCommand(path = Path("el1", "el2"), lastRevision = 1),
+                }.build() to CreateFolderCommand(path = Path("el1", "el2")),
                 Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = Path("el1", "el2").toString()
                     lastRevision = 1

@@ -5,5 +5,6 @@ import io.reactivex.Observable
 
 interface AggregateRepository<T : Aggregate<T>> {
     fun get(aggId: String, revision: Int): T
+    fun getLatest(aggId: String): T
     fun getAndUpdate(aggId: String): Observable<T>
 }

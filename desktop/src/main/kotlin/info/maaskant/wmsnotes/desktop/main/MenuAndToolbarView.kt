@@ -13,6 +13,7 @@ import javafx.geometry.Orientation
 import javafx.scene.control.TextInputDialog
 import org.controlsfx.control.ToggleSwitch
 import tornadofx.*
+import java.io.File
 import java.util.*
 
 class MenuAndToolbarView : View() {
@@ -71,6 +72,12 @@ class MenuAndToolbarView : View() {
                     }
                 }
                 .ifPresent { applicationController.renameCurrentNote.onNext(it) }
+    }
+    private val importMarkdownFilesAction = StatelessAction(messageKey = "menu.file.importMarkdownFiles") {
+        val directory: File? = chooseDirectory(owner = this.currentWindow)
+        if (directory!= null) {
+            applicationController.importMarkdownFiles.onNext(directory)
+        }
     }
     private val cutAction = StatelessAction(messageKey = "menu.edit.cut", graphic = FontAwesomeIconView(FontAwesomeIcon.CUT),
             accelerator = "Shortcut+X",
@@ -142,6 +149,8 @@ class MenuAndToolbarView : View() {
                         item(createNoteAction)
                         item(deleteNoteAction)
                         item(createFolderAction)
+                        separator()
+                        item(importMarkdownFilesAction)
                         separator()
                         item(exitAction)
                     }

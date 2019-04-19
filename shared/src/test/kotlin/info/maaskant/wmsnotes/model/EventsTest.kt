@@ -18,7 +18,7 @@ internal class EventsTest {
     fun `equals and hashCode for shared fields`() {
         val o = NoteDeletedEvent(eventId = 1, aggId = aggId, revision = 1)
         val different1 = NoteDeletedEvent(eventId = 2, aggId = o.aggId, revision = o.revision)
-        val different2 = NoteDeletedEvent(eventId = o.eventId, aggId = "note-2", revision = o.revision)
+        val different2 = NoteDeletedEvent(eventId = o.eventId, aggId = "different", revision = o.revision)
         val different3 = NoteDeletedEvent(eventId = o.eventId, aggId = o.aggId, revision = 2)
 
         assertThat(o).isEqualTo(o)
@@ -166,6 +166,6 @@ internal class EventsTest {
         // When / then
         assertThat(e1).isNotEqualTo(e2)
     }
-}
 
-private data class Item(val o: Event, val sameButCopy: Event, val differents: List<Event>)
+    private data class Item(val o: Event, val sameButCopy: Event, val differents: List<Event>)
+}

@@ -4,9 +4,6 @@ import info.maaskant.wmsnotes.model.CommandHandler.Result.Handled
 import info.maaskant.wmsnotes.model.CommandHandler.Result.NotHandled
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.folder.FolderCommand
-import info.maaskant.wmsnotes.model.note.Note
-import info.maaskant.wmsnotes.model.note.NoteCommand
-import info.maaskant.wmsnotes.model.note.NoteCommandToEventMapper
 import info.maaskant.wmsnotes.utilities.Optional
 import io.mockk.clearMocks
 import io.mockk.every
@@ -16,11 +13,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class AggregateCommandHandlerTest {
+    private val aggId = "agg"
 
-    private val repository: AggregateRepository<Note> = mockk()
-    private val commandToEventMapper: NoteCommandToEventMapper = mockk()
+    private val repository: AggregateRepository<TestAggregate> = mockk()
+    private val commandToEventMapper: CommandToEventMapper<TestAggregate> = mockk()
 
-    private lateinit var handler: AggregateCommandHandler<Note>
+    private lateinit var handler: AggregateCommandHandler<TestAggregate>
 
     @BeforeEach
     fun init() {
@@ -28,37 +26,37 @@ internal class AggregateCommandHandlerTest {
                 repository,
                 commandToEventMapper
         )
-        handler = AggregateCommandHandler(NoteCommand::class, repository, commandToEventMapper)
+        handler = AggregateCommandHandler(TestAggregateCommand::class, repository, commandToEventMapper)
     }
 
     @Test
     fun default() {
         // Given
-        val command: NoteCommand = mockk()
-        val event1: Event = createEvent("note", 15)
-        val note1: Note = mockk()
-        val event2: Event = createEvent("note", 15)
-        val note2: Note = mockk()
-        every { commandToEventMapper.map(command) }.returns(event1)
-        every { repository.get("note", 14) }.returns(note1)
-        every { note1.apply(event1) }.returns(note2 to event2)
+        val command = TestAggregateCommand(aggId)
+        val eventIn: Event = createEvent(aggId, 15)
+        val eventOut: Event = createEvent(aggId, 15)
+        val agg2 = TestAggregate(aggId = aggId, revision = 15)
+        val agg1 = TestAggregate(aggId = aggId, revision = 14, application = eventIn to (agg2 to eventOut))
+        every { commandToEventMapper.map(command, lastRevision = agg1.revision) }.returns(eventIn)
+        every { repository.getLatest(aggId) }.returns(agg1)
 
         // When
         val result = handler.handle(command)
 
         // Then
-        assertThat(result).isEqualTo(Handled(Optional(event2)))
+        assertThat(result).isEqualTo(Handled(Optional(eventOut)))
     }
 
     @Test
     fun `no event returned by aggregate`() {
         // Given
-        val command: NoteCommand = mockk()
-        val event1: Event = createEvent("note", 15)
-        val note1: Note = mockk()
-        every { commandToEventMapper.map(command) }.returns(event1)
-        every { repository.get("note", 14) }.returns(note1)
-        every { note1.apply(event1) }.returns(note1 to null)
+        val command = TestAggregateCommand(aggId)
+        val event1: Event = createEvent(aggId, 15)
+        val agg1: TestAggregate = mockk()
+        every { commandToEventMapper.map(command, lastRevision = 14) }.returns(event1)
+        every { repository.getLatest(aggId) }.returns(agg1)
+        every { agg1.revision }.returns(14)
+        every { agg1.apply(event1) }.returns(agg1 to null)
 
         // When
         val result = handler.handle(command)
@@ -86,4 +84,14 @@ internal class AggregateCommandHandlerTest {
         return event
     }
 
+    private class TestAggregateCommand(aggId: String) : AggregateCommand(aggId)
+    private data class TestAggregate(override val aggId: String, override val revision: Int, val application: Pair<Event, Pair<TestAggregate, Event>>? = null) : Aggregate<TestAggregate> {
+        override fun apply(event: Event): Pair<TestAggregate, Event?> {
+            return if (event == application?.first) {
+                application.second
+            } else {
+                throw IllegalArgumentException(event.toString())
+            }
+        }
+    }
 }

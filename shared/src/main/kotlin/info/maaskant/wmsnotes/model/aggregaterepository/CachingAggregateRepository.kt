@@ -14,11 +14,17 @@ class CachingAggregateRepository<T : Aggregate<T>> @Inject constructor(
         private val emptyAggregate: T
 ) : AggregateRepository<T> {
 
-    override fun get(aggId: String, revision: Int): T {
+    override fun get(aggId: String, revision: Int): T =
+            getInternal(aggId = aggId, revision = revision)
+
+    override fun getLatest(aggId: String): T =
+            getInternal(aggId = aggId, revision = null)
+
+    private fun getInternal(aggId: String, revision: Int?): T {
         val cached: T? = aggregateCache.getLatest(aggId, lastRevision = revision)
         return eventStore
                 .getEventsOfAggregate(aggId, afterRevision = cached?.revision)
-                .filter { it.revision <= revision }
+                .filter { revision == null || it.revision <= revision }
                 .reduceWith({
                     cached ?: emptyAggregate
                 }, { note: T, event: Event -> note.apply(event).component1() })

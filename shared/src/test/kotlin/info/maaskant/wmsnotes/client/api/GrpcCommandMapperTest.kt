@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
 import info.maaskant.wmsnotes.model.folder.DeleteFolderCommand
-import info.maaskant.wmsnotes.model.folder.Folder
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import org.assertj.core.api.Assertions.assertThat
@@ -80,7 +79,7 @@ internal class GrpcCommandMapperTest {
                         path = Path("el1", "el2").toString()
                     }.build()
                 }.build(),
-                CreateFolderCommand(path = Path("el1", "el2"), lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
+                CreateFolderCommand(path = Path("el1", "el2")) to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = Path("el1", "el2").toString()
                     createFolder = Command.PostCommandRequest.CreateFolderCommand.newBuilder().build()
                 }.build(),

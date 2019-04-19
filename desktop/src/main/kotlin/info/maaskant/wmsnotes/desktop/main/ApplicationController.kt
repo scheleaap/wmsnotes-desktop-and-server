@@ -1,7 +1,9 @@
 package info.maaskant.wmsnotes.desktop.main
 
+import info.maaskant.wmsnotes.desktop.imprt.MarkdownFilesImporter
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
 import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.utilities.logger
@@ -20,7 +22,6 @@ class ApplicationController @Inject constructor(
         private val editingViewModel: EditingViewModel,
         commandProcessor: CommandProcessor
 ) {
-
     private val logger by logger()
 
     // TODO: Replace with SerializedSubject
@@ -34,6 +35,7 @@ class ApplicationController @Inject constructor(
     final val addAttachmentToCurrentNote: Subject<File> = PublishSubject.create()
     final val deleteAttachmentFromCurrentNote: Subject<String> = PublishSubject.create()
     final val saveContent: Subject<Unit> = PublishSubject.create()
+    final val importMarkdownFiles: Subject<File> = PublishSubject.create()
 
     private var i: Int = 1
 
@@ -41,14 +43,14 @@ class ApplicationController @Inject constructor(
         // Folder
         createFolder
                 .subscribeOn(Schedulers.computation())
-                .map { CreateFolderCommand(path = navigationViewModel.currentPathValue.child(it), lastRevision = 0) }
+                .map { CreateFolderCommand(path = navigationViewModel.currentPathValue.child(it)) }
                 .subscribe(commandProcessor.commands)
 
         // Note
         selectNote.subscribe(navigationViewModel.selectionRequest)
         createNote
                 .subscribeOn(Schedulers.computation())
-                .map { CreateNoteCommand(aggId = null, path = navigationViewModel.currentPathValue, title = "Note ${i++}", content = "") }
+                .map { CreateNoteCommand(aggId = Note.randomAggId(), path = navigationViewModel.currentPathValue, title = "Note ${i++}", content = "") }
                 .subscribe(commandProcessor.commands)
         deleteCurrentNote
                 .subscribeOn(Schedulers.computation())
@@ -95,6 +97,13 @@ class ApplicationController @Inject constructor(
                     )
                 }
                 .doOnNext { logger.debug("Saving content of note ${it.aggId}") }
+                .subscribe(commandProcessor.commands)
+        importMarkdownFiles
+                .subscribeOn(Schedulers.io())
+                .flatMap {
+                    MarkdownFilesImporter.load(it, basePath = Path())
+                }
+                .map { MarkdownFilesImporter.mapToCommand(it) }
                 .subscribe(commandProcessor.commands)
     }
 

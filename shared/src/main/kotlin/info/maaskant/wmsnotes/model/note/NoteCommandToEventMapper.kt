@@ -8,7 +8,7 @@ import javax.inject.Singleton
 
 @Singleton
 class NoteCommandToEventMapper : CommandToEventMapper<Note> {
-    override fun map(source: Command): Event {
+    override fun map(source: Command, lastRevision: Int): Event {
         return when (source) {
             is NoteCommand -> map(source)
             else -> throw IllegalArgumentException()
@@ -17,10 +17,7 @@ class NoteCommandToEventMapper : CommandToEventMapper<Note> {
 
     private fun map(source: NoteCommand): NoteEvent {
         return when (source) {
-            is CreateNoteCommand -> {
-                val aggId = source.aggId ?: "n-" + UUID.randomUUID().toString()
-                NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = source.path, title = source.title, content = source.content)
-            }
+            is CreateNoteCommand -> NoteCreatedEvent(eventId = 0, aggId = source.aggId, revision = 1, path = source.path, title = source.title, content = source.content)
             is DeleteNoteCommand -> NoteDeletedEvent(eventId = 0, aggId = source.aggId, revision = source.lastRevision + 1)
             is UndeleteNoteCommand -> NoteUndeletedEvent(eventId = 0, aggId = source.aggId, revision = source.lastRevision + 1)
             is AddAttachmentCommand -> AttachmentAddedEvent(eventId = 0, aggId = source.aggId, revision = source.lastRevision + 1, name = source.name, content = source.content)

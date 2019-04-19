@@ -19,8 +19,8 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 internal class PreviewAttachmentStorageTest {
-    private val note1Id = "note-1"
-    private val note2Id = "note-2"
+    private val note1Id = "n-10000000-0000-0000-0000-000000000000"
+    private val note2Id = "n-20000000-0000-0000-0000-000000000000"
     private val path = Path("path")
     private val title = "Title"
     private val content = "Text"
