@@ -7,6 +7,7 @@ server_data
 
 /build.gradle.bak
 _test
+Test.kt
 events.bak
 /0
 /1
@@ -15,3 +16,4 @@ run_server.bat
 run_desktop*.bat
 WMS Notes.bat
 /noto
+2019-04-23 analysis.txt
