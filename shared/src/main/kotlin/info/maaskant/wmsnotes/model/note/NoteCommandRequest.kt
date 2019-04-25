@@ -1,7 +1,7 @@
-package info.maaskant.wmsnotes.model
+package info.maaskant.wmsnotes.model.note
 
+import info.maaskant.wmsnotes.model.AggregateCommandRequest
 import info.maaskant.wmsnotes.model.CommandRequest.Companion.randomRequestId
-import info.maaskant.wmsnotes.model.note.NoteCommand
 
 data class NoteCommandRequest(
         override val aggId: String,

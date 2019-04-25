@@ -1,7 +1,5 @@
 package info.maaskant.wmsnotes.model
 
-import info.maaskant.wmsnotes.model.CommandRequest.Companion.randomRequestId
-
 /** A request to sequentially execute commands all related to one aggregate. */
 interface AggregateCommandRequest<CommandType : AggregateCommand> : CommandRequest {
     /** The id of the aggregate. */

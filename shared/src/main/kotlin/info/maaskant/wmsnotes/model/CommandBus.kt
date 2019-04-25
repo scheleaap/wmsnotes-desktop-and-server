@@ -1,8 +1,9 @@
 package info.maaskant.wmsnotes.model
 
+import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 
-data class CommandBus(
-        val requests: Subject<CommandRequest>,
-        val results: Subject<CommandResult>
-)
+class CommandBus {
+    val requests: Subject<CommandRequest> = PublishSubject.create<CommandRequest>().toSerialized()
+    val results: Subject<CommandResult> = PublishSubject.create<CommandResult>().toSerialized()
+}

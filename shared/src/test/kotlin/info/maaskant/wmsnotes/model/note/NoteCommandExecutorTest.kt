@@ -1,8 +1,9 @@
-package info.maaskant.wmsnotes.model
+package info.maaskant.wmsnotes.model.note
 
+import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.AggregateCommandExecutorTest
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
-import info.maaskant.wmsnotes.model.note.*
 import io.mockk.mockk
 
 internal class NoteCommandExecutorTest : AggregateCommandExecutorTest<Note, NoteCommand, NoteCommandRequest, NoteCommandToEventMapper>() {

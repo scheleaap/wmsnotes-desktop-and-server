@@ -142,17 +142,30 @@ internal abstract class AggregateCommandExecutorTest<
         verify { eventStore.appendEvent(any()) wasNot Called }
     }
 
-//    @Disabled @Test
-//    fun `only handle commands that the handler is responsible for`() {
-//        // Given
-//        val command: FolderCommand = mockk()
-//
-//        // When
-//        val result = executor.handle(command)
-//
-//        // Then
-//        assertThat(result).isEqualTo(NotHandled)
-//    }
+    @Test
+    fun canExecuteRequestType() {
+        // Given
+        val aggId = getAggId1()
+        val request: CommandRequest = createCommandRequest(aggId, emptyList(), lastRevision = null, requestId = randomRequestId())
+
+        // When
+        val result: CommandRequestType? = executor.canExecuteRequest(request)
+
+        // Then
+        assertThat(result).isEqualTo(request)
+    }
+
+    @Test
+    fun `canExecuteRequestType, different type`() {
+        // Given
+        val request: CommandRequest = mockk()
+
+        // When
+        val result: CommandRequestType? = executor.canExecuteRequest(request)
+
+        // Then
+        assertThat(result).isEqualTo(null)
+    }
 
     private fun givenAnEventCanBeStored(eventIn: Event) {
         val eventOut: Event = mockk()

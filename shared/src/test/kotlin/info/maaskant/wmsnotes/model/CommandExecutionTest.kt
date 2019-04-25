@@ -14,9 +14,7 @@ internal class CommandExecutionTest {
 
     @BeforeEach
     fun init() {
-        commandRequests = PublishSubject.create<CommandRequest>()
-        commandResults = PublishSubject.create<CommandResult>()
-        commandBus = CommandBus(commandRequests, commandResults)
+        commandBus = CommandBus()
     }
 
     @Test
