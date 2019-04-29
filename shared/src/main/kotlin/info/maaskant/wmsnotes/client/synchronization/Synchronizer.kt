@@ -137,8 +137,9 @@ class Synchronizer @Inject constructor(
 
     private fun executeCompensatingAction(compensatingAction: CompensatingAction, aggId: String): Boolean {
         for (remoteEvent in compensatingAction.newRemoteEvents) {
-            val command = eventToCommandMapper.map(remoteEvent, state.lastKnownRemoteRevisions[remoteEvent.aggId])
-            val executionResult = remoteCommandExecutor.execute(command)
+            val command = eventToCommandMapper.map(remoteEvent)
+            val lastRevision = state.lastKnownRemoteRevisions[remoteEvent.aggId] ?: 0
+            val executionResult = remoteCommandExecutor.execute(command, lastRevision)
             when (executionResult) {
                 CommandExecutor.ExecutionResult.Failure -> return false
                 is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
@@ -150,8 +151,9 @@ class Synchronizer @Inject constructor(
             }
         }
         for (localEvent in compensatingAction.newLocalEvents) {
-            val command = eventToCommandMapper.map(localEvent, state.lastKnownLocalRevisions[localEvent.aggId])
-            val executionResult = localCommandExecutor.execute(command)
+            val command = eventToCommandMapper.map(localEvent)
+            val lastRevision = state.lastKnownLocalRevisions[localEvent.aggId] ?: 0
+            val executionResult = localCommandExecutor.execute(command, lastRevision)
             when (executionResult) {
                 CommandExecutor.ExecutionResult.Failure -> return false
                 is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {

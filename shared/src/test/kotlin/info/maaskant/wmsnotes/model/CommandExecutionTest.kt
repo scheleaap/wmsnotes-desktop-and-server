@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.model
 
-import io.reactivex.subjects.PublishSubject
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -8,8 +9,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 internal class CommandExecutionTest {
-    private lateinit var commandRequests: PublishSubject<CommandRequest>
-    private lateinit var commandResults: PublishSubject<CommandResult>
+    private val timeout = CommandExecution.Duration(100, TimeUnit.MILLISECONDS)
+
     private lateinit var commandBus: CommandBus
 
     @BeforeEach
@@ -20,12 +21,12 @@ internal class CommandExecutionTest {
     @Test
     fun `executeBlocking, normal`() {
         // Given
-        val request1 = TestCommandRequest(1)
-        val request2 = TestCommandRequest(2)
-        val result1 = CommandResult.Success(1)
-        val result2 = CommandResult.Success(2)
-        val commandRequestObserver = commandRequests.test()
-        commandRequests
+        val request1 = commandRequest(1)
+        val request2 = commandRequest(2)
+        val result1 = commandResult(1)
+        val result2 = commandResult(2)
+        val commandRequestObserver = commandBus.requests.test()
+        commandBus.requests
                 .map {
                     when (it) {
                         request1 -> result1
@@ -33,10 +34,10 @@ internal class CommandExecutionTest {
                         else -> throw  IllegalArgumentException()
                     }
                 }
-                .subscribe(commandResults)
+                .subscribe(commandBus.results)
 
         // When
-        val actualResult = CommandExecution.executeBlocking(commandBus, request2, 100, TimeUnit.MILLISECONDS)
+        val actualResult = CommandExecution.executeBlocking(commandBus, request2, timeout)
 
         // Then
         assertThat(commandRequestObserver.values().toList()).isEqualTo(listOf(request2))
@@ -46,15 +47,22 @@ internal class CommandExecutionTest {
     @Test
     fun `executeBlocking, timeout`() {
         // Given
-        val request = TestCommandRequest(1)
+        val request = commandRequest(1)
 
         // When / then
         try {
-            CommandExecution.executeBlocking(commandBus, request, 100, TimeUnit.MILLISECONDS)
+            CommandExecution.executeBlocking(commandBus, request, timeout)
         } catch (e: RuntimeException) {
             assertThat(e.cause is TimeoutException)
         }
     }
 
-    private data class TestCommandRequest(override val requestId: Int) : CommandRequest
+    private fun commandResult(requestId: Int) =
+            CommandResult(requestId = requestId, commands = emptyList(), newEvents = emptyList())
+
+    private fun commandRequest(requestId: Int): CommandRequest<Command> {
+        val request = mockk<CommandRequest<Command>>()
+        every { request.requestId }.returns(requestId)
+        return request
+    }
 }

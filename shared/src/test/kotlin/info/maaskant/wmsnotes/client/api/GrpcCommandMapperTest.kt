@@ -24,6 +24,7 @@ internal class GrpcCommandMapperTest {
 
     @TestFactory
     fun test(): List<DynamicTest> {
+        val lastRevisionValue = 3
         val items = mapOf(
                 CreateNoteCommand(aggId = "note", path = Path("el1", "el2"), title = "Title", content = "Text") to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = "note"
@@ -33,48 +34,48 @@ internal class GrpcCommandMapperTest {
                         content = "Text"
                     }.build()
                 }.build(),
-                DeleteNoteCommand(aggId = "note", lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
+                DeleteNoteCommand(aggId = "note") to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = "note"
-                    lastRevision = 1
+                    lastRevision = lastRevisionValue
                     deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
                 }.build(),
-                UndeleteNoteCommand(aggId = "note", lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
+                UndeleteNoteCommand(aggId = "note") to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = "note"
-                    lastRevision = 1
+                    lastRevision = lastRevisionValue
                     undeleteNote = Command.PostCommandRequest.UndeleteNoteCommand.newBuilder().build()
                 }.build(),
-                AddAttachmentCommand(aggId = "note", lastRevision = 1, name = "att", content = "data".toByteArray()) to Command.PostCommandRequest.newBuilder().apply {
+                AddAttachmentCommand(aggId = "note", name = "att", content = "data".toByteArray()) to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = "note"
-                    lastRevision = 1
+                    lastRevision = lastRevisionValue
                     addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
                         name = "att"
                         content = ByteString.copyFrom("data".toByteArray())
                     }.build()
                 }.build(),
-                DeleteAttachmentCommand(aggId = "note", lastRevision = 1, name = "att") to Command.PostCommandRequest.newBuilder().apply {
+                DeleteAttachmentCommand(aggId = "note", name = "att") to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = "note"
-                    lastRevision = 1
+                    lastRevision = lastRevisionValue
                     deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
                         name = "att"
                     }.build()
                 }.build(),
-                ChangeContentCommand(aggId = "note", lastRevision = 1, content = "Text") to Command.PostCommandRequest.newBuilder().apply {
+                ChangeContentCommand(aggId = "note", content = "Text") to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = "note"
-                    lastRevision = 1
+                    lastRevision = lastRevisionValue
                     changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().apply {
                         content = "Text"
                     }.build()
                 }.build(),
-                ChangeTitleCommand(aggId = "note", lastRevision = 1, title = "Title") to Command.PostCommandRequest.newBuilder().apply {
+                ChangeTitleCommand(aggId = "note", title = "Title") to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = "note"
-                    lastRevision = 1
+                    lastRevision = lastRevisionValue
                     changeTitle = Command.PostCommandRequest.ChangeTitleCommand.newBuilder().apply {
                         title = "Title"
                     }.build()
                 }.build(),
-                MoveCommand(aggId = "note", lastRevision = 1, path = Path("el1", "el2")) to Command.PostCommandRequest.newBuilder().apply {
+                MoveCommand(aggId = "note", path = Path("el1", "el2")) to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = "note"
-                    lastRevision = 1
+                    lastRevision = lastRevisionValue
                     move = Command.PostCommandRequest.MoveCommand.newBuilder().apply {
                         path = Path("el1", "el2").toString()
                     }.build()
@@ -83,9 +84,9 @@ internal class GrpcCommandMapperTest {
                     aggregateId = Path("el1", "el2").toString()
                     createFolder = Command.PostCommandRequest.CreateFolderCommand.newBuilder().build()
                 }.build(),
-                DeleteFolderCommand(path = Path("el1", "el2"), lastRevision = 1) to Command.PostCommandRequest.newBuilder().apply {
+                DeleteFolderCommand(path = Path("el1", "el2")) to Command.PostCommandRequest.newBuilder().apply {
                     aggregateId = Path("el1", "el2").toString()
-                    lastRevision = 1
+                    lastRevision = lastRevisionValue
                     deleteFolder = Command.PostCommandRequest.DeleteFolderCommand.newBuilder().build()
                 }.build()
                 // Add more classes here
@@ -93,7 +94,7 @@ internal class GrpcCommandMapperTest {
         return items.map { (command, expectedRequest) ->
             DynamicTest.dynamicTest(command::class.simpleName) {
                 // When
-                val actualRequest = mapper.toGrpcPostCommandRequest(command)
+                val actualRequest = mapper.toGrpcPostCommandRequest(command, lastRevision = lastRevisionValue)
 
                 // Then
                 assertThat(actualRequest).isEqualTo(expectedRequest)

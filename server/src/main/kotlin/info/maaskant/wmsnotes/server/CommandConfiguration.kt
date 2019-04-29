@@ -1,6 +1,6 @@
-package info.maaskant.wmsnotes.desktop.app
+package info.maaskant.wmsnotes.server
 
-import info.maaskant.wmsnotes.model.AbstractCommandExecutor.Companion.connectToBus
+import info.maaskant.wmsnotes.model.AbstractCommandExecutor
 import info.maaskant.wmsnotes.model.CommandBus
 import info.maaskant.wmsnotes.model.CommandExecution
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
@@ -16,9 +16,9 @@ import org.springframework.context.annotation.Configuration
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
-@Suppress("ConstantConditionIf")
 @Configuration
 class CommandConfiguration {
+
     @Bean
     @Singleton
     fun commandExecutionTimeout() = CommandExecution.Duration(500, TimeUnit.MILLISECONDS)
@@ -30,8 +30,8 @@ class CommandConfiguration {
             noteCommandExecutor: NoteCommandExecutor
     ): CommandBus {
         val commandBus = CommandBus()
-        connectToBus(commandBus, folderCommandExecutor)
-        connectToBus(commandBus, noteCommandExecutor)
+        AbstractCommandExecutor.connectToBus(commandBus, folderCommandExecutor)
+        AbstractCommandExecutor.connectToBus(commandBus, noteCommandExecutor)
         return commandBus
     }
 

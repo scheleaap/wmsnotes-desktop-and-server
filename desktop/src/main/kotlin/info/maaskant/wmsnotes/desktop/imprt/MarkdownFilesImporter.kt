@@ -1,7 +1,7 @@
 package info.maaskant.wmsnotes.desktop.imprt
 
 import com.google.common.annotations.VisibleForTesting
-import info.maaskant.wmsnotes.model.AggregateCommand
+import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
 import info.maaskant.wmsnotes.model.note.CreateNoteCommand
@@ -102,7 +102,7 @@ class MarkdownFilesImporter @VisibleForTesting constructor(
         private fun titleFromFile(file: File) =
                 file.nameWithoutExtension
 
-        fun mapToCommand(node: ImportableNode): AggregateCommand =
+        fun mapToCommand(node: ImportableNode): Command =
                 when (node) {
                     is ImportableNode.Folder -> CreateFolderCommand(path = node.path)
                     is ImportableNode.Note -> CreateNoteCommand(Note.randomAggId(), path = node.path, title = node.title, content = node.content)

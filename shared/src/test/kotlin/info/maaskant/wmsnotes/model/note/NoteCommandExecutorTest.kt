@@ -1,16 +1,16 @@
 package info.maaskant.wmsnotes.model.note
 
 import info.maaskant.wmsnotes.model.*
-import info.maaskant.wmsnotes.model.AggregateCommandExecutorTest
+import info.maaskant.wmsnotes.model.CommandExecutorTest
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.mockk.mockk
 
-internal class NoteCommandExecutorTest : AggregateCommandExecutorTest<Note, NoteCommand, NoteCommandRequest, NoteCommandToEventMapper>() {
+internal class NoteCommandExecutorTest : CommandExecutorTest<Note, NoteCommand, NoteCommandRequest, NoteCommandToEventMapper>() {
     override fun createMockedCommandToEventMapper(): NoteCommandToEventMapper =
             mockk()
 
-    override fun createInstance(eventStore: EventStore, repository: AggregateRepository<Note>, commandToEventMapper: NoteCommandToEventMapper): AggregateCommandExecutor<Note, NoteCommand, NoteCommandRequest, NoteCommandToEventMapper> =
+    override fun createInstance(eventStore: EventStore, repository: AggregateRepository<Note>, commandToEventMapper: NoteCommandToEventMapper): CommandExecutor<Note, NoteCommand, NoteCommandRequest, NoteCommandToEventMapper> =
             NoteCommandExecutor(eventStore, repository, commandToEventMapper)
 
     override fun createMockedCommand(): NoteCommand = mockk()
@@ -31,5 +31,4 @@ internal class NoteCommandExecutorTest : AggregateCommandExecutorTest<Note, Note
 
     override fun getInitialAggregate(aggId: String): Note = Note()
             .apply(NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = Path(), title = "Title", content = "Content")).component1()
-
 }

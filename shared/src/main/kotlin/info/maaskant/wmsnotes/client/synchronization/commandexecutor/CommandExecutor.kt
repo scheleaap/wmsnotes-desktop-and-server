@@ -4,7 +4,7 @@ import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.Event
 
 interface CommandExecutor {
-    fun execute(command: Command): ExecutionResult
+    fun execute(command: Command, lastRevision:Int): ExecutionResult
 
     sealed class ExecutionResult {
         object Failure : ExecutionResult()

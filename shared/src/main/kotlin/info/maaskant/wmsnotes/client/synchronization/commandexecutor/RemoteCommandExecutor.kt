@@ -2,8 +2,8 @@ package info.maaskant.wmsnotes.client.synchronization.commandexecutor
 
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.model.Command
-import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse
+import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.utilities.logger
 import io.grpc.Deadline
 import io.grpc.Status
@@ -17,12 +17,12 @@ class RemoteCommandExecutor @Inject constructor(
 ) : CommandExecutor {
     private val logger by logger()
 
-    override fun execute(command: Command): CommandExecutor.ExecutionResult =
+    override fun execute(command: Command, lastRevision: Int): CommandExecutor.ExecutionResult =
             try {
                 command
                         .let {
-                            logger.debug("Executing command remotely: $command")
-                            grpcCommandMapper.toGrpcPostCommandRequest(it)
+                            logger.debug("Executing command remotely: ($command, $lastRevision)")
+                            grpcCommandMapper.toGrpcPostCommandRequest(it, lastRevision)
                         }
                         .let {
                             grpcCommandService
@@ -48,23 +48,23 @@ class RemoteCommandExecutor @Inject constructor(
                                 logger.debug("Command successfully executed remotely: $command")
                                 result
                             } else {
-                                logger.debug("Executing $command remotely failed: ${response.status} ${response.errorDescription}")
+                                logger.debug("Executing ($command, $lastRevision) remotely failed: ${response.status} ${response.errorDescription}")
                                 CommandExecutor.ExecutionResult.Failure
                             }
                         }
             } catch (e: StatusRuntimeException) {
                 when (e.status.code) {
                     Status.Code.UNAVAILABLE -> {
-                        logger.debug("Could not send command $command to server: server not available")
+                        logger.debug("Could not send command ($command, $lastRevision) to server: server not available")
                     }
                     Status.Code.DEADLINE_EXCEEDED -> {
-                        logger.debug("Could not send command $command to server: server is taking too long to respond")
+                        logger.debug("Could not send command ($command, $lastRevision) to server: server is taking too long to respond")
                     }
-                    else -> logger.warn("Error sending command $command to server: ${e.status.code}, ${e.status.description}")
+                    else -> logger.warn("Error sending command ($command, $lastRevision) to server: ${e.status.code}, ${e.status.description}")
                 }
                 CommandExecutor.ExecutionResult.Failure
             } catch (t: Throwable) {
-                logger.debug("Executing command $command remotely failed due to a local error", t)
+                logger.debug("Executing command ($command, $lastRevision) remotely failed due to a local error", t)
                 CommandExecutor.ExecutionResult.Failure
             }
 }

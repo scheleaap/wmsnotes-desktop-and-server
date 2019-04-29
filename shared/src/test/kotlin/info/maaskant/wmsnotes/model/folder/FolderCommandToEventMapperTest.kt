@@ -10,19 +10,17 @@ internal class FolderCommandToEventMapperTest {
 
     @TestFactory
     fun test(): List<DynamicTest> {
-        val lastRevision1 = 11
-        val lastRevision2 = 15
-        val eventRevision1 = lastRevision1 + 1
-        val eventRevision2 = lastRevision2 + 1
+        val lastRevision = 11
+        val eventRevision = lastRevision + 1
 
         val pairs = listOf(
-                CreateFolderCommand(path = path) to FolderCreatedEvent(eventId = 0, revision = eventRevision2, path = path),
-                DeleteFolderCommand(path = path, lastRevision = lastRevision1) to FolderDeletedEvent(eventId = 0, revision = eventRevision1, path = path)
+                CreateFolderCommand(path = path) to FolderCreatedEvent(eventId = 0, revision = eventRevision, path = path),
+                DeleteFolderCommand(path = path) to FolderDeletedEvent(eventId = 0, revision = eventRevision, path = path)
                 // Add more classes here
         )
         return pairs.map { (command, expectedEvent) ->
             DynamicTest.dynamicTest("${command::class.simpleName} to ${expectedEvent::class.simpleName}") {
-                assertThat(FolderCommandToEventMapper().map(command, lastRevision2)).isEqualTo(expectedEvent)
+                assertThat(FolderCommandToEventMapper().map(command, lastRevision)).isEqualTo(expectedEvent)
             }
         }
     }
