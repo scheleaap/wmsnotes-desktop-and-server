@@ -18,7 +18,7 @@ import java.io.File
 import javax.inject.Singleton
 
 @Configuration
-class AggregateRepositoryConfiguration {
+class AggregateConfiguration {
     @Bean
     @Singleton
     fun folderCache(@OtherConfiguration.AppDirectory appDirectory: File, serializer: Serializer<Folder>): AggregateCache<Folder> =

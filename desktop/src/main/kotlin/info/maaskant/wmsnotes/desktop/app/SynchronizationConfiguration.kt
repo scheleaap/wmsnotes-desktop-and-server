@@ -204,7 +204,11 @@ class SynchronizationConfiguration {
 
     @Bean
     @Singleton
-    fun localCommandExecutor(commandToCommandRequestMapper: CommandToCommandRequestMapper, commandBus: CommandBus, commandExecutionTimeout: CommandExecution.Duration) =
+    fun localCommandExecutor(
+            commandToCommandRequestMapper: CommandToCommandRequestMapper,
+            commandBus: CommandBus,
+            commandExecutionTimeout: CommandExecution.Duration
+    ) =
             LocalCommandExecutor(commandToCommandRequestMapper, commandBus, commandExecutionTimeout)
 
     @Bean
