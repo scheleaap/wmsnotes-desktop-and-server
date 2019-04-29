@@ -57,22 +57,6 @@ class MenuAndToolbarView : View() {
             enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
         applicationController.deleteCurrentNote.onNext(Unit)
     }
-    private val renameNoteAction = StatelessAction(messageKey = "menu.file.renameNote",
-            enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
-        TextInputDialog("TODO").apply {
-            title = Messages["RenameNoteDialog.title"]
-            contentText = Messages["RenameNoteDialog.contentText"]
-        }
-                .showAndWait()
-                .flatMap {
-                    if (it.isNotBlank()) {
-                        Optional.of(it)
-                    } else {
-                        Optional.empty()
-                    }
-                }
-                .ifPresent { applicationController.renameCurrentNote.onNext(it) }
-    }
     private val importMarkdownFilesAction = StatelessAction(messageKey = "menu.file.importMarkdownFiles") {
         val directory: File? = chooseDirectory(owner = this.currentWindow)
         if (directory!= null) {
@@ -178,7 +162,6 @@ class MenuAndToolbarView : View() {
                     orientation = Orientation.HORIZONTAL
                     button(createNoteAction)
                     button(deleteNoteAction)
-                    button(renameNoteAction)
                     button(createFolderAction)
                     // toggleswitch {
                     this += ToggleSwitch().apply {

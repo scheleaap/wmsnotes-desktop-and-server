@@ -4,6 +4,7 @@ import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
+import io.reactivex.Scheduler
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -88,9 +89,14 @@ abstract class AbstractCommandExecutor<
                 RequestType : CommandRequest<CommandType>,
                 MapperType : CommandToEventMapper<AggregateType>
                 >
-                connectToBus(commandBus: CommandBus, executor: CommandExecutor<AggregateType, CommandType, RequestType, MapperType>) {
+                connectToBus(
+                executor: CommandExecutor<AggregateType, CommandType, RequestType, MapperType>,
+                commandBus: CommandBus,
+                scheduler: Scheduler
+        ) {
             logger.debug("Connecting command executor $executor to command bus $commandBus")
             commandBus.requests
+                    .observeOn(scheduler)
                     .flatMap {
                         val typedRequest: RequestType? = executor.canExecuteRequest(it)
                         if (typedRequest != null) {

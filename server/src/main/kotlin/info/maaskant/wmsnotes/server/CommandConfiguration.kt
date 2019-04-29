@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.server
 
 import info.maaskant.wmsnotes.model.AbstractCommandExecutor
+import info.maaskant.wmsnotes.model.AbstractCommandExecutor.Companion.connectToBus
 import info.maaskant.wmsnotes.model.CommandBus
 import info.maaskant.wmsnotes.model.CommandExecution
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
@@ -11,6 +12,7 @@ import info.maaskant.wmsnotes.model.folder.FolderCommandToEventMapper
 import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.model.note.NoteCommandExecutor
 import info.maaskant.wmsnotes.model.note.NoteCommandToEventMapper
+import io.reactivex.schedulers.Schedulers
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.concurrent.TimeUnit
@@ -30,8 +32,8 @@ class CommandConfiguration {
             noteCommandExecutor: NoteCommandExecutor
     ): CommandBus {
         val commandBus = CommandBus()
-        AbstractCommandExecutor.connectToBus(commandBus, folderCommandExecutor)
-        AbstractCommandExecutor.connectToBus(commandBus, noteCommandExecutor)
+        connectToBus(folderCommandExecutor, commandBus, Schedulers.io())
+        connectToBus(noteCommandExecutor, commandBus, Schedulers.io())
         return commandBus
     }
 

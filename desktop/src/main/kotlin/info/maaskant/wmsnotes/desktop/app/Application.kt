@@ -1,9 +1,7 @@
 package info.maaskant.wmsnotes.desktop.app
 
-import info.maaskant.wmsnotes.client.synchronization.SynchronizationTask
 import info.maaskant.wmsnotes.desktop.design.Styles
 import info.maaskant.wmsnotes.desktop.main.MainView
-import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
 import javafx.scene.image.Image
 import javafx.stage.Stage
 import org.springframework.boot.SpringApplication
@@ -17,11 +15,8 @@ class Application : App(MainView::class, Styles::class) {
 
     private lateinit var context: ConfigurableApplicationContext
 
-    private val navigationViewModel: NavigationViewModel by lazy {
-        context.beanFactory.getBean(NavigationViewModel::class.java)
-    }
-    private val synchronizationTask: SynchronizationTask by lazy {
-        context.beanFactory.getBean(SynchronizationTask::class.java)
+    private val services: ApplicationServices by lazy {
+        context.beanFactory.getBean(ApplicationServices::class.java)
     }
 
     override fun init() {
@@ -36,22 +31,19 @@ class Application : App(MainView::class, Styles::class) {
 
     override fun start(stage: Stage) {
         super.start(stage)
-        navigationViewModel.start()
-        synchronizationTask.pause()
-        synchronizationTask.start()
+        services.start()
     }
 
     override fun stop() {
         super.stop()
-        synchronizationTask.shutdown()
+        services.stop()
         context.close()
     }
 
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            javafx.application.Application.launch(Application::class.java, *args)
+            launch(Application::class.java, *args)
         }
     }
-
 }

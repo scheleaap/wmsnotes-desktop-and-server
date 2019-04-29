@@ -1,6 +1,5 @@
 package info.maaskant.wmsnotes.desktop.app
 
-import info.maaskant.wmsnotes.model.AbstractCommandExecutor.Companion.connectToBus
 import info.maaskant.wmsnotes.model.CommandBus
 import info.maaskant.wmsnotes.model.CommandExecution
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
@@ -11,6 +10,9 @@ import info.maaskant.wmsnotes.model.folder.FolderCommandToEventMapper
 import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.model.note.NoteCommandExecutor
 import info.maaskant.wmsnotes.model.note.NoteCommandToEventMapper
+import info.maaskant.wmsnotes.model.note.policy.NoteTitlePolicy
+import info.maaskant.wmsnotes.model.note.policy.extractTitleFromContent
+import io.reactivex.schedulers.Schedulers
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.concurrent.TimeUnit
@@ -25,15 +27,7 @@ class CommandConfiguration {
 
     @Bean
     @Singleton
-    fun commandBusWithConnectedExecutors(
-            folderCommandExecutor: FolderCommandExecutor,
-            noteCommandExecutor: NoteCommandExecutor
-    ): CommandBus {
-        val commandBus = CommandBus()
-        connectToBus(commandBus, folderCommandExecutor)
-        connectToBus(commandBus, noteCommandExecutor)
-        return commandBus
-    }
+    fun commandBus() = CommandBus()
 
     @Bean
     @Singleton
@@ -55,5 +49,17 @@ class CommandConfiguration {
             eventStore,
             repository,
             NoteCommandToEventMapper()
+    )
+
+    @Bean
+    @Singleton
+    fun noteTitlePolicy(
+            commandBus: CommandBus,
+            eventStore: EventStore
+    ) = NoteTitlePolicy(
+            commandBus,
+            eventStore,
+            Schedulers.computation(),
+            titleExtractor = ::extractTitleFromContent
     )
 }

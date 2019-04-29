@@ -42,8 +42,8 @@ class MainView : View() {
                 .subscribe { (selection, isDirty) ->
                     val nodeTitle = when (selection) {
                         NavigationViewModel.Selection.Nothing -> ""
-                        is NavigationViewModel.Selection.NoteSelection -> " ${selection.title}"
-                        is NavigationViewModel.Selection.FolderSelection -> " ${selection.title}"
+                        is NavigationViewModel.Selection.NoteSelection -> " - ${selection.title}"
+                        is NavigationViewModel.Selection.FolderSelection -> " - ${selection.title}"
                     }
                     val dirtyMarker = if (isDirty) "*" else ""
                     title = "$applicationTitle$nodeTitle$dirtyMarker"

@@ -33,7 +33,6 @@ class ApplicationController @Inject constructor(
     final val selectNote: Subject<NavigationViewModel.SelectionRequest> = PublishSubject.create()
     final val createNote: Subject<Unit> = PublishSubject.create()
     final val deleteCurrentNote: Subject<Unit> = PublishSubject.create()
-    final val renameCurrentNote: Subject<String> = PublishSubject.create()
     final val addAttachmentToCurrentNote: Subject<File> = PublishSubject.create()
     final val deleteAttachmentFromCurrentNote: Subject<String> = PublishSubject.create()
     final val saveContent: Subject<Unit> = PublishSubject.create()
@@ -60,12 +59,6 @@ class ApplicationController @Inject constructor(
                 .subscribeOn(Schedulers.computation())
                 .filter { navigationViewModel.currentNoteValue != null }
                 .map { DeleteNoteCommand(navigationViewModel.currentNoteValue!!.aggId) }
-                .map { NoteCommandRequest.of(it) }
-                .subscribe(commandBus.requests)
-        renameCurrentNote
-                .subscribeOn(Schedulers.computation())
-                .filter { navigationViewModel.currentNoteValue != null }
-                .map { ChangeTitleCommand(navigationViewModel.currentNoteValue!!.aggId, title = it) }
                 .map { NoteCommandRequest.of(it) }
                 .subscribe(commandBus.requests)
         addAttachmentToCurrentNote
