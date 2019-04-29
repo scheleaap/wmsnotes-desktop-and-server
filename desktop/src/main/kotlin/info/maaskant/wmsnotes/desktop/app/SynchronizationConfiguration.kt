@@ -16,7 +16,8 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.RemoteOnlySynchron
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.*
 import info.maaskant.wmsnotes.desktop.settings.Configuration.storeInMemory
-import info.maaskant.wmsnotes.model.CommandProcessor
+import info.maaskant.wmsnotes.model.CommandBus
+import info.maaskant.wmsnotes.model.CommandExecution
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
@@ -199,8 +200,12 @@ class SynchronizationConfiguration {
 
     @Bean
     @Singleton
-    fun localCommandExecutor(commandProcessor: CommandProcessor) =
-            LocalCommandExecutor(commandProcessor)
+    fun commandToCommandRequestMapper() = CommandToCommandRequestMapper()
+
+    @Bean
+    @Singleton
+    fun localCommandExecutor(commandToCommandRequestMapper: CommandToCommandRequestMapper, commandBus: CommandBus, commandExecutionTimeout: CommandExecution.Duration) =
+            LocalCommandExecutor(commandToCommandRequestMapper, commandBus, commandExecutionTimeout)
 
     @Bean
     @Singleton

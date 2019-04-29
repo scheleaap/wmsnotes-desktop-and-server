@@ -3,14 +3,16 @@ package info.maaskant.wmsnotes.model.note
 import au.com.console.kassava.SupportsMixedTypeEquality
 import au.com.console.kassava.kotlinEquals
 import au.com.console.kassava.kotlinToString
-import info.maaskant.wmsnotes.model.AggregateCommand
+import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.Path
 import java.util.*
 
-sealed class NoteCommand(aggId: String) : AggregateCommand(aggId), SupportsMixedTypeEquality
+sealed class NoteCommand(aggId: String) : Command(aggId), SupportsMixedTypeEquality
 
 class CreateNoteCommand(aggId: String, val path: Path, val title: String, val content: String) : NoteCommand(aggId) {
-    override fun toString() = kotlinToString(properties = arrayOf(CreateNoteCommand::aggId, CreateNoteCommand::path, CreateNoteCommand::title, CreateNoteCommand::content))
+    private val contentLength = content.length
+
+    override fun toString() = kotlinToString(properties = arrayOf(CreateNoteCommand::aggId, CreateNoteCommand::path, CreateNoteCommand::title, CreateNoteCommand::contentLength))
 
     override fun canEqual(other: Any?) = other is CreateNoteCommand
 
@@ -23,38 +25,38 @@ class CreateNoteCommand(aggId: String, val path: Path, val title: String, val co
     override fun hashCode() = Objects.hash(path, title, content, super.hashCode())
 }
 
-class DeleteNoteCommand(aggId: String, val lastRevision: Int) : NoteCommand(aggId) {
-    override fun toString() = kotlinToString(properties = arrayOf(DeleteNoteCommand::aggId, DeleteNoteCommand::lastRevision))
+class DeleteNoteCommand(aggId: String) : NoteCommand(aggId) {
+    override fun toString() = kotlinToString(properties = arrayOf(DeleteNoteCommand::aggId))
 
     override fun canEqual(other: Any?) = other is DeleteNoteCommand
 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
-            properties = arrayOf(DeleteNoteCommand::lastRevision),
+            properties = arrayOf(),
             superEquals = { super.equals(other) }
     )
 
-    override fun hashCode() = Objects.hash(lastRevision, super.hashCode())
+    override fun hashCode() = Objects.hash(super.hashCode())
 }
 
-class UndeleteNoteCommand(aggId: String, val lastRevision: Int) : NoteCommand(aggId) {
-    override fun toString() = kotlinToString(properties = arrayOf(UndeleteNoteCommand::aggId, UndeleteNoteCommand::lastRevision))
+class UndeleteNoteCommand(aggId: String) : NoteCommand(aggId) {
+    override fun toString() = kotlinToString(properties = arrayOf(UndeleteNoteCommand::aggId))
 
     override fun canEqual(other: Any?) = other is UndeleteNoteCommand
 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
-            properties = arrayOf(UndeleteNoteCommand::lastRevision),
+            properties = arrayOf(),
             superEquals = { super.equals(other) }
     )
 
-    override fun hashCode() = Objects.hash(lastRevision, super.hashCode())
+    override fun hashCode() = Objects.hash(super.hashCode())
 }
 
-class AddAttachmentCommand(aggId: String, val lastRevision: Int, val name: String, val content: ByteArray) : NoteCommand(aggId) {
+class AddAttachmentCommand(aggId: String, val name: String, val content: ByteArray) : NoteCommand(aggId) {
     private val contentLength = content.size
 
-    override fun toString() = kotlinToString(properties = arrayOf(AddAttachmentCommand::aggId, AddAttachmentCommand::lastRevision, AddAttachmentCommand::name, AddAttachmentCommand::contentLength))
+    override fun toString() = kotlinToString(properties = arrayOf(AddAttachmentCommand::aggId, AddAttachmentCommand::name, AddAttachmentCommand::contentLength))
 
     override fun canEqual(other: Any?) = other is AddAttachmentCommand
 
@@ -65,7 +67,6 @@ class AddAttachmentCommand(aggId: String, val lastRevision: Int, val name: Strin
         other as AddAttachmentCommand
 
         if (aggId != other.aggId) return false
-        if (lastRevision != other.lastRevision) return false
         if (name != other.name) return false
         if (!Arrays.equals(content, other.content)) return false
 
@@ -74,65 +75,66 @@ class AddAttachmentCommand(aggId: String, val lastRevision: Int, val name: Strin
 
     override fun hashCode(): Int {
         var result = aggId.hashCode()
-        result = 31 * result + lastRevision
         result = 31 * result + name.hashCode()
         result = 31 * result + Arrays.hashCode(content)
         return result
     }
 }
 
-class DeleteAttachmentCommand(aggId: String, val lastRevision: Int, val name: String) : NoteCommand(aggId) {
-    override fun toString() = kotlinToString(properties = arrayOf(DeleteAttachmentCommand::aggId, DeleteAttachmentCommand::lastRevision, DeleteAttachmentCommand::name))
+class DeleteAttachmentCommand(aggId: String, val name: String) : NoteCommand(aggId) {
+    override fun toString() = kotlinToString(properties = arrayOf(DeleteAttachmentCommand::aggId, DeleteAttachmentCommand::name))
 
     override fun canEqual(other: Any?) = other is DeleteAttachmentCommand
 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
-            properties = arrayOf(DeleteAttachmentCommand::lastRevision, DeleteAttachmentCommand::name),
+            properties = arrayOf(DeleteAttachmentCommand::name),
             superEquals = { super.equals(other) }
     )
 
-    override fun hashCode() = Objects.hash(lastRevision, name, super.hashCode())
+    override fun hashCode() = Objects.hash(name, super.hashCode())
 }
 
-class ChangeContentCommand(aggId: String, val lastRevision: Int, val content: String) : NoteCommand(aggId) {
-    override fun toString() = kotlinToString(properties = arrayOf(ChangeContentCommand::aggId, ChangeContentCommand::lastRevision, ChangeContentCommand::content))
+class ChangeContentCommand(aggId: String, val content: String) : NoteCommand(aggId) {
+    private val contentLength = content.length
+
+    override fun toString() = kotlinToString(properties = arrayOf(ChangeContentCommand::aggId, ChangeContentCommand::contentLength))
 
     override fun canEqual(other: Any?) = other is ChangeContentCommand
 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
-            properties = arrayOf(ChangeContentCommand::lastRevision, ChangeContentCommand::content),
+            properties = arrayOf(ChangeContentCommand::content),
             superEquals = { super.equals(other) }
     )
 
-    override fun hashCode() = Objects.hash(lastRevision, content, super.hashCode())
+    override fun hashCode() = Objects.hash(content, super.hashCode())
 }
 
-class ChangeTitleCommand(aggId: String, val lastRevision: Int, val title: String) : NoteCommand(aggId) {
-    override fun toString() = kotlinToString(properties = arrayOf(ChangeTitleCommand::aggId, ChangeTitleCommand::lastRevision, ChangeTitleCommand::title))
+class ChangeTitleCommand(aggId: String, val title: String) : NoteCommand(aggId) {
+    override fun toString() = kotlinToString(properties = arrayOf(ChangeTitleCommand::aggId, ChangeTitleCommand::title))
 
     override fun canEqual(other: Any?) = other is ChangeTitleCommand
 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
-            properties = arrayOf(ChangeTitleCommand::lastRevision, ChangeTitleCommand::title),
+            properties = arrayOf(ChangeTitleCommand::title),
             superEquals = { super.equals(other) }
     )
 
-    override fun hashCode() = Objects.hash(lastRevision, title, super.hashCode())
+    override fun hashCode() = Objects.hash(title, super.hashCode())
 }
 
-class MoveCommand(aggId: String, val lastRevision: Int, val path: Path) : NoteCommand(aggId) {
-    override fun toString() = kotlinToString(properties = arrayOf(MoveCommand::aggId, MoveCommand::lastRevision, MoveCommand::path))
+class MoveCommand(aggId: String, val path: Path) : NoteCommand(aggId) {
+    override fun toString() = kotlinToString(properties = arrayOf(MoveCommand::aggId, MoveCommand::path))
 
     override fun canEqual(other: Any?) = other is MoveCommand
 
     override fun equals(other: Any?) = kotlinEquals(
             other = other,
-            properties = arrayOf(MoveCommand::lastRevision, MoveCommand::path),
+            properties = arrayOf(MoveCommand::path),
             superEquals = { super.equals(other) }
     )
 
-    override fun hashCode() = Objects.hash(lastRevision, path, super.hashCode())
+    override fun hashCode() = Objects.hash(path, super.hashCode())
 }

@@ -5,10 +5,11 @@ import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableE
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
-import info.maaskant.wmsnotes.model.*
+import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
-import info.maaskant.wmsnotes.model.note.*
+import info.maaskant.wmsnotes.model.note.CreateNoteCommand
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import io.mockk.*
 import io.reactivex.Observable
 import io.reactivex.observers.TestObserver
@@ -21,12 +22,12 @@ internal class SynchronizerTest {
     private val aggId1 = "n-10000000-0000-0000-0000-000000000000"
     private val aggId2 = "n-20000000-0000-0000-0000-000000000000"
 
-    private val localEvents: ModifiableEventRepository = mockk()
-    private val remoteEvents: ModifiableEventRepository = mockk()
+    private val localEvents: ModifiableEventRepository = mockk(name = "local")
+    private val remoteEvents: ModifiableEventRepository = mockk(name = "remote")
     private val synchronizationStrategy: SynchronizationStrategy = mockk()
     private val eventToCommandMapper: EventToCommandMapper = mockk()
-    private val localCommandExecutor: CommandExecutor = mockk()
-    private val remoteCommandExecutor: CommandExecutor = mockk()
+    private val localCommandExecutor: CommandExecutor = mockk(name = "local")
+    private val remoteCommandExecutor: CommandExecutor = mockk(name = "remote")
     private lateinit var initialState: SynchronizerState
 
     @BeforeEach
@@ -39,8 +40,8 @@ internal class SynchronizerTest {
                 localCommandExecutor,
                 remoteCommandExecutor
         )
-        every { localCommandExecutor.execute(any()) }.returns(CommandExecutor.ExecutionResult.Failure)
-        every { remoteCommandExecutor.execute(any()) }.returns(CommandExecutor.ExecutionResult.Failure)
+        every { localCommandExecutor.execute(any(), any()) }.returns(CommandExecutor.ExecutionResult.Failure)
+        every { remoteCommandExecutor.execute(any(), any()) }.returns(CommandExecutor.ExecutionResult.Failure)
         every { localEvents.removeEvent(any()) }.just(Runs)
         every { remoteEvents.removeEvent(any()) }.just(Runs)
         initialState = SynchronizerState.create()
@@ -59,8 +60,8 @@ internal class SynchronizerTest {
         // Then
         verify {
             synchronizationStrategy.resolve(any(), any(), any()).wasNot(Called)
-            localCommandExecutor.execute(any()).wasNot(Called)
-            remoteCommandExecutor.execute(any()).wasNot(Called)
+            localCommandExecutor.execute(any(), any()).wasNot(Called)
+            remoteCommandExecutor.execute(any(), any()).wasNot(Called)
         }
     }
 
@@ -83,8 +84,8 @@ internal class SynchronizerTest {
             synchronizationStrategy.resolve(aggId1, listOf(localEvent), listOf(remoteEvent))
         }
         verify(exactly = 0) {
-            localCommandExecutor.execute(any())
-            remoteCommandExecutor.execute(any())
+            localCommandExecutor.execute(any(), any())
+            remoteCommandExecutor.execute(any(), any())
             localEvents.removeEvent(any())
             remoteEvents.removeEvent(any())
         }
@@ -122,7 +123,7 @@ internal class SynchronizerTest {
         ))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent1
         )
@@ -142,8 +143,8 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2)
+            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
+            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
             localEvents.removeEvent(compensatedLocalEvent1)
             localEvents.removeEvent(compensatedLocalEvent2)
         }
@@ -181,7 +182,7 @@ internal class SynchronizerTest {
         ))
         val commandForRemoteEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent1
         )
@@ -201,8 +202,8 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            localCommandExecutor.execute(commandForRemoteEvent1)
-            localCommandExecutor.execute(commandForRemoteEvent2)
+            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
+            localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
             remoteEvents.removeEvent(compensatedRemoteEvent1)
             remoteEvents.removeEvent(compensatedRemoteEvent2)
         }
@@ -246,7 +247,7 @@ internal class SynchronizerTest {
         )))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent1
         )
@@ -258,7 +259,7 @@ internal class SynchronizerTest {
         )
         val commandForRemoteEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent1
         )
@@ -278,10 +279,10 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2)
-            localCommandExecutor.execute(commandForRemoteEvent1)
-            localCommandExecutor.execute(commandForRemoteEvent2)
+            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
+            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
+            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
+            localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
             remoteEvents.removeEvent(compensatedRemoteEvent1)
             remoteEvents.removeEvent(compensatedRemoteEvent2)
             localEvents.removeEvent(compensatedLocalEvent1)
@@ -335,7 +336,7 @@ internal class SynchronizerTest {
         )))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent1
         )
@@ -347,7 +348,7 @@ internal class SynchronizerTest {
         )
         val commandForRemoteEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent1
         )
@@ -367,12 +368,12 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1)
-            localCommandExecutor.execute(commandForRemoteEvent1)
+            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
+            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
             remoteEvents.removeEvent(compensatedRemoteEvent1)
             localEvents.removeEvent(compensatedLocalEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2)
-            localCommandExecutor.execute(commandForRemoteEvent2)
+            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
+            localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
             remoteEvents.removeEvent(compensatedRemoteEvent2)
             localEvents.removeEvent(compensatedLocalEvent2)
         }
@@ -424,7 +425,7 @@ internal class SynchronizerTest {
         )))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent1
         )
@@ -436,7 +437,7 @@ internal class SynchronizerTest {
         )
         val commandForRemoteEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor
         )
         val commandForRemoteEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
@@ -455,14 +456,14 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1)
-            localCommandExecutor.execute(commandForRemoteEvent1)
+            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
+            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
         }
         verify(exactly = 0) {
             remoteEvents.removeEvent(compensatedRemoteEvent1)
             localEvents.removeEvent(compensatedLocalEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2)
-            localCommandExecutor.execute(commandForRemoteEvent2)
+            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
+            localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
             remoteEvents.removeEvent(compensatedRemoteEvent2)
             localEvents.removeEvent(compensatedLocalEvent2)
         }
@@ -514,7 +515,7 @@ internal class SynchronizerTest {
         )))
         val commandForLocalEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor
         )
         val commandForLocalEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
@@ -525,7 +526,7 @@ internal class SynchronizerTest {
         )
         val commandForRemoteEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent1
         )
@@ -545,14 +546,14 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1)
+            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
         }
         verify(exactly = 0) {
-            localCommandExecutor.execute(commandForRemoteEvent1)
+            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
             remoteEvents.removeEvent(compensatedRemoteEvent1)
             localEvents.removeEvent(compensatedLocalEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2)
-            localCommandExecutor.execute(commandForRemoteEvent2)
+            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
+            localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
             remoteEvents.removeEvent(compensatedRemoteEvent2)
             localEvents.removeEvent(compensatedLocalEvent2)
         }
@@ -601,7 +602,7 @@ internal class SynchronizerTest {
         )))
         givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent1
         )
@@ -613,7 +614,7 @@ internal class SynchronizerTest {
         )
         givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent1
         )
@@ -631,8 +632,8 @@ internal class SynchronizerTest {
 
         // Then
         verify(exactly = 0) {
-            localCommandExecutor.execute(any())
-            remoteCommandExecutor.execute(any())
+            localCommandExecutor.execute(any(), any())
+            remoteCommandExecutor.execute(any(), any())
             localEvents.removeEvent(any())
             remoteEvents.removeEvent(any())
         }
@@ -691,25 +692,25 @@ internal class SynchronizerTest {
         )))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent1
         )
         val commandForLocalEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent2,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId2],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId2]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent2
         )
         val commandForRemoteEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent1
         )
         val commandForRemoteEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent2,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId2],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId2]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent2
         )
@@ -723,12 +724,12 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1)
-            localCommandExecutor.execute(commandForRemoteEvent1)
+            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
+            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
             remoteEvents.removeEvent(compensatedRemoteEvent1)
             localEvents.removeEvent(compensatedLocalEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2)
-            localCommandExecutor.execute(commandForRemoteEvent2)
+            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
+            localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
             remoteEvents.removeEvent(compensatedRemoteEvent2)
             localEvents.removeEvent(compensatedLocalEvent2)
         }
@@ -792,24 +793,24 @@ internal class SynchronizerTest {
         )))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent1
         )
         val commandForLocalEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent2,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId2],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId2]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent2
         )
         val commandForRemoteEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor
         )
         val commandForRemoteEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent2,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId2],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId2]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent2
         )
@@ -823,10 +824,10 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1)
-            localCommandExecutor.execute(commandForRemoteEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2)
-            localCommandExecutor.execute(commandForRemoteEvent2)
+            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
+            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
+            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
+            localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
             remoteEvents.removeEvent(compensatedRemoteEvent2)
             localEvents.removeEvent(compensatedLocalEvent2)
         }
@@ -894,24 +895,24 @@ internal class SynchronizerTest {
         )))
         val commandForLocalEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor
         )
         val commandForLocalEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent2,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId2],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId2]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent2
         )
         val commandForRemoteEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent1
         )
         val commandForRemoteEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent2,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId2],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId2]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent2
         )
@@ -925,14 +926,14 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2)
-            localCommandExecutor.execute(commandForRemoteEvent2)
+            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
+            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
+            localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
             remoteEvents.removeEvent(compensatedRemoteEvent2)
             localEvents.removeEvent(compensatedLocalEvent2)
         }
         verify(exactly = 0) {
-            localCommandExecutor.execute(commandForRemoteEvent1)
+            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
             remoteEvents.removeEvent(compensatedRemoteEvent1)
             localEvents.removeEvent(compensatedLocalEvent1)
         }
@@ -976,13 +977,13 @@ internal class SynchronizerTest {
         )))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1],
+                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
                 commandExecutor = remoteCommandExecutor,
                 newEvent = newRemoteEventForLocalEvent1
         )
         val commandForRemoteEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1],
+                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
                 commandExecutor = localCommandExecutor,
                 newEvent = newLocalEventForRemoteEvent1
         )
@@ -999,8 +1000,8 @@ internal class SynchronizerTest {
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1)
-            localCommandExecutor.execute(commandForRemoteEvent1)
+            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
+            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
             remoteEvents.removeEvent(compensatedRemoteEvent1)
             localEvents.removeEvent(compensatedLocalEvent1)
             localEvents.getEvents()
@@ -1035,20 +1036,20 @@ internal class SynchronizerTest {
         every { remoteEvents.getEvents() }.returns(events.toList().toObservable())
     }
 
-    private fun givenTheSuccessfulExecutionOfACompensatingEvent(compensatingEvent: Event, lastRevision: Int?, commandExecutor: CommandExecutor, newEvent: Event): Command {
-        val command = modelCommand(compensatingEvent.aggId, lastRevision)
-        every { eventToCommandMapper.map(compensatingEvent, lastRevision) }.returns(command)
-        every { commandExecutor.execute(command) }.returns(CommandExecutor.ExecutionResult.Success(
+    private fun givenTheSuccessfulExecutionOfACompensatingEvent(compensatingEvent: Event, lastRevision: Int, commandExecutor: CommandExecutor, newEvent: Event): Pair<Command, Int> {
+        val command = modelCommand(compensatingEvent.aggId)
+        every { eventToCommandMapper.map(compensatingEvent) }.returns(command)
+        every { commandExecutor.execute(command, lastRevision) }.returns(CommandExecutor.ExecutionResult.Success(
                 newEventMetadata = CommandExecutor.EventMetadata(newEvent)
         ))
-        return command
+        return command to lastRevision
     }
 
-    private fun givenTheFailedExecutionOfACompensatingEvent(compensatingEvent: Event, lastRevision: Int?, commandExecutor: CommandExecutor): Command {
-        val command = modelCommand(compensatingEvent.aggId, lastRevision)
-        every { eventToCommandMapper.map(compensatingEvent, lastRevision) }.returns(command)
-        every { commandExecutor.execute(command) }.returns(CommandExecutor.ExecutionResult.Failure)
-        return command
+    private fun givenTheFailedExecutionOfACompensatingEvent(compensatingEvent: Event, lastRevision: Int, commandExecutor: CommandExecutor): Pair<Command, Int> {
+        val command = modelCommand(compensatingEvent.aggId)
+        every { eventToCommandMapper.map(compensatingEvent) }.returns(command)
+        every { commandExecutor.execute(command, lastRevision) }.returns(CommandExecutor.ExecutionResult.Failure)
+        return command to lastRevision
     }
 
     companion object {
@@ -1056,13 +1057,8 @@ internal class SynchronizerTest {
             assertThat(stateObserver.values().toList()).isEmpty()
         }
 
-        internal fun modelCommand(aggId: String, lastRevision: Int? = null): Command {
-            return if (lastRevision == null) {
-                CreateNoteCommand(aggId, path = Path("path-$aggId"), title = "Title $aggId", content = "Text $aggId")
-            } else {
-                DeleteNoteCommand(aggId, lastRevision)
-            }
-
+        internal fun modelCommand(aggId: String): Command {
+            return CreateNoteCommand(aggId, path = Path("path-$aggId"), title = "Title $aggId", content = "Text $aggId")
         }
 
         internal fun modelEvent(eventId: Int, aggId: String, revision: Int): NoteCreatedEvent {

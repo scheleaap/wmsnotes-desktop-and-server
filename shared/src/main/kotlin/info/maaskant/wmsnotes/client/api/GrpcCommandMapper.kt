@@ -9,85 +9,85 @@ import info.maaskant.wmsnotes.server.command.grpc.Command
 import javax.inject.Inject
 
 class GrpcCommandMapper @Inject constructor() {
-    fun toGrpcPostCommandRequest(command: info.maaskant.wmsnotes.model.Command): Command.PostCommandRequest {
+    fun toGrpcPostCommandRequest(command: info.maaskant.wmsnotes.model.Command, lastRevision: Int): Command.PostCommandRequest {
         return when (command) {
-            is NoteCommand -> mapNoteCommand(command)
-            is FolderCommand -> mapFolderCommand(command)
+            is NoteCommand -> mapNoteCommand(command, lastRevision)
+            is FolderCommand -> mapFolderCommand(command, lastRevision)
             else -> throw IllegalArgumentException()
         }
     }
 
-    private fun mapFolderCommand(command: FolderCommand): Command.PostCommandRequest {
+    private fun mapFolderCommand(command: FolderCommand, lastRevision: Int): Command.PostCommandRequest {
         val builder = Command.PostCommandRequest.newBuilder()
         when (command) {
-            is CreateFolderCommand -> builder.apply {
-                aggregateId = command.path.toString()
-                createFolder = Command.PostCommandRequest.CreateFolderCommand.newBuilder().build()
+            is CreateFolderCommand -> builder.also {
+                it.aggregateId = command.path.toString()
+                it.createFolder = Command.PostCommandRequest.CreateFolderCommand.newBuilder().build()
             }
-            is DeleteFolderCommand -> builder.apply {
-                aggregateId = command.path.toString()
-                lastRevision = command.lastRevision
-                deleteFolder = Command.PostCommandRequest.DeleteFolderCommand.newBuilder().build()
+            is DeleteFolderCommand -> builder.also {
+                it.aggregateId = command.path.toString()
+                it.lastRevision = lastRevision
+                it.deleteFolder = Command.PostCommandRequest.DeleteFolderCommand.newBuilder().build()
             }
         }
         return builder.build()
     }
 
-    private fun mapNoteCommand(command: NoteCommand): Command.PostCommandRequest {
+    private fun mapNoteCommand(command: NoteCommand, lastRevision: Int): Command.PostCommandRequest {
         val builder = Command.PostCommandRequest.newBuilder()
         when (command) {
-            is CreateNoteCommand -> builder.apply {
-                aggregateId = command.aggId
-                createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().apply {
-                    path = command.path.toString()
-                    title = command.title
-                    content = command.content
+            is CreateNoteCommand -> builder.also {
+                it.aggregateId = command.aggId
+                it.createNote = Command.PostCommandRequest.CreateNoteCommand.newBuilder().also { it2 ->
+                    it2.path = command.path.toString()
+                    it2.title = command.title
+                    it2.content = command.content
                 }.build()
             }
-            is DeleteNoteCommand -> builder.apply {
-                aggregateId = command.aggId
-                lastRevision = command.lastRevision
-                deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
+            is DeleteNoteCommand -> builder.also {
+                it.aggregateId = command.aggId
+                it.lastRevision = lastRevision
+                it.deleteNote = Command.PostCommandRequest.DeleteNoteCommand.newBuilder().build()
             }
-            is UndeleteNoteCommand -> builder.apply {
-                aggregateId = command.aggId
-                lastRevision = command.lastRevision
-                undeleteNote = Command.PostCommandRequest.UndeleteNoteCommand.newBuilder().build()
+            is UndeleteNoteCommand -> builder.also {
+                it.aggregateId = command.aggId
+                it.lastRevision = lastRevision
+                it.undeleteNote = Command.PostCommandRequest.UndeleteNoteCommand.newBuilder().build()
             }
-            is AddAttachmentCommand -> builder.apply {
-                aggregateId = command.aggId
-                lastRevision = command.lastRevision
-                addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().apply {
-                    name = command.name
-                    content = ByteString.copyFrom(command.content)
+            is AddAttachmentCommand -> builder.also {
+                it.aggregateId = command.aggId
+                it.lastRevision = lastRevision
+                it.addAttachment = Command.PostCommandRequest.AddAttachmentCommand.newBuilder().also { it2 ->
+                    it2.name = command.name
+                    it2.content = ByteString.copyFrom(command.content)
                 }.build()
             }
-            is DeleteAttachmentCommand -> builder.apply {
-                aggregateId = command.aggId
-                lastRevision = command.lastRevision
-                deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().apply {
-                    name = command.name
+            is DeleteAttachmentCommand -> builder.also {
+                it.aggregateId = command.aggId
+                it.lastRevision = lastRevision
+                it.deleteAttachment = Command.PostCommandRequest.DeleteAttachmentCommand.newBuilder().also { it2 ->
+                    it2.name = command.name
                 }.build()
             }
-            is ChangeContentCommand -> builder.apply {
-                aggregateId = command.aggId
-                lastRevision = command.lastRevision
-                changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().apply {
-                    content = command.content
+            is ChangeContentCommand -> builder.also {
+                it.aggregateId = command.aggId
+                it.lastRevision = lastRevision
+                it.changeContent = Command.PostCommandRequest.ChangeContentCommand.newBuilder().also { it2 ->
+                    it2.content = command.content
                 }.build()
             }
-            is ChangeTitleCommand -> builder.apply {
-                aggregateId = command.aggId
-                lastRevision = command.lastRevision
-                changeTitle = Command.PostCommandRequest.ChangeTitleCommand.newBuilder().apply {
-                    title = command.title
+            is ChangeTitleCommand -> builder.also {
+                it.aggregateId = command.aggId
+                it.lastRevision = lastRevision
+                it.changeTitle = Command.PostCommandRequest.ChangeTitleCommand.newBuilder().also { it2 ->
+                    it2.title = command.title
                 }.build()
             }
-            is MoveCommand -> builder.apply {
-                aggregateId = command.aggId
-                lastRevision = command.lastRevision
-                move = Command.PostCommandRequest.MoveCommand.newBuilder().apply {
-                    path = command.path.toString()
+            is MoveCommand -> builder.also {
+                it.aggregateId = command.aggId
+                it.lastRevision = lastRevision
+                it.move = Command.PostCommandRequest.MoveCommand.newBuilder().also { it2 ->
+                    it2.path = command.path.toString()
                 }.build()
             }
         }

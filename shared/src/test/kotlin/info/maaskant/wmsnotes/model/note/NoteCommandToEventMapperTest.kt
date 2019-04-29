@@ -18,18 +18,18 @@ internal class NoteCommandToEventMapperTest {
 
         val pairs = listOf(
                 CreateNoteCommand(aggId = aggId, path = path, title = title, content = content) to NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = path, title = title, content = content),
-                DeleteNoteCommand(aggId = aggId, lastRevision = lastRevision) to NoteDeletedEvent(eventId = 0, aggId = aggId, revision = eventRevision),
-                UndeleteNoteCommand(aggId = aggId, lastRevision = lastRevision) to NoteUndeletedEvent(eventId = 0, aggId = aggId, revision = eventRevision),
-                AddAttachmentCommand(aggId = aggId, lastRevision = lastRevision, name = "att-1", content = "data".toByteArray()) to AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = eventRevision, name = "att-1", content = "data".toByteArray()),
-                DeleteAttachmentCommand(aggId = aggId, lastRevision = lastRevision, name = "att-1") to AttachmentDeletedEvent(eventId = 0, aggId = aggId, revision = eventRevision, name = "att-1"),
-                ChangeContentCommand(aggId = aggId, lastRevision = lastRevision, content = content) to ContentChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, content = content),
-                ChangeTitleCommand(aggId = aggId, lastRevision = lastRevision, title = title) to TitleChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, title = title),
-                MoveCommand(aggId = aggId, lastRevision = lastRevision, path = path) to MovedEvent(eventId = 0, aggId = aggId, revision = eventRevision, path = path)
+                DeleteNoteCommand(aggId = aggId) to NoteDeletedEvent(eventId = 0, aggId = aggId, revision = eventRevision),
+                UndeleteNoteCommand(aggId = aggId) to NoteUndeletedEvent(eventId = 0, aggId = aggId, revision = eventRevision),
+                AddAttachmentCommand(aggId = aggId, name = "att-1", content = "data".toByteArray()) to AttachmentAddedEvent(eventId = 0, aggId = aggId, revision = eventRevision, name = "att-1", content = "data".toByteArray()),
+                DeleteAttachmentCommand(aggId = aggId, name = "att-1") to AttachmentDeletedEvent(eventId = 0, aggId = aggId, revision = eventRevision, name = "att-1"),
+                ChangeContentCommand(aggId = aggId, content = content) to ContentChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, content = content),
+                ChangeTitleCommand(aggId = aggId, title = title) to TitleChangedEvent(eventId = 0, aggId = aggId, revision = eventRevision, title = title),
+                MoveCommand(aggId = aggId, path = path) to MovedEvent(eventId = 0, aggId = aggId, revision = eventRevision, path = path)
                 // Add more classes here
         )
         return pairs.map { (command, expectedEvent) ->
             DynamicTest.dynamicTest("${command::class.simpleName} to ${expectedEvent::class.simpleName}") {
-                assertThat(NoteCommandToEventMapper().map(command, lastRevision = 0)).isEqualTo(expectedEvent)
+                assertThat(NoteCommandToEventMapper().map(command, lastRevision = lastRevision)).isEqualTo(expectedEvent)
             }
         }
     }
