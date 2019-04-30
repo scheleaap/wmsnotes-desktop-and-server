@@ -1,12 +1,10 @@
 package info.maaskant.wmsnotes.model.folder
 
-import info.maaskant.wmsnotes.model.CommandExecutor
-import info.maaskant.wmsnotes.model.CommandExecutorTest
-import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.mockk.mockk
+import io.reactivex.Scheduler
 
 internal class FolderCommandExecutorTest : CommandExecutorTest<Folder, FolderCommand, FolderCommandRequest, FolderCommandToEventMapper>() {
     val path = Path("el")
@@ -14,8 +12,8 @@ internal class FolderCommandExecutorTest : CommandExecutorTest<Folder, FolderCom
     override fun createMockedCommandToEventMapper(): FolderCommandToEventMapper =
             mockk()
 
-    override fun createInstance(eventStore: EventStore, repository: AggregateRepository<Folder>, commandToEventMapper: FolderCommandToEventMapper): CommandExecutor<Folder, FolderCommand, FolderCommandRequest, FolderCommandToEventMapper> =
-            FolderCommandExecutor(eventStore, repository, commandToEventMapper)
+    override fun createInstance(commandBus: CommandBus, eventStore: EventStore, repository: AggregateRepository<Folder>, commandToEventMapper: FolderCommandToEventMapper, scheduler: Scheduler): CommandExecutor<Folder, FolderCommand, FolderCommandRequest, FolderCommandToEventMapper> =
+            FolderCommandExecutor(commandBus, eventStore, repository, commandToEventMapper, scheduler)
 
     override fun createMockedCommand(): FolderCommand = mockk()
 

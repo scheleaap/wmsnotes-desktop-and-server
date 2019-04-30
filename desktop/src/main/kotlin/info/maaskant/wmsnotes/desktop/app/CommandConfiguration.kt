@@ -32,23 +32,29 @@ class CommandConfiguration {
     @Bean
     @Singleton
     fun folderCommandExecutor(
+            commandBus: CommandBus,
             eventStore: EventStore,
             repository: AggregateRepository<Folder>
     ) = FolderCommandExecutor(
+            commandBus,
             eventStore,
             repository,
-            FolderCommandToEventMapper()
+            FolderCommandToEventMapper(),
+            Schedulers.io()
     )
 
     @Bean
     @Singleton
     fun noteCommandExecutor(
+            commandBus: CommandBus,
             eventStore: EventStore,
             repository: AggregateRepository<Note>
     ) = NoteCommandExecutor(
+            commandBus,
             eventStore,
             repository,
-            NoteCommandToEventMapper()
+            NoteCommandToEventMapper(),
+            Schedulers.io()
     )
 
     @Bean

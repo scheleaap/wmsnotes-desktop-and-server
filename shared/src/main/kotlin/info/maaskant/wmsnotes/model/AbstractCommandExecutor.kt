@@ -2,9 +2,12 @@ package info.maaskant.wmsnotes.model
 
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.utilities.ApplicationService
 import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Observable
 import io.reactivex.Scheduler
+import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.subscribeBy
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -16,10 +19,17 @@ abstract class AbstractCommandExecutor<
         >
 @Inject constructor(
         private val commandRequestClass: KClass<RequestType>,
+        private val commandBus: CommandBus,
         private val eventStore: EventStore,
         private val repository: AggregateRepository<AggregateType>,
-        private val commandToEventMapper: MapperType
-) : CommandExecutor<AggregateType, CommandType, RequestType, MapperType> {
+        private val commandToEventMapper: MapperType,
+        private val scheduler: Scheduler
+) : CommandExecutor<AggregateType, CommandType, RequestType, MapperType>, ApplicationService {
+
+    private val logger by logger()
+
+    private var disposable: Disposable? = null
+
     override fun canExecuteRequest(request: CommandRequest<*>): RequestType? {
         @Suppress("NO_REFLECTION_IN_CLASS_PATH")
         return if (commandRequestClass.isInstance(request)) {
@@ -27,6 +37,24 @@ abstract class AbstractCommandExecutor<
         } else {
             null
         }
+    }
+
+    private fun connect(): Disposable {
+        return commandBus.requests
+                .observeOn(scheduler)
+                .flatMap {
+                    val typedRequest: RequestType? = canExecuteRequest(it)
+                    if (typedRequest != null) {
+                        Observable.just(typedRequest)
+                    } else {
+                        Observable.empty()
+                    }
+                }
+                .map { execute(it) }
+                .subscribeBy(
+                        onNext = commandBus.results::onNext,
+                        onError = { logger.warn("Error", it) }
+                )
     }
 
     override fun execute(request: RequestType): CommandResult {
@@ -80,36 +108,20 @@ abstract class AbstractCommandExecutor<
         }
     }
 
-    companion object {
-        private val logger by logger()
-
-        fun <
-                AggregateType : Aggregate<AggregateType>,
-                CommandType : Command,
-                RequestType : CommandRequest<CommandType>,
-                MapperType : CommandToEventMapper<AggregateType>
-                >
-                connectToBus(
-                executor: CommandExecutor<AggregateType, CommandType, RequestType, MapperType>,
-                commandBus: CommandBus,
-                scheduler: Scheduler
-        ) {
-            logger.debug("Connecting command executor $executor to command bus $commandBus")
-            commandBus.requests
-                    .observeOn(scheduler)
-                    .flatMap {
-                        val typedRequest: RequestType? = executor.canExecuteRequest(it)
-                        if (typedRequest != null) {
-                            Observable.just(typedRequest)
-                        } else {
-                            Observable.empty()
-                        }
-                    }
-                    .map { executor.execute(it) }
-                    .doOnSubscribe {
-                        logger.debug("Connected command executor $executor to command bus $commandBus")
-                    }
-                    .subscribe(commandBus.results)
+    @Synchronized
+    override fun start() {
+        if (disposable == null) {
+            logger.debug("Starting")
+            disposable = connect()
         }
+    }
+
+    @Synchronized
+    override fun shutdown() {
+        disposable?.let {
+            logger.debug("Shutting down")
+            it.dispose()
+        }
+        disposable = null
     }
 }

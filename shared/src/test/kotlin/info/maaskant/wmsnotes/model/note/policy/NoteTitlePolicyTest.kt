@@ -46,7 +46,7 @@ internal class NoteTitlePolicyTest {
         val requestObserver = commandBus.requests.test()
         val titleExtractor: (String) -> String = { if (it == content) title else "" }
         val event = ContentChangedEvent(eventId = 0, aggId = aggId, revision = revision, content = content)
-        createInstance(titleExtractor)
+        createInstanceAndStart(titleExtractor)
 
         // When
         eventSubject.onNext(event)
@@ -61,7 +61,7 @@ internal class NoteTitlePolicyTest {
         val requestObserver = commandBus.requests.test()
         val titleExtractor: (String) -> String = { "foo" }
         val event: Event = mockk()
-        createInstance(titleExtractor)
+        createInstanceAndStart(titleExtractor)
 
         // When
         eventSubject.onNext(event)
@@ -87,12 +87,13 @@ internal class NoteTitlePolicyTest {
         assertThat(request.lastRevision).isEqualTo(revision)
     }
 
-    private fun createInstance(titleExtractor: (String) -> String) {
+    private fun createInstanceAndStart(titleExtractor: (String) -> String) {
         NoteTitlePolicy(
                 commandBus = commandBus,
                 eventStore = eventStore,
                 scheduler = scheduler,
                 titleExtractor = titleExtractor
         )
+                .start()
     }
 }

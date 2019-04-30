@@ -10,11 +10,14 @@ import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
 import info.maaskant.wmsnotes.model.note.NoteUndeletedEvent
 import info.maaskant.wmsnotes.model.note.TitleChangedEvent
+import info.maaskant.wmsnotes.utilities.ApplicationService
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
 import io.reactivex.Scheduler
+import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.rxkotlin.toObservable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
@@ -23,19 +26,23 @@ import javax.inject.Inject
 private typealias New = Pair<TreeIndexState, List<TreeIndexEvent>>
 
 class TreeIndex @Inject constructor(
-        eventStore: EventStore,
+        private val eventStore: EventStore,
         private val sortingStrategy: Comparator<Node>,
         initialState: TreeIndexState?,
-        scheduler: Scheduler
-) : StateProducer<TreeIndexState> {
+        private val scheduler: Scheduler
+) : StateProducer<TreeIndexState> , ApplicationService{
 
     private val logger by logger()
 
-    private var state: TreeIndexState = initialState ?: TreeIndexState(isInitialized = false)
-    private val stateUpdates: BehaviorSubject<TreeIndexState> = BehaviorSubject.create()
+    private var disposable: Disposable? = null
+
     private val events: PublishSubject<TreeIndexEvent> = PublishSubject.create()
 
-    init {
+    private var state: TreeIndexState = initialState ?: TreeIndexState(isInitialized = false)
+
+    private val stateUpdates: BehaviorSubject<TreeIndexState> = BehaviorSubject.create()
+
+    private fun connect(): Disposable {
         var source = eventStore.getEventUpdates()
         if (!state.isInitialized) {
             source = Observable.concat(
@@ -48,9 +55,9 @@ class TreeIndex @Inject constructor(
                     source
             )
         }
-        source
+        return source
                 .subscribeOn(scheduler)
-                .subscribe({
+                .subscribeBy(onNext = {
                     val (newState, newEvents) = when (it) {
                         is NoteCreatedEvent -> handleNoteCreated(state, it)
                         is NoteDeletedEvent -> handleNoteDeleted(state, it)
@@ -63,9 +70,9 @@ class TreeIndex @Inject constructor(
                     if (state != newState) {
                         updateState(newState)
                     }
-                    newEvents.forEach { events.onNext(it) }
+                    newEvents.forEach(events::onNext)
 
-                }, { logger.warn("Error", it) })
+                }, onError = { logger.warn("Error", it) })
     }
 
     private fun addAutomaticallyGeneratedFoldersIfNecessary(state: TreeIndexState, events: List<TreeIndexEvent>, path: Path): Triple<String?, TreeIndexState, List<TreeIndexEvent>> {
@@ -259,6 +266,22 @@ class TreeIndex @Inject constructor(
 
     override fun getStateUpdates(): Observable<TreeIndexState> = stateUpdates
 
+    @Synchronized
+    override fun start() {
+        if (disposable == null) {
+            logger.debug("Starting")
+            disposable = connect()
+        }
+    }
+
+    @Synchronized
+    override fun shutdown() {
+        disposable?.let {
+            logger.debug("Shutting down")
+            it.dispose()
+        }
+        disposable = null
+    }
     companion object {
         fun asNodeAddedEvents(): ObservableTransformer<IndexedValue<Node>, NodeAdded> {
             return ObservableTransformer { it.map { it2 -> NodeAdded(it2.value, folderIndex = it2.index) } }

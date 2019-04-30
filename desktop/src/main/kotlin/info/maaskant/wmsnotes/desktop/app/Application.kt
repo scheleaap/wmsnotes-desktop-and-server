@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.desktop.app
 
 import info.maaskant.wmsnotes.desktop.design.Styles
 import info.maaskant.wmsnotes.desktop.main.MainView
+import info.maaskant.wmsnotes.desktop.main.NavigationViewModel
 import javafx.scene.image.Image
 import javafx.stage.Stage
 import org.springframework.boot.SpringApplication
@@ -15,8 +16,12 @@ class Application : App(MainView::class, Styles::class) {
 
     private lateinit var context: ConfigurableApplicationContext
 
-    private val services: ApplicationServices by lazy {
-        context.beanFactory.getBean(ApplicationServices::class.java)
+    private val navigationViewModel: NavigationViewModel by lazy {
+        context.beanFactory.getBean(NavigationViewModel::class.java)
+    }
+
+    private val serviceManager: ApplicationServiceManager by lazy {
+        context.beanFactory.getBean(ApplicationServiceManager::class.java)
     }
 
     override fun init() {
@@ -31,12 +36,13 @@ class Application : App(MainView::class, Styles::class) {
 
     override fun start(stage: Stage) {
         super.start(stage)
-        services.start()
+        serviceManager.start()
+        navigationViewModel.start()
     }
 
     override fun stop() {
         super.stop()
-        services.stop()
+        serviceManager.shutdown()
         context.close()
     }
 

@@ -1,7 +1,5 @@
 package info.maaskant.wmsnotes.server
 
-import info.maaskant.wmsnotes.model.AbstractCommandExecutor
-import info.maaskant.wmsnotes.model.AbstractCommandExecutor.Companion.connectToBus
 import info.maaskant.wmsnotes.model.CommandBus
 import info.maaskant.wmsnotes.model.CommandExecution
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
@@ -27,35 +25,33 @@ class CommandConfiguration {
 
     @Bean
     @Singleton
-    fun commandBusWithConnectedExecutors(
-            folderCommandExecutor: FolderCommandExecutor,
-            noteCommandExecutor: NoteCommandExecutor
-    ): CommandBus {
-        val commandBus = CommandBus()
-        connectToBus(folderCommandExecutor, commandBus, Schedulers.io())
-        connectToBus(noteCommandExecutor, commandBus, Schedulers.io())
-        return commandBus
-    }
+    fun commandBus() = CommandBus()
 
     @Bean
     @Singleton
     fun folderCommandExecutor(
+            commandBus: CommandBus,
             eventStore: EventStore,
             repository: AggregateRepository<Folder>
     ) = FolderCommandExecutor(
+            commandBus,
             eventStore,
             repository,
-            FolderCommandToEventMapper()
+            FolderCommandToEventMapper(),
+            Schedulers.io()
     )
 
     @Bean
     @Singleton
     fun noteCommandExecutor(
+            commandBus: CommandBus,
             eventStore: EventStore,
             repository: AggregateRepository<Note>
     ) = NoteCommandExecutor(
+            commandBus,
             eventStore,
             repository,
-            NoteCommandToEventMapper()
+            NoteCommandToEventMapper(),
+            Schedulers.io()
     )
 }

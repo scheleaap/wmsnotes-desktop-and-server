@@ -16,12 +16,12 @@
 //
 //    private val logger by logger()
 //
-//    init {
+//    init { --> connect()
 //        bus.requests
 //                .observeOn(Schedulers.io())
 //                .doOnNext { logger.debug("Received command: $it") }
 //                .map(this::dispatchToExecutor)
-//                .subscribe(bus.results)
+//                .subscribeBy(onNext, onError, bus.results)
 //    }
 //
 //    private fun <T:Command> dispatchToExecutor(commandRequest: CommandRequest<T>): CommandResult {

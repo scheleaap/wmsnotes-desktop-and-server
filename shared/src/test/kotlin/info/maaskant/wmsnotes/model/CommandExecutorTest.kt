@@ -4,6 +4,8 @@ import info.maaskant.wmsnotes.model.CommandRequest.Companion.randomRequestId
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.mockk.*
+import io.reactivex.Scheduler
+import io.reactivex.schedulers.Schedulers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -15,6 +17,7 @@ internal abstract class CommandExecutorTest<
         RequestType : CommandRequest<CommandType>,
         MapperType : CommandToEventMapper<AggregateType>
         > {
+    private val commandBus: CommandBus = mockk()
     private val eventStore: EventStore = mockk()
     private val repository: AggregateRepository<AggregateType> = mockk()
     private lateinit var commandToEventMapper: MapperType
@@ -28,7 +31,7 @@ internal abstract class CommandExecutorTest<
                 repository
         )
         commandToEventMapper = createMockedCommandToEventMapper()
-        executor = createInstance(eventStore, repository, commandToEventMapper)
+        executor = createInstance(commandBus, eventStore, repository, commandToEventMapper, Schedulers.trampoline())
     }
 
     @Test
@@ -210,7 +213,7 @@ internal abstract class CommandExecutorTest<
     }
 
     protected abstract fun createMockedCommandToEventMapper(): MapperType
-    protected abstract fun createInstance(eventStore: EventStore, repository: AggregateRepository<AggregateType>, commandToEventMapper: MapperType): CommandExecutor<AggregateType, CommandType, RequestType, MapperType>
+    protected abstract fun createInstance(commandBus: CommandBus, eventStore: EventStore, repository: AggregateRepository<AggregateType>, commandToEventMapper: MapperType, scheduler: Scheduler): CommandExecutor<AggregateType, CommandType, RequestType, MapperType>
     protected abstract fun createMockedCommand(): CommandType
     protected abstract fun createCommandRequest(aggId: String, commands: List<CommandType>, lastRevision: Int?, requestId: Int): RequestType
     protected abstract fun createEventThatChangesAggregate(agg: AggregateType): Triple<Event, AggregateType, Event>

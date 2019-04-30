@@ -5,13 +5,14 @@ import info.maaskant.wmsnotes.model.CommandExecutorTest
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.mockk.mockk
+import io.reactivex.Scheduler
 
 internal class NoteCommandExecutorTest : CommandExecutorTest<Note, NoteCommand, NoteCommandRequest, NoteCommandToEventMapper>() {
     override fun createMockedCommandToEventMapper(): NoteCommandToEventMapper =
             mockk()
 
-    override fun createInstance(eventStore: EventStore, repository: AggregateRepository<Note>, commandToEventMapper: NoteCommandToEventMapper): CommandExecutor<Note, NoteCommand, NoteCommandRequest, NoteCommandToEventMapper> =
-            NoteCommandExecutor(eventStore, repository, commandToEventMapper)
+    override fun createInstance(commandBus: CommandBus, eventStore: EventStore, repository: AggregateRepository<Note>, commandToEventMapper: NoteCommandToEventMapper, scheduler: Scheduler): CommandExecutor<Note, NoteCommand, NoteCommandRequest, NoteCommandToEventMapper> =
+            NoteCommandExecutor(commandBus, eventStore, repository, commandToEventMapper, scheduler)
 
     override fun createMockedCommand(): NoteCommand = mockk()
 
