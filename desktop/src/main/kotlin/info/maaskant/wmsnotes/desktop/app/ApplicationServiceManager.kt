@@ -9,7 +9,7 @@ import javax.inject.Singleton
 
 @Service
 @Singleton
-class ApplicationServiceManager @Inject constructor(
+data class ApplicationServiceManager @Inject constructor(
         private val services: List<ApplicationService>,
         private val synchronizationTask: SynchronizationTask
 ) : ApplicationService {
