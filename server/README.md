@@ -7,11 +7,13 @@ For general information about WMS Notes, read the main [README](../README.md).
 ## Running
 
 ```bash
+docker pull scheleaap/wmsnotes-server && \
 docker run \
   --detach=true \
   --name wmsnotes-server \
   --restart=unless-stopped \
   --publish 6565:6565 \
+  --volume /var/wmsnotes:/home/.wmsnotes/server:rw \
   scheleaap/wmsnotes-server
 ```
 
