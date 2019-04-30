@@ -7,6 +7,7 @@ import info.maaskant.wmsnotes.model.folder.FolderCommandExecutor
 import info.maaskant.wmsnotes.model.note.NoteCommandExecutor
 import info.maaskant.wmsnotes.model.note.policy.NoteTitlePolicy
 import info.maaskant.wmsnotes.utilities.ApplicationService
+import info.maaskant.wmsnotes.utilities.logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -16,6 +17,8 @@ import javax.inject.Singleton
 
 @Configuration
 class OtherConfiguration {
+
+    private val logger by logger()
 
     @Qualifier
     @MustBeDocumented
@@ -34,6 +37,8 @@ class OtherConfiguration {
             } else {
                 File(System.getProperty("user.home")).resolve(".wmsnotes").resolve("desktop")
             }
+        }.also {
+            logger.info("Using application directory: $it")
         }
     }
 

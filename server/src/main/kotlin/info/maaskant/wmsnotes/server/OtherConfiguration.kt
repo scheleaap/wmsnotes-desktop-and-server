@@ -2,6 +2,7 @@ package info.maaskant.wmsnotes.server
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.util.Pool
+import info.maaskant.wmsnotes.utilities.logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -11,6 +12,8 @@ import javax.inject.Singleton
 
 @Configuration
 class OtherConfiguration {
+
+    private val logger by logger()
 
     @Qualifier
     @MustBeDocumented
@@ -29,6 +32,8 @@ class OtherConfiguration {
             } else {
                 File(System.getProperty("user.home")).resolve(".wmsnotes").resolve("server")
             }
+        }.also {
+            logger.info("Using application directory: $it")
         }
     }
 

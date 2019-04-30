@@ -8,6 +8,10 @@ import java.io.File
 class FileAggregateCache<T : Aggregate<T>>(private val rootDirectory: File, private val serializer: Serializer<T>) : AggregateCache<T> {
     private val logger by logger()
 
+    init {
+        logger.debug("Aggregate cache directory: $rootDirectory")
+    }
+
     override fun get(aggId: String, revision: Int): T? {
         val noteFilePath = noteFilePath(aggId, revision)
         return if (noteFilePath.exists()) {

@@ -25,6 +25,7 @@ class FileEventStore @Inject constructor(
     private val newEventSubject: Subject<Event> = PublishSubject.create()
 
     init {
+        logger.debug("Event store directory: $rootDirectory")
         // Replace with persisted value if too slow.
         try {
             val time = measureNanoTime {
