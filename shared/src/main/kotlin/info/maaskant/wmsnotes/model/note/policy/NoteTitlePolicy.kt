@@ -10,8 +10,11 @@ import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Scheduler
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class NoteTitlePolicy(
+@Singleton
+class NoteTitlePolicy @Inject constructor(
         private val commandBus: CommandBus,
         private val eventStore: EventStore,
         private val scheduler: Scheduler,

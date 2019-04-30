@@ -10,7 +10,9 @@ import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class SynchronizationTask @Inject constructor(
         private val localEventImporter: LocalEventImporter,
         private val remoteEventImporter: RemoteEventImporter,

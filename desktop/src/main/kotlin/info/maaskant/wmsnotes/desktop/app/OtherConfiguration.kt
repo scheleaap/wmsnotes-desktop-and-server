@@ -39,14 +39,6 @@ class OtherConfiguration {
 
     @Bean
     @Singleton
-    fun kryoPool(): Pool<Kryo> {
-        return object : Pool<Kryo>(true, true) {
-            override fun create(): Kryo = Kryo()
-        }
-    }
-
-    @Bean
-    @Singleton
     fun applicationServices(
             folderCommandExecutor: FolderCommandExecutor,
             noteCommandExecutor: NoteCommandExecutor,
@@ -58,4 +50,12 @@ class OtherConfiguration {
             noteTitlePolicy,
             treeIndex
     )
+
+    @Bean
+    @Singleton
+    fun kryoPool(): Pool<Kryo> {
+        return object : Pool<Kryo>(true, true) {
+            override fun create(): Kryo = Kryo()
+        }
+    }
 }

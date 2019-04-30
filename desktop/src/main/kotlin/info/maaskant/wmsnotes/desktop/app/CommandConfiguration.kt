@@ -18,7 +18,6 @@ import org.springframework.context.annotation.Configuration
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
-@Suppress("ConstantConditionIf")
 @Configuration
 class CommandConfiguration {
     @Bean

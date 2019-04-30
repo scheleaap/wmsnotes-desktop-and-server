@@ -6,7 +6,9 @@ import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.reactivex.Scheduler
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class NoteCommandExecutor @Inject constructor(
         commandBus: CommandBus,
         eventStore: EventStore,

@@ -22,15 +22,17 @@ import io.reactivex.rxkotlin.toObservable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
+import javax.inject.Singleton
 
 private typealias New = Pair<TreeIndexState, List<TreeIndexEvent>>
 
+@Singleton
 class TreeIndex @Inject constructor(
         private val eventStore: EventStore,
         private val sortingStrategy: Comparator<Node>,
         initialState: TreeIndexState?,
         private val scheduler: Scheduler
-) : StateProducer<TreeIndexState> , ApplicationService{
+) : StateProducer<TreeIndexState>, ApplicationService {
 
     private val logger by logger()
 
@@ -282,6 +284,7 @@ class TreeIndex @Inject constructor(
         }
         disposable = null
     }
+
     companion object {
         fun asNodeAddedEvents(): ObservableTransformer<IndexedValue<Node>, NodeAdded> {
             return ObservableTransformer { it.map { it2 -> NodeAdded(it2.value, folderIndex = it2.index) } }
