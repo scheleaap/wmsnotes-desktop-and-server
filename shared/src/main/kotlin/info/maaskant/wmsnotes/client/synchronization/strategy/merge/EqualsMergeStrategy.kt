@@ -12,7 +12,7 @@ class EqualsMergeStrategy : MergeStrategy {
             localNote: Note,
             remoteNote: Note
     ): MergeResult {
-        return if (localNote == remoteNote) {
+        return if (localNote.equalsIgnoringRevision(remoteNote)) {
             MergeResult.Solution(
                     newLocalEvents = emptyList(),
                     newRemoteEvents = emptyList()
