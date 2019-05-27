@@ -7,10 +7,7 @@ import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.folder.Folder.Companion.aggId
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
 import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
-import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
-import info.maaskant.wmsnotes.model.note.NoteUndeletedEvent
-import info.maaskant.wmsnotes.model.note.TitleChangedEvent
+import info.maaskant.wmsnotes.model.note.*
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -25,6 +22,7 @@ import org.junit.jupiter.api.Test
 internal class TreeIndexTest {
     private val aggId1 = "note-1"
     private val aggId2 = "note-2"
+    private val aggId3 = "note-3"
     private val rootPath = Path()
     private val title = "Title"
     private val content = "Text"
@@ -503,6 +501,57 @@ internal class TreeIndexTest {
                 IndexedValue(0, Folder(aggId = folderAggId, parentAggId = null, path = folderPath, title = folderTitle)),
                 IndexedValue(0, node3b),
                 IndexedValue(1, node2)
+        ))
+    }
+
+    @Test
+    fun moved() {
+        // Given
+        val folder1Title = "el1"
+        val folder2Title = "el2"
+        val folder1Path = Path(folder1Title)
+        val folder2Path = Path(folder2Title)
+        val folder1AggId = aggId(folder1Path)
+        val folder2AggId = aggId(folder2Path)
+        val event1 = folderCreatedEvent(folder1Path)
+        val event2 = folderCreatedEvent(folder2Path)
+        val event3 = noteCreatedEvent(aggId1, folder1Path, "Title 1")
+        val event4 = noteCreatedEvent(aggId2, folder2Path, "Title 2")
+        val event5 = noteCreatedEvent(aggId3, folder1Path, "Title 3")
+        val event6 = MovedEvent(eventId = 0, aggId = aggId3, revision = 0, path = folder2Path)
+        val node3 = Note(aggId = aggId1, parentAggId = folder1AggId, path = folder1Path, title = "Title 1")
+        val node4 = Note(aggId = aggId2, parentAggId = folder2AggId, path = folder2Path, title = "Title 2")
+        val node5a = Note(aggId = aggId3, parentAggId = folder1AggId, path = folder1Path, title = "Title 3")
+        val node5b = Note(aggId = aggId3, parentAggId = folder2AggId, path = folder2Path, title = "Title 3")
+        every { sortingStrategy.compare(node3, node5a) }.returns(-1)
+        every { sortingStrategy.compare(node5a, node3) }.returns(1)
+        every { sortingStrategy.compare(node4, node5b) }.returns(-1)
+        every { sortingStrategy.compare(node5b, node4) }.returns(1)
+        val index = createInstanceAndStart()
+        eventUpdatesSubject.onNext(event1)
+        eventUpdatesSubject.onNext(event2)
+        eventUpdatesSubject.onNext(event3)
+        eventUpdatesSubject.onNext(event4)
+        eventUpdatesSubject.onNext(event5)
+        val eventObserver = index.getEvents().test()
+
+        // When
+        eventUpdatesSubject.onNext(event6)
+        val initializationObserver = index.getNodes().test()
+
+        // Then
+        eventObserver.assertNoErrors()
+        assertThat(eventObserver.values().toList()).isEqualTo(listOf(
+                NodeRemoved(node5a),
+                NodeAdded(node5b, 1)
+        ))
+        initializationObserver.assertNoErrors()
+        assertThat(initializationObserver.values().toList()).isEqualTo(listOf(
+                IndexedValue(0, Folder(aggId = folder1AggId, parentAggId = null, path = folder1Path, title = folder1Title)),
+                IndexedValue(1, Folder(aggId = folder2AggId, parentAggId = null, path = folder2Path, title = folder2Title)),
+                IndexedValue(0, node3),
+                IndexedValue(0, node4),
+                IndexedValue(1, node5b)
         ))
     }
 

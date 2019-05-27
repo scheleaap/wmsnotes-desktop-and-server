@@ -6,10 +6,7 @@ import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.folder.Folder.Companion.aggId
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
 import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
-import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.note.NoteDeletedEvent
-import info.maaskant.wmsnotes.model.note.NoteUndeletedEvent
-import info.maaskant.wmsnotes.model.note.TitleChangedEvent
+import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.utilities.ApplicationService
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
@@ -66,6 +63,7 @@ class TreeIndex @Inject constructor(
                         is NoteUndeletedEvent -> handleNoteUndeleted(state, it)
                         is FolderCreatedEvent -> handleFolderCreated(state, it)
                         is FolderDeletedEvent -> handleFolderDeleted(state, it)
+                        is MovedEvent -> handleMoved(state,it)
                         is TitleChangedEvent -> handleTitleChanged(state, it)
                         else -> state to emptyList()
                     }
@@ -183,6 +181,13 @@ class TreeIndex @Inject constructor(
 
     private fun handleFolderDeleted(state: TreeIndexState, it: FolderDeletedEvent) =
             removeFolder(state, it.path)
+
+    private fun handleMoved(state: TreeIndexState, it: MovedEvent): New {
+        val (newState1, newEvents1) = removeNote(state, it.aggId)
+        val oldNote: Note = state.getNote(aggId = it.aggId)
+        val (newState2, newEvents2) = addNote(newState1, it.aggId, it.path, oldNote.title)
+        return newState2 to newEvents1 + newEvents2
+    }
 
     private fun handleNoteCreated(state: TreeIndexState, it: NoteCreatedEvent) =
             addNote(state, aggId = it.aggId, path = it.path, title = it.title)
