@@ -4,6 +4,7 @@ import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.reactivex.Observable
+import io.reactivex.rxkotlin.toObservable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import java.io.File
@@ -43,6 +44,13 @@ class FileEventStore @Inject constructor(
         } catch (e: NoSuchElementException) {
         }
     }
+
+    fun getAggregateIds(): Observable<String> =
+            rootDirectory
+                    .walkTopDown()
+                    .filter { it.isDirectory && it != rootDirectory }
+                    .map { it.name }
+                    .toObservable()
 
     override fun getEvents(afterEventId: Int?): Observable<Event> {
         // TODO Use caching instead of reading all files

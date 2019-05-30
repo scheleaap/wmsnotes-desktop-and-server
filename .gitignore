@@ -4,7 +4,7 @@ build
 out
 desktop_data
 server_data
-logs/
+/logs/
 /build.gradle.bak
 _test
 Test.kt
@@ -18,3 +18,4 @@ WMS Notes.bat
 /noto
 2019-04-23 analysis.txt
 *.pdn
+/tmp/

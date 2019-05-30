@@ -3,6 +3,7 @@ package info.maaskant.wmsnotes.model.eventstore
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.Path
+import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.mockk.clearMocks
 import io.mockk.every
@@ -14,6 +15,7 @@ import java.io.File
 import java.util.*
 
 internal class FileEventStoreTest : EventStoreTest() {
+    private val noteId = "n-10000000-0000-0000-0000-000000000000"
 
     private lateinit var tempDir: File
     private var eventSerializer: Serializer<Event> = mockk()
@@ -43,8 +45,25 @@ internal class FileEventStoreTest : EventStoreTest() {
         assertThat(expectedEventFile.readBytes()).isEqualTo(eventSerializer.serialize(eventOut))
     }
 
+    @Test
+    fun getAggregateIds() {
+        // Given
+        val event1 = NoteCreatedEvent(eventId = 0, aggId = noteId, revision = 1, path = Path("path"), title = "Title", content = "Text")
+        val event2 = FolderCreatedEvent(eventId = 0,  revision = 1, path = Path("path"))
+        val r = createInstance()
+        r.appendEvent(event1)
+        r.appendEvent(event2)
 
-    override fun createInstance(): EventStore {
+        // When
+        val observer = r.getAggregateIds().test()
+
+        // Then
+        observer.assertComplete()
+        observer.assertNoErrors()
+        assertThat(observer.values().toSet()).isEqualTo(setOf(event1.aggId, event2.aggId))
+    }
+
+    override fun createInstance(): FileEventStore {
         return FileEventStore(tempDir, eventSerializer)
     }
 

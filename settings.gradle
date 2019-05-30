@@ -1,5 +1,6 @@
 rootProject.name = 'wmsnotes'
 
+include 'debug'
 include 'desktop'
 include 'server'
 include 'shared'
