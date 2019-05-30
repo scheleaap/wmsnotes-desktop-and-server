@@ -90,7 +90,7 @@ internal class LocalCommandExecutorTest {
         // Given
         val lastRevision = 10
         val command = modelCommand(aggId = 1)
-        every { commandToCommandRequestMapper.map(any<Command>(), any()) }.throws(IllegalArgumentException())
+        every { commandToCommandRequestMapper.map(any(), any(), any()) }.throws(IllegalArgumentException())
         val executor = createExecutor()
 
         // When
@@ -125,9 +125,10 @@ internal class LocalCommandExecutorTest {
         val request = NoteCommandRequest(
                 aggId = command.aggId,
                 commands = listOf(command),
-                lastRevision = lastRevision
+                lastRevision = lastRevision,
+                origin = CommandOrigin.REMOTE
         )
-        every { commandToCommandRequestMapper.map(command, lastRevision) }.returns(request)
+        every { commandToCommandRequestMapper.map(command, lastRevision, CommandOrigin.REMOTE) }.returns(request)
         return request
     }
 
@@ -136,7 +137,8 @@ internal class LocalCommandExecutorTest {
         val result = CommandResult(
                 requestId = request.requestId,
                 commands = request.commands.map { it to success },
-                newEvents = newEvents
+                newEvents = newEvents,
+                origin = CommandOrigin.REMOTE
         )
         commandBus.requests
                 .map {

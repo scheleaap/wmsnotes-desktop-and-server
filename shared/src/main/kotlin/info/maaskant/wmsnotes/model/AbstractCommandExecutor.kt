@@ -69,14 +69,16 @@ abstract class AbstractCommandExecutor<
             CommandResult(
                     requestId = request.requestId,
                     commands = request.commands.map { it to true },
-                    newEvents = newEvents
+                    newEvents = newEvents,
+                    origin = request.origin
             )
         } catch (t: Throwable) {
             logger.info("Error while process command request $request", t)
             CommandResult(
                     requestId = request.requestId,
                     commands = request.commands.map { it to false },
-                    newEvents = emptyList()
+                    newEvents = emptyList(),
+                    origin = request.origin
             )
         }
     }

@@ -36,7 +36,7 @@ private fun dump(rootDirectory: File) {
 }
 
 fun writeNoteToFile(note: Note, file: File) {
-    if (note.attachments.isNotEmpty()) TODO()
+    if (note.attachments.isNotEmpty()) throw NotImplementedError()
     val content = """---
 aggId: ${note.aggId}
 exists: ${note.exists}

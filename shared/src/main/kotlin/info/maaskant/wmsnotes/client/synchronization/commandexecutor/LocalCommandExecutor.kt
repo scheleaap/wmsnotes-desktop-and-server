@@ -6,6 +6,7 @@ import info.maaskant.wmsnotes.client.synchronization.commandexecutor.CommandExec
 import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.CommandBus
 import info.maaskant.wmsnotes.model.CommandExecution
+import info.maaskant.wmsnotes.model.CommandOrigin.REMOTE
 import info.maaskant.wmsnotes.utilities.logger
 import javax.inject.Inject
 
@@ -21,7 +22,7 @@ class LocalCommandExecutor @Inject constructor(
             command
                     .let {
                         logger.debug("Executing command locally: ($command, $lastRevision)")
-                        val commandRequest = commandToCommandRequestMapper.map(command, lastRevision)
+                        val commandRequest = commandToCommandRequestMapper.map(command, lastRevision, origin = REMOTE)
                         logger.debug("Mapped command ($command, $lastRevision) to command request $commandRequest")
                         CommandExecution.executeBlocking(commandBus, commandRequest, timeout)
                     }

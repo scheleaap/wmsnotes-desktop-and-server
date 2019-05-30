@@ -17,8 +17,8 @@ internal class FolderCommandExecutorTest : CommandExecutorTest<Folder, FolderCom
 
     override fun createMockedCommand(): FolderCommand = mockk()
 
-    override fun createCommandRequest(aggId: String, commands: List<FolderCommand>, lastRevision: Int?, requestId: Int): FolderCommandRequest =
-            FolderCommandRequest(aggId, commands, lastRevision, requestId)
+    override fun createCommandRequest(aggId: String, commands: List<FolderCommand>, lastRevision: Int?, requestId: Int, origin: CommandOrigin): FolderCommandRequest =
+            FolderCommandRequest(aggId, commands, lastRevision, requestId, origin)
 
     override fun createEventThatChangesAggregate(agg: Folder): Triple<Event, Folder, Event> {
         val eventIn = if (agg.exists) {

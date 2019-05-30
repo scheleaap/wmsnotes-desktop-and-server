@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlin.random.Random
 
 internal class CommandExecutionTest {
     private val timeout = CommandExecution.Duration(100, TimeUnit.MILLISECONDS)
@@ -58,11 +59,16 @@ internal class CommandExecutionTest {
     }
 
     private fun commandResult(requestId: Int) =
-            CommandResult(requestId = requestId, commands = emptyList(), newEvents = emptyList())
+            CommandResult(requestId = requestId, commands = emptyList(), newEvents = emptyList(), origin = randomOrigin())
 
     private fun commandRequest(requestId: Int): CommandRequest<Command> {
         val request = mockk<CommandRequest<Command>>()
         every { request.requestId }.returns(requestId)
         return request
+    }
+
+    private fun randomOrigin(): CommandOrigin {
+        val values = CommandOrigin.values()
+        return values[Random.nextInt(values.size)]
     }
 }

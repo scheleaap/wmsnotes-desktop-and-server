@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.server.command
 
+import info.maaskant.wmsnotes.model.CommandOrigin.REMOTE
 import info.maaskant.wmsnotes.model.CommandRequest
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
@@ -24,19 +25,22 @@ class GrpcCommandMapper {
                             title = request.createNote.title,
                             content = request.createNote.content
                     ),
-                    lastRevision = null
+                    lastRevision = null,
+                    origin = REMOTE
             )
             Command.PostCommandRequest.CommandCase.DELETE_NOTE -> NoteCommandRequest.of(
                     command = DeleteNoteCommand(
                             aggId = request.aggregateId
                     ),
-                    lastRevision = request.lastRevision
+                    lastRevision = request.lastRevision,
+                    origin = REMOTE
             )
             Command.PostCommandRequest.CommandCase.UNDELETE_NOTE -> NoteCommandRequest.of(
                     command = UndeleteNoteCommand(
                             aggId = request.aggregateId
                     ),
-                    lastRevision = request.lastRevision
+                    lastRevision = request.lastRevision,
+                    origin = REMOTE
             )
             Command.PostCommandRequest.CommandCase.ADD_ATTACHMENT -> NoteCommandRequest.of(
                     command = AddAttachmentCommand(
@@ -44,47 +48,54 @@ class GrpcCommandMapper {
                             name = request.addAttachment.name.also { if (it.isEmpty()) throw BadRequestException("Field 'name' not set") },
                             content = request.addAttachment.content.toByteArray()
                     ),
-                    lastRevision = request.lastRevision
+                    lastRevision = request.lastRevision,
+                    origin = REMOTE
             )
             Command.PostCommandRequest.CommandCase.DELETE_ATTACHMENT -> NoteCommandRequest.of(
                     command = DeleteAttachmentCommand(
                             aggId = request.aggregateId,
                             name = request.deleteAttachment.name.also { if (it.isEmpty()) throw BadRequestException("Field 'name' not set") }
                     ),
-                    lastRevision = request.lastRevision
+                    lastRevision = request.lastRevision,
+                    origin = REMOTE
             )
             Command.PostCommandRequest.CommandCase.CHANGE_CONTENT -> NoteCommandRequest.of(
                     command = ChangeContentCommand(
                             aggId = request.aggregateId,
                             content = request.changeContent.content
                     ),
-                    lastRevision = request.lastRevision
+                    lastRevision = request.lastRevision,
+                    origin = REMOTE
             )
             Command.PostCommandRequest.CommandCase.CHANGE_TITLE -> NoteCommandRequest.of(
                     command = ChangeTitleCommand(
                             aggId = request.aggregateId,
                             title = request.changeTitle.title
                     ),
-                    lastRevision = request.lastRevision
+                    lastRevision = request.lastRevision,
+                    origin = REMOTE
             )
             Command.PostCommandRequest.CommandCase.MOVE -> NoteCommandRequest.of(
                     command = MoveCommand(
                             aggId = request.aggregateId,
                             path = Path.from(request.move.path)
                     ),
-                    lastRevision = request.lastRevision
+                    lastRevision = request.lastRevision,
+                    origin = REMOTE
             )
             Command.PostCommandRequest.CommandCase.CREATE_FOLDER -> FolderCommandRequest.of(
                     command = CreateFolderCommand(
                             path = Path.from(request.aggregateId)
                     ),
-                    lastRevision = request.lastRevision
+                    lastRevision = request.lastRevision,
+                    origin = REMOTE
             )
             Command.PostCommandRequest.CommandCase.DELETE_FOLDER -> FolderCommandRequest.of(
                     command = DeleteFolderCommand(
                             path = Path.from(request.aggregateId)
                     ),
-                    lastRevision = request.lastRevision
+                    lastRevision = request.lastRevision,
+                    origin = REMOTE
             )
         }
     }

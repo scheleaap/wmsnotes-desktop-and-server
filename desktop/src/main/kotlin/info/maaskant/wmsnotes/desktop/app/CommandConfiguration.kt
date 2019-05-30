@@ -58,13 +58,10 @@ class CommandConfiguration {
 
     @Bean
     @Singleton
-    fun noteTitlePolicy(
-            commandBus: CommandBus,
-            eventStore: EventStore
-    ) = NoteTitlePolicy(
-            commandBus,
-            eventStore,
-            Schedulers.computation(),
-            titleExtractor = ::extractTitleFromContent
-    )
+    fun noteTitlePolicy(commandBus: CommandBus) =
+            NoteTitlePolicy(
+                    commandBus,
+                    Schedulers.computation(),
+                    titleExtractor = ::extractTitleFromContent
+            )
 }

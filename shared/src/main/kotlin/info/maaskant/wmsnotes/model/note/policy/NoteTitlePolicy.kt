@@ -1,6 +1,8 @@
 package info.maaskant.wmsnotes.model.note.policy
 
 import info.maaskant.wmsnotes.model.CommandBus
+import info.maaskant.wmsnotes.model.CommandOrigin
+import info.maaskant.wmsnotes.model.CommandOrigin.*
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.model.note.ChangeTitleCommand
 import info.maaskant.wmsnotes.model.note.ContentChangedEvent
@@ -10,13 +12,13 @@ import info.maaskant.wmsnotes.utilities.logger
 import io.reactivex.Scheduler
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.rxkotlin.toObservable
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class NoteTitlePolicy @Inject constructor(
         private val commandBus: CommandBus,
-        private val eventStore: EventStore,
         private val scheduler: Scheduler,
         private val titleExtractor: (content: String) -> String?
 ) : ApplicationService {
@@ -26,8 +28,10 @@ class NoteTitlePolicy @Inject constructor(
     private var disposable: Disposable? = null
 
     private fun connect(): Disposable {
-        return eventStore.getEventUpdates()
+        return commandBus.results
                 .observeOn(scheduler)
+                .filter { it.origin == LOCAL }
+                .flatMap { it.newEvents.toObservable() }
                 .filter { it is ContentChangedEvent }
                 .map { it as ContentChangedEvent }
                 .map { it to titleExtractor(it.content) }
@@ -39,7 +43,8 @@ class NoteTitlePolicy @Inject constructor(
                                     aggId = event.aggId,
                                     title = title!!
                             ),
-                            lastRevision = event.revision
+                            lastRevision = event.revision,
+                            origin = LOCAL
                     )
                 }
                 .subscribeBy(

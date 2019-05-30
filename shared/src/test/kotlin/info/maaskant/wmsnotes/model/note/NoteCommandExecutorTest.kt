@@ -1,7 +1,6 @@
 package info.maaskant.wmsnotes.model.note
 
 import info.maaskant.wmsnotes.model.*
-import info.maaskant.wmsnotes.model.CommandExecutorTest
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.mockk.mockk
@@ -16,8 +15,8 @@ internal class NoteCommandExecutorTest : CommandExecutorTest<Note, NoteCommand, 
 
     override fun createMockedCommand(): NoteCommand = mockk()
 
-    override fun createCommandRequest(aggId: String, commands: List<NoteCommand>, lastRevision: Int?, requestId: Int): NoteCommandRequest =
-            NoteCommandRequest(aggId, commands, lastRevision, requestId)
+    override fun createCommandRequest(aggId: String, commands: List<NoteCommand>, lastRevision: Int?, requestId: Int, origin: CommandOrigin): NoteCommandRequest =
+            NoteCommandRequest(aggId, commands, lastRevision, requestId, origin)
 
     override fun createEventThatChangesAggregate(agg: Note): Triple<Event, Note, Event> {
         val eventIn = TitleChangedEvent(eventId = 0, aggId = agg.aggId, revision = agg.revision + 1, title = agg.title + "+")

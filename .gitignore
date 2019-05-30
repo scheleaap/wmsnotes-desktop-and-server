@@ -4,7 +4,7 @@ build
 out
 desktop_data
 server_data
-/logs/
+logs/
 /build.gradle.bak
 _test
 Test.kt

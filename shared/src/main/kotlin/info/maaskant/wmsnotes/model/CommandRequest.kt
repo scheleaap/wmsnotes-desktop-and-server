@@ -11,10 +11,13 @@ interface CommandRequest<out CommandType : Command> {
     val aggId: String
 
     /** The commands to execute. All commands must refer to the same aggregate. */
-    val commands: List< CommandType>
+    val commands: List<CommandType>
 
     /** The last known revision of the aggregate. Used for optimistic locking. */
     val lastRevision: Int?
+
+    /** The origin of the commands to execute. */
+    val origin: CommandOrigin
 
     companion object {
         fun randomRequestId() = Random.Default.nextInt()

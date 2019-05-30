@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.server.command
 
 import com.google.protobuf.ByteString
+import info.maaskant.wmsnotes.model.CommandOrigin.REMOTE
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
 import info.maaskant.wmsnotes.model.folder.DeleteFolderCommand
@@ -156,6 +157,7 @@ internal class GrpcCommandMapperTest {
                 assertThat(commandRequest.aggId).isEqualTo(expectedCommand.aggId)
                 assertThat(commandRequest.commands).isEqualTo(listOf(expectedCommand))
                 assertThat(commandRequest.lastRevision).isEqualTo(expectedLastRevision)
+                assertThat(commandRequest.origin).isEqualTo(REMOTE)
             }
         }
     }
@@ -191,5 +193,4 @@ internal class GrpcCommandMapperTest {
             }
         }
     }
-
 }

@@ -1,5 +1,7 @@
 package info.maaskant.wmsnotes.model
 
+import info.maaskant.wmsnotes.model.CommandOrigin.LOCAL
+import info.maaskant.wmsnotes.model.CommandOrigin.REMOTE
 import info.maaskant.wmsnotes.model.CommandRequest.Companion.randomRequestId
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
@@ -9,8 +11,9 @@ import io.reactivex.schedulers.Schedulers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
-@Suppress("LocalVariableName")
+@Suppress("LocalVariableName", "RemoveRedundantBackticks")
 internal abstract class CommandExecutorTest<
         AggregateType : Aggregate<AggregateType>,
         CommandType : Command,
@@ -39,7 +42,8 @@ internal abstract class CommandExecutorTest<
         // Given
         val aggId = getAggId1()
         val command1 = createMockedCommand()
-        val request = createCommandRequest(aggId, listOf(command1), lastRevision = null, requestId = randomRequestId())
+        val origin = randomOrigin()
+        val request = createCommandRequest(aggId, listOf(command1), lastRevision = null, requestId = randomRequestId(), origin = origin)
         val agg1 = getInitialAggregate(aggId)
         val (event1Before, _, event1Applied) = createEventThatChangesAggregate(agg1)
         givenAStoredAggregate(aggId, agg1)
@@ -53,7 +57,8 @@ internal abstract class CommandExecutorTest<
         assertThat(result).isEqualTo(CommandResult(
                 requestId = request.requestId,
                 commands = listOf(command1 to true),
-                newEvents = listOf(event1Stored)
+                newEvents = listOf(event1Stored),
+                origin = origin
         ))
         verifySequence { eventStore.appendEvent(event1Applied) }
     }
@@ -63,7 +68,7 @@ internal abstract class CommandExecutorTest<
         // Given
         val aggId = getAggId1()
         val command1 = createMockedCommand()
-        val request = createCommandRequest(aggId, listOf(command1), lastRevision = null, requestId = randomRequestId())
+        val request = createCommandRequest(aggId, listOf(command1), lastRevision = null, requestId = randomRequestId(), origin = LOCAL)
         val agg1 = getInitialAggregate(aggId)
         val event1Before = createEventThatDoesNotChangeAggregate(agg1)
         givenAStoredAggregate(aggId, agg1)
@@ -77,7 +82,8 @@ internal abstract class CommandExecutorTest<
         assertThat(result).isEqualTo(CommandResult(
                 requestId = request.requestId,
                 commands = listOf(command1 to true),
-                newEvents = emptyList()
+                newEvents = emptyList(),
+                origin = LOCAL
         ))
         verify { eventStore.appendEvent(any()) wasNot Called }
     }
@@ -88,7 +94,7 @@ internal abstract class CommandExecutorTest<
         val aggId = getAggId1()
         val command1 = createMockedCommand()
         val command2 = createMockedCommand()
-        val request = createCommandRequest(aggId, listOf(command1, command2), lastRevision = null, requestId = randomRequestId())
+        val request = createCommandRequest(aggId, listOf(command1, command2), lastRevision = null, requestId = randomRequestId(), origin = LOCAL)
         val agg1 = getInitialAggregate(aggId)
         val (event1Before, agg2, event1Applied) = createEventThatChangesAggregate(agg1)
         val (event2Before, _, event2Applied) = createEventThatChangesAggregate(agg2)
@@ -105,7 +111,8 @@ internal abstract class CommandExecutorTest<
         assertThat(result).isEqualTo(CommandResult(
                 requestId = request.requestId,
                 commands = listOf(command1 to true, command2 to true),
-                newEvents = listOf(event1Stored, event2Stored)
+                newEvents = listOf(event1Stored, event2Stored),
+                origin = LOCAL
         ))
         verifySequence {
             eventStore.appendEvent(event1Applied)
@@ -119,7 +126,7 @@ internal abstract class CommandExecutorTest<
         val aggId = getAggId1()
         val command1 = createMockedCommand()
         val command2 = createMockedCommand()
-        val request = createCommandRequest(aggId, listOf(command1, command2), lastRevision = null, requestId = randomRequestId())
+        val request = createCommandRequest(aggId, listOf(command1, command2), lastRevision = null, requestId = randomRequestId(), origin = LOCAL)
         val agg1 = getInitialAggregate(aggId)
         val (event1Before, agg2, event1Applied) = createEventThatChangesAggregate(agg1)
         val (event2Before, _, event2Applied) = createEventThatChangesAggregate(agg2)
@@ -136,7 +143,8 @@ internal abstract class CommandExecutorTest<
         assertThat(result).isEqualTo(CommandResult(
                 requestId = request.requestId,
                 commands = listOf(command1 to false, command2 to false),
-                newEvents = emptyList()
+                newEvents = emptyList(),
+                origin = LOCAL
         ))
         verifySequence { eventStore.appendEvent(event1Applied) }
     }
@@ -146,7 +154,7 @@ internal abstract class CommandExecutorTest<
         // Given
         val aggId = getAggId1()
         val command1 = createMockedCommand()
-        val request = createCommandRequest(aggId, listOf(command1), lastRevision = 15, requestId = randomRequestId())
+        val request = createCommandRequest(aggId, listOf(command1), lastRevision = 15, requestId = randomRequestId(), origin = LOCAL)
         val agg1 = getInitialAggregate(aggId)
         val (event1Before, _, event1Applied) = createEventThatChangesAggregate(agg1, lastRevision = 15)
         givenAStoredAggregate(aggId, agg1)
@@ -160,16 +168,18 @@ internal abstract class CommandExecutorTest<
         assertThat(result).isEqualTo(CommandResult(
                 requestId = request.requestId,
                 commands = listOf(command1 to false),
-                newEvents = emptyList()
+                newEvents = emptyList(),
+                origin = LOCAL
         ))
         verify { eventStore.appendEvent(any()) wasNot Called }
     }
 
+
     @Test
-    fun canExecuteRequestType() {
+    fun `canExecuteRequestType`() {
         // Given
         val aggId = getAggId1()
-        val request: RequestType = createCommandRequest(aggId, emptyList(), lastRevision = null, requestId = randomRequestId())
+        val request: RequestType = createCommandRequest(aggId, emptyList(), lastRevision = null, requestId = randomRequestId(), origin = LOCAL)
 
         // When
         val result: RequestType? = executor.canExecuteRequest(request)
@@ -212,10 +222,15 @@ internal abstract class CommandExecutorTest<
         every { repository.getLatest(aggId) }.returns(agg)
     }
 
+    private fun randomOrigin(): CommandOrigin {
+        val values = CommandOrigin.values()
+        return values[Random.nextInt(values.size)]
+    }
+
     protected abstract fun createMockedCommandToEventMapper(): MapperType
     protected abstract fun createInstance(commandBus: CommandBus, eventStore: EventStore, repository: AggregateRepository<AggregateType>, commandToEventMapper: MapperType, scheduler: Scheduler): CommandExecutor<AggregateType, CommandType, RequestType, MapperType>
     protected abstract fun createMockedCommand(): CommandType
-    protected abstract fun createCommandRequest(aggId: String, commands: List<CommandType>, lastRevision: Int?, requestId: Int): RequestType
+    protected abstract fun createCommandRequest(aggId: String, commands: List<CommandType>, lastRevision: Int?, requestId: Int, origin: CommandOrigin): RequestType
     protected abstract fun createEventThatChangesAggregate(agg: AggregateType): Triple<Event, AggregateType, Event>
     private fun createEventThatChangesAggregate(agg: AggregateType, lastRevision: Int): Triple<Event, AggregateType, Event> {
         val (eventIn, aggregate, eventOut) = createEventThatChangesAggregate(agg)
