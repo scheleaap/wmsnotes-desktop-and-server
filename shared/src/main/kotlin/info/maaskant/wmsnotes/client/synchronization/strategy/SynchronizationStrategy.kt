@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy
 
+import au.com.console.kassava.kotlinToString
 import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.model.Event
 
@@ -20,7 +21,10 @@ interface SynchronizationStrategy {
     fun resolve(aggId: String, localEvents: List<Event>, remoteEvents: List<Event>): ResolutionResult
 
     sealed class ResolutionResult {
-        object NoSolution : ResolutionResult()
+        object NoSolution : ResolutionResult() {
+            override fun toString() = kotlinToString(properties = emptyArray())
+        }
+
         data class Solution(val compensatingActions: List<CompensatingAction>) : ResolutionResult() {
             constructor(compensatingAction: CompensatingAction) : this(listOf(compensatingAction))
         }

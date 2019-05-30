@@ -20,32 +20,37 @@ class MergingSynchronizationStrategy(
             logger.warn("Unexpected call to ${this.javaClass.name} with $localEvents and $remoteEvents")
             SynchronizationStrategy.ResolutionResult.NoSolution
         } else {
-            val baseRevision = localEvents.first().revision - 1
-            val modifiedRemoteEvents = remoteEvents
-                    .zip((baseRevision + 1)..(baseRevision + remoteEvents.size))
-                    .map { (event, revision) -> event.copy(revision = revision) }
-            val baseNote = noteRepository.get(aggId = aggId, revision = baseRevision)
-            val localNote = Aggregate.apply(baseNote, localEvents)
-            val remoteNote = Aggregate.apply(baseNote, modifiedRemoteEvents)
-            val mergeResult = mergeStrategy.merge(
-                    localEvents = localEvents,
-                    remoteEvents = remoteEvents,
-                    baseNote = baseNote,
-                    localNote = localNote,
-                    remoteNote = remoteNote
-            )
-            return when (mergeResult) {
-                MergeStrategy.MergeResult.NoSolution -> SynchronizationStrategy.ResolutionResult.NoSolution
-                is MergeStrategy.MergeResult.Solution -> {
-                    SynchronizationStrategy.ResolutionResult.Solution(
-                            compensatingAction = CompensatingAction(
-                                    compensatedLocalEvents = localEvents,
-                                    compensatedRemoteEvents = remoteEvents,
-                                    newLocalEvents = mergeResult.newLocalEvents,
-                                    newRemoteEvents = mergeResult.newRemoteEvents
-                            )
-                    )
-                }
+            return resolveInternal(aggId, localEvents, remoteEvents)
+        }
+    }
+
+    private fun resolveInternal(aggId: String, localEvents: List<Event>, remoteEvents: List<Event>): SynchronizationStrategy.ResolutionResult {
+        val baseRevision = localEvents.first().revision - 1
+        val modifiedRemoteEvents = remoteEvents
+                .zip((baseRevision + 1)..(baseRevision + remoteEvents.size))
+                .map { (event, revision) -> event.copy(revision = revision) }
+        val baseNote = noteRepository.get(aggId = aggId, revision = baseRevision)
+        val localNote = Aggregate.apply(baseNote, localEvents)
+        val remoteNote = Aggregate.apply(baseNote, modifiedRemoteEvents)
+        logger.debug("Attempting to merge events for aggregate {} with base {}, local {} and remote {}", aggId, baseNote, localNote, remoteNote)
+        val mergeResult = mergeStrategy.merge(
+                localEvents = localEvents,
+                remoteEvents = remoteEvents,
+                baseNote = baseNote,
+                localNote = localNote,
+                remoteNote = remoteNote
+        )
+        return when (mergeResult) {
+            MergeStrategy.MergeResult.NoSolution -> SynchronizationStrategy.ResolutionResult.NoSolution
+            is MergeStrategy.MergeResult.Solution -> {
+                SynchronizationStrategy.ResolutionResult.Solution(
+                        compensatingAction = CompensatingAction(
+                                compensatedLocalEvents = localEvents,
+                                compensatedRemoteEvents = remoteEvents,
+                                newLocalEvents = mergeResult.newLocalEvents,
+                                newRemoteEvents = mergeResult.newRemoteEvents
+                        )
+                )
             }
         }
     }

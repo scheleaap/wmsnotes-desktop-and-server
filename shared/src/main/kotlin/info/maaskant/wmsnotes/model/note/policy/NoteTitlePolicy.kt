@@ -33,6 +33,7 @@ class NoteTitlePolicy @Inject constructor(
                 .map { it to titleExtractor(it.content) }
                 .filter { (_, title) -> title != null }
                 .map { (event, title) ->
+                    logger.debug("Changing title of aggregate {} to {}", event.aggId, title)
                     NoteCommandRequest.of(
                             command = ChangeTitleCommand(
                                     aggId = event.aggId,
