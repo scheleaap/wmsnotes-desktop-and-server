@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="409.60001"
+   height="200"
+   viewBox="0 0 108.37333 52.916665"
+   version="1.1"
+   id="svg1409"
+   sodipodi:docname="feature-graphic.svg"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:export-filename="D:\Progs\Java\wmsnotes-desktop\graphics\feature-graphic.png"
+   inkscape:export-xdpi="240"
+   inkscape:export-ydpi="240">
+  <defs
+     id="defs1403" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="198.56741"
+     inkscape:cy="33.306425"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1280"
+     inkscape:window-height="971"
+     inkscape:window-x="1272"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     units="px" />
+  <metadata
+     id="metadata1406">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-244.08334)">
+    <g
+       id="g1522"
+       transform="matrix(0.92587041,0,0,0.45208516,-54.446955,189.55769)">
+      <path
+         transform="scale(0.26458333)"
+         id="path857-2"
+         d="M 222.25977,455.8457 V 898.24023 H 664.6543 V 455.8457 Z"
+         style="display:inline;fill:#008577;fill-opacity:1;stroke:none;stroke-width:0.7101301;stroke-opacity:1"
+         inkscape:connector-curvature="0" />
+      <path
+         id="rect4663"
+         d="M 175.85645,194.48639 58.80623,226.19273 v 11.46666 h 117.05022 z"
+         style="fill:#d81b60;fill-opacity:1;stroke:none;stroke-width:0.16027205;stroke-opacity:1"
+         inkscape:connector-curvature="0" />
+    </g>
+    <path
+       inkscape:connector-curvature="0"
+       style="display:inline;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.02795337px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 62.201113,249.86798 7.906808,27.87347 12.698811,-3.67386 5.910137,18.84855 13.976681,-3.91346 -1.83694,-4.71216 -7.108139,2.15644 -2.555733,-6.70882 7.028267,-1.99669 -1.836931,-5.11145 -6.868541,2.31612 -2.715467,-7.74707 -14.136408,4.39269 -2.955069,-8.46588 5.750403,-1.99667 -1.357736,-3.43426 -5.670534,1.99664 -3.354405,-10.30279 z"
+       id="path852-4" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:19.75555611px;line-height:80.00000119%;font-family:Bahnschrift;-inkscape-font-specification:'Bahnschrift, Semi-Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="4.2192955"
+       y="263.92969"
+       id="text1381"><tspan
+         sodipodi:role="line"
+         id="tspan1379"
+         x="4.2192955"
+         y="263.92969"
+         style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:19.75555611px;line-height:80.00000119%;font-family:Bahnschrift;-inkscape-font-specification:'Bahnschrift, Semi-Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332px">WMS</tspan><tspan
+         sodipodi:role="line"
+         x="4.2192955"
+         y="279.73413"
+         style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:19.75555611px;line-height:80.00000119%;font-family:Bahnschrift;-inkscape-font-specification:'Bahnschrift, Semi-Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332px"
+         id="tspan1383">NOTES</tspan></text>
+  </g>
+</svg>
