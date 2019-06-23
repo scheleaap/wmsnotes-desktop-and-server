@@ -9,10 +9,11 @@ plugins {
 
 ext {
     versions = [
-            tornadofx    : "1.7.15",
+            rxkotlinfx   : "2.2.2",
+            tornadofx    : "1.7.19",
             controlsfx   : "8.40.14",
             fontawesomefx: "8.9",
-            richtextfx   : "0.9.1",
+            richtextfx   : "0.10.1",
             flexmark     : "0.32.20",
     ]
 }
@@ -26,7 +27,6 @@ dependencies {
 
     // Infrastructure
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    compile 'com.github.thomasnield:rxkotlinfx:2.2.2'
     compile("org.apache.commons:commons-lang3:3.7")
 
     // Spring Boot
@@ -41,6 +41,7 @@ dependencies {
     compile "io.grpc:grpc-netty-shaded:$grpcVersion"
 
     // JavaFX, TornadoFX, RxKotlinFX, ControlsFX
+    implementation("com.github.thomasnield:rxkotlinfx:${versions.rxkotlinfx}")
     implementation("no.tornado:tornadofx:${versions.tornadofx}")
     implementation("no.tornado:tornadofx-controlsfx:0.1.1")
     implementation("org.controlsfx:controlsfx:${versions.controlsfx}")
