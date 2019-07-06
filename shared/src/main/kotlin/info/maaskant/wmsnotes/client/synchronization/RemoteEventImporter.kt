@@ -38,30 +38,28 @@ class RemoteEventImporter @Inject constructor(
                     .getEvents(request)
             response.forEach {
                 val event = grpcEventMapper.toModelClass(it)
-                logger.debug("Storing new remote event: $event")
+                logger.debug("Storing new remote event: {}", event)
                 eventRepository.addEvent(event)
-                updateLastEventId(it.eventId)
+                updateLastEventId(event.eventId)
                 numberOfNewEvents++
             }
         } catch (e: StatusRuntimeException) {
             when (e.status.code) {
                 Status.Code.UNAVAILABLE -> logger.debug("Could not retrieve events: server not available")
                 Status.Code.DEADLINE_EXCEEDED -> logger.debug("Could not retrieve events: server is taking too long to respond")
-                else -> logger.warn("Error while retrieving events: ${e.status.code}, ${e.status.description}")
+                else -> logger.warn("Error while retrieving events: {}, {}", e.status.code, e.status.description)
             }
         } catch (e: UnknownEventTypeException) {
             logger.warn("The server retrieved one or more unknown event types ($e). No further events will be imported.")
         } finally {
-            if (numberOfNewEvents > 0) logger.info("Added $numberOfNewEvents new remote events")
+            if (numberOfNewEvents > 0) logger.info("Added {} new remote events", numberOfNewEvents)
         }
     }
 
-    private fun createGetEventsRequest(): Event.GetEventsRequest? {
-        val builder = Event.GetEventsRequest.newBuilder()
-        if (state.lastEventId != null) {
-            builder.afterEventId = state.lastEventId!!
-        }
-        return builder.build()
+    private fun createGetEventsRequest(): Event.GetEventsRequest {
+        return Event.GetEventsRequest.newBuilder()
+                .setAfterEventId(state.lastEventId ?: 0)
+                .build()
     }
 
     private fun updateLastEventId(lastEventId: Int) {
