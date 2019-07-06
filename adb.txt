@@ -1,0 +1,1 @@
+adb pull "/storage/emulated/0/wmsnotes" D:\Progs\Java\wmsnotes-desktop\tmp\android
