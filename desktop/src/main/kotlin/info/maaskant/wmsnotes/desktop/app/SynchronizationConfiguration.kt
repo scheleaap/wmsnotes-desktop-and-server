@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
+
 @Suppress("ConstantConditionIf")
 @Configuration
 class SynchronizationConfiguration {
@@ -183,7 +184,12 @@ class SynchronizationConfiguration {
     fun mergeStrategy(differenceAnalyzer: DifferenceAnalyzer, differenceCompensator: DifferenceCompensator) =
             MultipleMergeStrategy(
                     EqualsMergeStrategy(),
-                    KeepBothMergeStrategy(differenceAnalyzer, differenceCompensator) { "n-" + UUID.randomUUID().toString() }
+                    KeepBothMergeStrategy(
+                            differenceAnalyzer = differenceAnalyzer,
+                            differenceCompensator = differenceCompensator,
+                            aggregateIdGenerator = { "n-" + UUID.randomUUID().toString() },
+                            conflictedNoteTitleSuffix = " (conflict on desktop)"
+                    )
             )
 
     @Bean

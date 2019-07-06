@@ -51,7 +51,8 @@ internal class SynchronizationIT {
                         mergeStrategy = KeepBothMergeStrategy(
                                 differenceAnalyzer = DifferenceAnalyzer(),
                                 differenceCompensator = DifferenceCompensator(),
-                                aggregateIdGenerator = { newAggId }
+                                aggregateIdGenerator = { newAggId },
+                                conflictedNoteTitleSuffix = " (conflict)"
                         ),
                         noteRepository = CachingAggregateRepository(
                                 eventStore = eventStore,
@@ -85,10 +86,12 @@ internal class SynchronizationIT {
         val newNoteCommand2 = MoveCommand(aggId = newAggId, path = Path("path")) to 1
         val newNoteCommand3 = ChangeTitleCommand(aggId = newAggId, title = "Note") to 2
         val newNoteCommand4 = ChangeContentCommand(aggId = newAggId, content = "Text 1") to 3
+        val newNoteCommand5 = ChangeTitleCommand(aggId = newAggId, title = "Note (conflict)") to 4
         val newNoteEvent1 = CommandExecutor.EventMetadata(eventId = 0, aggId = newAggId, revision = 1)
         val newNoteEvent2 = CommandExecutor.EventMetadata(eventId = 0, aggId = newAggId, revision = 2)
         val newNoteEvent3 = CommandExecutor.EventMetadata(eventId = 0, aggId = newAggId, revision = 3)
         val newNoteEvent4 = CommandExecutor.EventMetadata(eventId = 0, aggId = newAggId, revision = 4)
+        val newNoteEvent5 = CommandExecutor.EventMetadata(eventId = 0, aggId = newAggId, revision = 5)
         val aggId = compensatedLocalEvent1.aggId
         initialState = initialState
                 .updateLastKnownLocalRevision(aggId, oldLocalEvent.revision)
@@ -101,10 +104,12 @@ internal class SynchronizationIT {
         givenALocalCommandCanBeExecutedSuccessfully(newNoteCommand2, newNoteEvent2)
         givenALocalCommandCanBeExecutedSuccessfully(newNoteCommand3, newNoteEvent3)
         givenALocalCommandCanBeExecutedSuccessfully(newNoteCommand4, newNoteEvent4)
+        givenALocalCommandCanBeExecutedSuccessfully(newNoteCommand5, newNoteEvent5)
         givenARemoteCommandCanBeExecutedSuccessfully(newNoteCommand1, newNoteEvent1)
         givenARemoteCommandCanBeExecutedSuccessfully(newNoteCommand2, newNoteEvent2)
         givenARemoteCommandCanBeExecutedSuccessfully(newNoteCommand3, newNoteEvent3)
         givenARemoteCommandCanBeExecutedSuccessfully(newNoteCommand4, newNoteEvent4)
+        givenARemoteCommandCanBeExecutedSuccessfully(newNoteCommand5, newNoteEvent5)
         val s = createSynchronizer()
 
         // When
@@ -116,11 +121,13 @@ internal class SynchronizationIT {
             remoteCommandExecutor.execute(newNoteCommand2.first, newNoteCommand2.second)
             remoteCommandExecutor.execute(newNoteCommand3.first, newNoteCommand3.second)
             remoteCommandExecutor.execute(newNoteCommand4.first, newNoteCommand4.second)
+            remoteCommandExecutor.execute(newNoteCommand5.first, newNoteCommand5.second)
             localCommandExecutor.execute(localChangeCommand.first, localChangeCommand.second)
             localCommandExecutor.execute(newNoteCommand1.first, newNoteCommand1.second)
             localCommandExecutor.execute(newNoteCommand2.first, newNoteCommand2.second)
             localCommandExecutor.execute(newNoteCommand3.first, newNoteCommand3.second)
             localCommandExecutor.execute(newNoteCommand4.first, newNoteCommand4.second)
+            localCommandExecutor.execute(newNoteCommand5.first, newNoteCommand5.second)
         }
     }
 
