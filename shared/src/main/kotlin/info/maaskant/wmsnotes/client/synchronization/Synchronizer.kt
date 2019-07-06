@@ -59,8 +59,8 @@ class Synchronizer @Inject constructor(
         val eventsToIgnore = LocalAndRemoteEvents(localEventsToIgnore, remoteEventsToIgnore)
 
         updateLastRevisions(localEvents, remoteEvents)
-        synchronizeEvents(eventsToSynchronize)
         removeEventsToIgnore(eventsToIgnore)
+        synchronizeEvents(eventsToSynchronize)
     }
 
     private fun updateLastRevisions(localEvents: Observable<Event>, remoteEvents: Observable<Event>) {
