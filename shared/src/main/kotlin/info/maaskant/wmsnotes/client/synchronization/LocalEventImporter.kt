@@ -24,12 +24,12 @@ class LocalEventImporter @Inject constructor(
         logger.debug("Retrieving new local events")
         var numberOfNewEvents = 0
         try {
-            eventStore.getEvents(state.lastEventId).blockingSubscribe {
+            eventStore.getEvents(state.lastEventId).blockingSubscribe({
                 logger.debug("Storing new local event: $it")
                 eventRepository.addEvent(it)
                 updateLastEventId(it.eventId)
                 numberOfNewEvents++
-            }
+            }, { logger.warn("Error", it) })
         } finally {
             if (numberOfNewEvents > 0) logger.info("Added $numberOfNewEvents new local events")
         }
