@@ -8,6 +8,7 @@ import io.reactivex.Observable
 import io.reactivex.Scheduler
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
+import java.lang.RuntimeException
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -58,7 +59,7 @@ abstract class AbstractCommandExecutor<
     }
 
     override fun execute(request: RequestType): CommandResult {
-        logger.debug("Handling command request: $request")
+        logger.debug("Executing command request: {}", request)
         val aggregateBefore: AggregateType = repository.getLatest(request.aggId)
         return try {
             val (_, newEvents) = execute(
@@ -73,7 +74,7 @@ abstract class AbstractCommandExecutor<
                     origin = request.origin
             )
         } catch (t: Throwable) {
-            logger.info("Error while process command request $request", t)
+            logger.info("Error while executing command request $request", t)
             CommandResult(
                     requestId = request.requestId,
                     commands = request.commands.map { it to false },
@@ -98,14 +99,15 @@ abstract class AbstractCommandExecutor<
     }
 
     private fun execute(command: CommandType, aggregateBefore: AggregateType, lastRevision: Int): Pair<AggregateType, List<Event>> {
-        logger.debug("Executing command: $command")
+        logger.debug("Executing command: {}", command)
         val eventIn: Event = commandToEventMapper.map(command, lastRevision = lastRevision)
         val (aggregateAfter, appliedEvent) = aggregateBefore.apply(eventIn)
         return if (appliedEvent != null) {
-            logger.debug("Storing event: $appliedEvent")
+            logger.debug("Command {} produced event: {}, storing", command, appliedEvent)
             val storedEvent = eventStore.appendEvent(appliedEvent)
             aggregateAfter to listOf(storedEvent)
         } else {
+            logger.debug("Command {} produced no event", command)
             aggregateAfter to emptyList()
         }
     }

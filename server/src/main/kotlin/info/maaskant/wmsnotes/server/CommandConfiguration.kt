@@ -21,7 +21,7 @@ class CommandConfiguration {
 
     @Bean
     @Singleton
-    fun commandExecutionTimeout() = CommandExecution.Duration(500, TimeUnit.MILLISECONDS)
+    fun commandExecutionTimeout() = CommandExecution.Duration(1000, TimeUnit.MILLISECONDS)
 
     @Bean
     @Singleton

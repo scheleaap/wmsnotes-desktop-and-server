@@ -59,7 +59,7 @@ class MenuAndToolbarView : View() {
     }
     private val importMarkdownFilesAction = StatelessAction(messageKey = "menu.file.importMarkdownFiles") {
         val directory: File? = chooseDirectory(owner = this.currentWindow)
-        if (directory!= null) {
+        if (directory != null) {
             applicationController.importMarkdownFiles.onNext(directory)
         }
     }
@@ -174,6 +174,10 @@ class MenuAndToolbarView : View() {
                                     this.isSelected = !it
                                 }
                     }
+//                    button {
+//                        text = "Synchronize Now"
+//                        actionEvents().subscribe { synchronizationTask.synchronize() }
+//                    }
                     progressindicator {
                         progress = -1.0
                         setPrefSize(16.0, 16.0)

@@ -77,7 +77,7 @@ class SynchronizationTask @Inject constructor(
         }
     }
 
-    private fun synchronize() {
+    public fun synchronize() {
         logger.debug("Synchronizing")
         localEventImporter.loadAndStoreLocalEvents()
         remoteEventImporter.loadAndStoreRemoteEvents()

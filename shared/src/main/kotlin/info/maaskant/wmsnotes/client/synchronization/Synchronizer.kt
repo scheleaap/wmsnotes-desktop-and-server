@@ -155,7 +155,7 @@ class Synchronizer @Inject constructor(
             if (success) {
                 logger.debug("Successfully executed compensating action for aggregate {}: {}", aggId, head)
             } else {
-                logger.debug("Failed to execute compensating action for aggregate {}, skipping further compensating actions: {}", aggId, head)
+                logger.warn("Failed to execute compensating action for aggregate {}, skipping further compensating actions: {}", aggId, head)
             }
             if (success && compensatingActions.size > 1) {
                 val tail = compensatingActions.subList(1, compensatingActions.size)
