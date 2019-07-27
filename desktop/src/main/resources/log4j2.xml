@@ -22,5 +22,9 @@
             <AppenderRef ref="ConsoleAppender"/>
             <AppenderRef ref="FileAppender"/>
         </Logger>
+        <Logger name="info.maaskant.wmsnotes.desktop.main.TreeView" level="info" additivity="false">
+            <AppenderRef ref="ConsoleAppender"/>
+            <AppenderRef ref="FileAppender"/>
+        </Logger>
     </Loggers>
 </Configuration>
