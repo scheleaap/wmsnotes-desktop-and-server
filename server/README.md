@@ -7,6 +7,7 @@ For general information about WMS Notes, read the main [README](../README.md).
 ## Running
 
 ```bash
+docker rm -f wmsnotes-server ; \
 docker pull scheleaap/wmsnotes-server && \
 docker run \
   --detach=true \
