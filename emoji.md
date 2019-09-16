@@ -1,23 +1,17 @@
 # Emoji test
 
-<div style="font-size: 25pt;">
+<div style="font-size: 25pt">
 
-&#x1F602; does not work
+&#x1F602; works
 
-<span>&#x1F602;</span> does not work
+<span style="font-family: 'Segoe UI Emoji'">&#x1F602; works</span>
 
-<!-- 1 --><span>&#x1F602;</span> works
+😂 does not work
 
-<p>&#x1F602;</p> works
+:joy: does not work
 
-<span>
-&#x1F602;</span> works
+€ works
 
-<span style="font-family: 'Segoe UI Emoji'">
-&#x1F602;</span> works
-
-&euro;
-
-&#9986;
+✂ works
 
 </div>

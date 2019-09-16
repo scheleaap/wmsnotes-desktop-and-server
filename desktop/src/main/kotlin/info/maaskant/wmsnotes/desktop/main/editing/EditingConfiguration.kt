@@ -28,6 +28,7 @@ class EditingConfiguration {
 
                     .set(HtmlRenderer.INDENT_SIZE, 2)
                     .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
+                    .set(HtmlRenderer.UNESCAPE_HTML_ENTITIES, false)
 
                     // For full GFM table compatibility add the following table extension options:
                     .set(TablesExtension.COLUMN_SPANS, false)

@@ -54,7 +54,7 @@ dependencies {
     implementation("com.vladsch.flexmark:flexmark-ext-emoji:${versions.flexmark}")
     implementation("com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:${versions.flexmark}")
     implementation("com.vladsch.flexmark:flexmark-ext-gfm-tables:${versions.flexmark}")
-    // implementation( "com.vladsch.flexmark:flexmark-ext-wikilink:${versions.flexmark}" )
+//    implementation("com.vladsch.flexmark:flexmark-ext-wikilink:${versions.flexmark}")
     implementation("com.vladsch.flexmark:flexmark-ext-youtube-embedded:${versions.flexmark}")
 
     // Configuration
