@@ -41,6 +41,7 @@ import com.vladsch.flexmark.util.options.DataHolder
  */
 class FlexmarkPreviewRenderer(options: DataHolder) : Renderer {
     private val renderer = HtmlRenderer.builder(options)
+            .linkResolverFactory(AttachmentLinkResolverFactory())
             // .extensions(MarkdownExtensions.getFlexmarkExtensions())
             .attributeProviderFactory(MyAttributeProvider.Factory())
             .build()

@@ -8,6 +8,7 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView
 import info.maaskant.wmsnotes.desktop.design.Styles
 import info.maaskant.wmsnotes.desktop.main.ApplicationController
 import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
+import info.maaskant.wmsnotes.desktop.main.editing.preview.AttachmentLinkResolver
 import info.maaskant.wmsnotes.desktop.main.editing.preview.MarkdownPreviewPane
 import info.maaskant.wmsnotes.desktop.main.editing.preview.PreviewAttachmentStorage
 import info.maaskant.wmsnotes.utilities.logger
@@ -85,7 +86,9 @@ class EditingView : View() {
                         text = name
                         events(MouseEvent.MOUSE_CLICKED)
                                 .subscribe {
-                                    markdownEditorPane.smartEdit.insertImage(name, name)
+                                    markdownEditorPane.smartEdit.insertImage(
+                                            AttachmentLinkResolver.attachmentPrefix + name,
+                                            name)
                                     markdownEditorPane.requestFocus()
                                 }
                     }
