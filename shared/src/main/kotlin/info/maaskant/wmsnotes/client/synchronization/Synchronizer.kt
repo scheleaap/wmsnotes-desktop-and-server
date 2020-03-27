@@ -94,21 +94,30 @@ class Synchronizer @Inject constructor(
     }
 
     private fun synchronizeEvents(eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents>) {
-        for ((aggId, aggregateEventsToSynchronize) in eventsToSynchronize) {
-            logger.debug("Synchronizing events for aggregate {}: {}", aggId, aggregateEventsToSynchronize)
-            val resolutionResult = synchronizationStrategy.resolve(aggId, aggregateEventsToSynchronize.localEvents, aggregateEventsToSynchronize.remoteEvents)
-            logger.debug("Resolution result for aggregate {}: {}", aggId, resolutionResult)
+        val resolutionResults: List<Pair<String, List<CompensatingAction>>> = eventsToSynchronize.asSequence().map { (aggId, aggregateEventsToSynchronize) ->
+            aggId to (aggregateEventsToSynchronize to resolve(aggregateEventsToSynchronize, aggId))
+        }.filter { (aggId, tmp) ->
+            val (aggregateEventsToSynchronize, resolutionResult) = tmp
             when (resolutionResult) {
                 SynchronizationStrategy.ResolutionResult.NoSolution -> {
                     logger.warn("The events for aggregate {} cannot be synchronized, because the program does not know how. Events: {}", aggId, aggregateEventsToSynchronize)
+                    false
                 }
                 is SynchronizationStrategy.ResolutionResult.Solution ->
                     if (areCompensatingActionsValid(aggregateEventsToSynchronize.localEvents, aggregateEventsToSynchronize.remoteEvents, resolutionResult.compensatingActions)) {
-                        executeCompensatingActions(resolutionResult.compensatingActions, aggId)
+                        true
                     } else {
                         logger.warn("The compensating actions for aggregate {} are invalid: {}, {}, {}", aggId, aggregateEventsToSynchronize.localEvents, aggregateEventsToSynchronize.remoteEvents, resolutionResult.compensatingActions)
+                        false
                     }
             }
+        }.map { (aggId, tmp) ->
+            val (_, resolutionResult) = tmp
+            aggId to (resolutionResult as SynchronizationStrategy.ResolutionResult.Solution).compensatingActions
+        }.toList()
+
+        resolutionResults.forEach { (aggId, compensatingActions) ->
+            executeCompensatingActions(compensatingActions, aggId)
         }
     }
 
@@ -217,7 +226,7 @@ class Synchronizer @Inject constructor(
                 .toMultimap { it.aggId }
                 .blockingGet()
         val aggId = localEventsByNote.keys + remoteEventsByNote.keys
-        val result = aggId.toObservable()
+        @Suppress("UnnecessaryVariable") val result = aggId.toObservable()
                 .toMap({ it }, {
                     LocalAndRemoteEvents(
                             localEvents = localEventsByNote[it]?.toList() ?: emptyList(),
@@ -227,6 +236,13 @@ class Synchronizer @Inject constructor(
                 .blockingGet()
                 .toSortedMap()
         return result
+    }
+
+    private fun resolve(aggregateEventsToSynchronize: LocalAndRemoteEvents, aggId: String): SynchronizationStrategy.ResolutionResult {
+        logger.debug("Synchronizing events for aggregate {}: {}", aggId, aggregateEventsToSynchronize)
+        val resolutionResult = synchronizationStrategy.resolve(aggId, aggregateEventsToSynchronize.localEvents, aggregateEventsToSynchronize.remoteEvents)
+        logger.debug("Resolution result for aggregate {}: {}", aggId, resolutionResult)
+        return resolutionResult
     }
 
     private fun updateState(state: SynchronizerState) {
