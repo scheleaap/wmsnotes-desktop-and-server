@@ -22,6 +22,7 @@ class SynchronizationTask @Inject constructor(
     private val logger by logger()
 
     private var isPaused: BehaviorSubject<Boolean> = BehaviorSubject.createDefault(false)
+    private var synchronizationResult: BehaviorSubject<SynchronizationResult> = BehaviorSubject.create()
 
     private var disposable: Disposable? = null
 
@@ -77,10 +78,15 @@ class SynchronizationTask @Inject constructor(
         }
     }
 
-    public fun synchronize() {
+    @Suppress("unused")
+    fun getSynchronizationResult(): Observable<SynchronizationResult> = synchronizationResult
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun synchronize() {
         logger.debug("Synchronizing")
         localEventImporter.loadAndStoreLocalEvents()
         remoteEventImporter.loadAndStoreRemoteEvents()
-        synchronizer.synchronize()
+        val result = synchronizer.synchronize()
+        synchronizationResult.onNext(result)
     }
 }

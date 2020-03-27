@@ -17,6 +17,7 @@ import io.reactivex.rxkotlin.toObservable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import javax.sql.rowset.spi.SyncResolver
 
 internal class SynchronizerTest {
     private val aggId1 = "n-10000000-0000-0000-0000-000000000000"
@@ -55,9 +56,12 @@ internal class SynchronizerTest {
         val s = createSynchronizer()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(
+                success = true
+        ))
         verify {
             synchronizationStrategy.resolve(any(), any(), any()).wasNot(Called)
             localCommandExecutor.execute(any(), any()).wasNot(Called)
@@ -137,9 +141,10 @@ internal class SynchronizerTest {
         val stateObserver = s.getStateUpdates().test()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(success = true))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -196,9 +201,10 @@ internal class SynchronizerTest {
         val stateObserver = s.getStateUpdates().test()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(success = true))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -273,9 +279,10 @@ internal class SynchronizerTest {
         val stateObserver = s.getStateUpdates().test()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(success = true))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -362,9 +369,10 @@ internal class SynchronizerTest {
         val stateObserver = s.getStateUpdates().test()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(success = true))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -450,9 +458,10 @@ internal class SynchronizerTest {
         val stateObserver = s.getStateUpdates().test()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(success = false))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -540,9 +549,10 @@ internal class SynchronizerTest {
         val stateObserver = s.getStateUpdates().test()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(success = false))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -718,9 +728,10 @@ internal class SynchronizerTest {
         val stateObserver = s.getStateUpdates().test()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(success = true))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -818,9 +829,10 @@ internal class SynchronizerTest {
         val stateObserver = s.getStateUpdates().test()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(success = false))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -920,9 +932,10 @@ internal class SynchronizerTest {
         val stateObserver = s.getStateUpdates().test()
 
         // When
-        s.synchronize()
+        val result = s.synchronize()
 
         // Then
+        assertThat(result).isEqualTo(SynchronizationResult(success = false))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
