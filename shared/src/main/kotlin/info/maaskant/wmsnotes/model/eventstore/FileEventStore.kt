@@ -23,7 +23,7 @@ class FileEventStore @Inject constructor(
 
     private var lastEventId: Int = 0
 
-    private val newEventSubject: Subject<Event> = PublishSubject.create()
+    private val newEventSubject: Subject<Event> = PublishSubject.create<Event>().toSerialized()
 
     init {
         logger.debug("Event store directory: $rootDirectory")

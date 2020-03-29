@@ -18,6 +18,7 @@ import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.rxkotlin.toObservable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,11 +36,11 @@ class TreeIndex @Inject constructor(
 
     private var disposable: Disposable? = null
 
-    private val events: PublishSubject<TreeIndexEvent> = PublishSubject.create()
+    private val events: Subject<TreeIndexEvent> = PublishSubject.create<TreeIndexEvent>().toSerialized()
 
     private var state: TreeIndexState = initialState ?: TreeIndexState(isInitialized = false)
 
-    private val stateUpdates: BehaviorSubject<TreeIndexState> = BehaviorSubject.create()
+    private val stateUpdates: Subject<TreeIndexState> = BehaviorSubject.create<TreeIndexState>().toSerialized()
 
     private fun connect(): Disposable {
         var source = eventStore.getEventUpdates()

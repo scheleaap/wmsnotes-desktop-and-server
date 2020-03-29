@@ -9,6 +9,7 @@ import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.reactivex.Observable
 import io.reactivex.rxkotlin.toObservable
 import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.subjects.Subject
 import java.util.*
 import javax.inject.Inject
 
@@ -25,7 +26,7 @@ class Synchronizer @Inject constructor(
     private val logger by logger()
 
     private var state = initialState ?: SynchronizerState.create()
-    private val stateUpdates: BehaviorSubject<SynchronizerState> = BehaviorSubject.create()
+    private val stateUpdates: Subject<SynchronizerState> = BehaviorSubject.create<SynchronizerState>().toSerialized()
 
     @Synchronized
     fun synchronize(): SynchronizationResult {

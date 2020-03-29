@@ -24,14 +24,13 @@ class NavigationViewModel @Inject constructor(
 
     private val logger by logger()
 
-    // TODO: Replace with SerializedSubject
-    final val selectionRequest: Subject<SelectionRequest> = PublishSubject.create()
-    final val currentSelection: BehaviorSubject<Selection> = BehaviorSubject.createDefault(Selection.Nothing)
+    final val selectionRequest: Subject<SelectionRequest> = PublishSubject.create<SelectionRequest>().toSerialized()
+    final val currentSelection: Subject<Selection> = BehaviorSubject.createDefault<Selection>(Selection.Nothing).toSerialized()
     final var currentPathValue: Path = Path()
     final var currentNoteValue: Note? = null
-    final val selectionSwitchingProcess: Subject<SelectionSwitchingProcessNotification> = PublishSubject.create()
-    final val isLoading: Subject<Boolean> = PublishSubject.create()
-    private val isNavigationAllowed: Subject<Boolean> = PublishSubject.create()
+    final val selectionSwitchingProcess: Subject<SelectionSwitchingProcessNotification> = PublishSubject.create<SelectionSwitchingProcessNotification>().toSerialized()
+    final val isLoading: Subject<Boolean> = PublishSubject.create<Boolean>().toSerialized()
+    private val isNavigationAllowed: Subject<Boolean> = PublishSubject.create<Boolean>().toSerialized()
 
     init {
         Observables.combineLatest(selectionRequest, isNavigationAllowed)

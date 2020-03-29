@@ -29,7 +29,7 @@ class PreviewAttachmentStorage @Inject constructor(
 
     private val logger by logger()
 
-    private val attachmentsStoredNotifications: Subject<Map<String, String>> = BehaviorSubject.create()
+    private val attachmentsStoredNotifications: Subject<Map<String, String>> = BehaviorSubject.create<Map<String, String>>().toSerialized()
 
     private var state: PreviewAttachmentStorageState = initialState ?: PreviewAttachmentStorageState()
 

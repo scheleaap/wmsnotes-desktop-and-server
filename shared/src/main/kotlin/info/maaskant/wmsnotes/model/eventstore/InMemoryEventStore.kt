@@ -14,7 +14,7 @@ class InMemoryEventStore : EventStore {
 
     private val events: MutableMap<Int, Event> = HashMap()
     private var lastEventId = 0
-    private val newEventSubject: Subject<Event> = PublishSubject.create()
+    private val newEventSubject: Subject<Event> = PublishSubject.create<Event>().toSerialized()
 
     override fun getEvents(afterEventId: Int?): Observable<Event> {
         return events
