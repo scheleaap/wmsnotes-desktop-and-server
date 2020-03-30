@@ -1,7 +1,13 @@
 package info.maaskant.wmsnotes.client.synchronization.commandexecutor
 
+import arrow.core.*
+import arrow.core.Either.Companion.left
+import arrow.core.Either.Companion.right
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
+import info.maaskant.wmsnotes.client.synchronization.commandexecutor.CommandExecutor.*
 import info.maaskant.wmsnotes.model.Command
+import info.maaskant.wmsnotes.model.CommandError
+import info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest
 import info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.utilities.logger
@@ -12,59 +18,72 @@ import javax.inject.Inject
 
 class RemoteCommandExecutor @Inject constructor(
         private val grpcCommandMapper: GrpcCommandMapper,
-        private val grpcCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
-        private val grpcDeadline: Deadline?
+        grpcCommandService: CommandServiceGrpc.CommandServiceBlockingStub,
+        grpcDeadline: Deadline?
 ) : CommandExecutor {
     private val logger by logger()
 
-    override fun execute(command: Command, lastRevision: Int): CommandExecutor.ExecutionResult =
-            try {
-                command
-                        .let {
-                            logger.debug("Executing command remotely: ($command, $lastRevision)")
-                            grpcCommandMapper.toGrpcPostCommandRequest(it, lastRevision)
-                        }
-                        .let {
-                            grpcCommandService
-                                    .apply { if (grpcDeadline != null) this.withDeadline(grpcDeadline) }
-                                    .postCommand(it)
-                        }
-                        .let { response ->
-                            if (response.status == PostCommandResponse.Status.SUCCESS) {
-                                val result = if (response.newEventId != 0) {
-                                    if (response.aggregateId.isNotEmpty() && response.newRevision != 0) {
-                                        CommandExecutor.ExecutionResult.Success(newEventMetadata = CommandExecutor.EventMetadata(
-                                                eventId = response.newEventId,
-                                                aggId = response.aggregateId,
-                                                revision = response.newRevision
-                                        ))
-                                    } else {
-                                        logger.warn("Executing command remotely returned success, but response was incomplete: $command -> (${response.status}, ${response.newEventId}, ${response.aggregateId}, ${response.newRevision})")
-                                        CommandExecutor.ExecutionResult.Failure
-                                    }
-                                } else {
-                                    CommandExecutor.ExecutionResult.Success(newEventMetadata = null)
-                                }
-                                logger.debug("Command successfully executed remotely: $command")
-                                result
-                            } else {
-                                logger.debug("Executing ($command, $lastRevision) remotely failed: ${response.status} ${response.errorDescription}")
-                                CommandExecutor.ExecutionResult.Failure
-                            }
-                        }
-            } catch (e: StatusRuntimeException) {
-                when (e.status.code) {
-                    Status.Code.UNAVAILABLE -> {
-                        logger.debug("Could not send command ($command, $lastRevision) to server: server not available")
-                    }
-                    Status.Code.DEADLINE_EXCEEDED -> {
-                        logger.debug("Could not send command ($command, $lastRevision) to server: server is taking too long to respond")
-                    }
-                    else -> logger.warn("Error sending command ($command, $lastRevision) to server: ${e.status.code}, ${e.status.description}")
+    private val grpcCommandService: CommandServiceGrpc.CommandServiceBlockingStub =
+            grpcCommandService.apply { if (grpcDeadline != null) this.withDeadline(grpcDeadline) }
+
+    override fun execute(command: Command, lastRevision: Int): ExecutionResult {
+        val executionResult: ExecutionResult = try {
+            logger.debug("Executing command remotely: $command, $lastRevision")
+            val request = grpcCommandMapper.toGrpcPostCommandRequest(command, lastRevision)
+            val responseEither: Either<StatusRuntimeException, PostCommandResponse> = postCommand(request)
+            val a = responseEither.left().flatMap { left(1) }
+            val b: ExecutionResult = responseEither.fold({ sre ->
+                // Failure
+                val commandError: CommandError = when (sre.status.code) {
+                    Status.Code.INVALID_ARGUMENT ->
+                        CommandError.InvalidCommandError(sre.status.description ?: "Missing description")
+                    Status.Code.FAILED_PRECONDITION ->
+                        CommandError.IllegalStateError(sre.status.description ?: "Missing description")
+                    Status.Code.UNAVAILABLE ->
+                        CommandError.NetworkError("Server not available")
+                    Status.Code.DEADLINE_EXCEEDED ->
+                        CommandError.NetworkError("Server is taking too long to respond")
+                    else -> CommandError.OtherError(
+                            message = "Error sending command to server: ${sre.status.code}, ${sre.status.description}",
+                            cause = Some(sre)
+                    )
                 }
-                CommandExecutor.ExecutionResult.Failure
-            } catch (t: Throwable) {
-                logger.debug("Executing command ($command, $lastRevision) remotely failed due to a local error", t)
-                CommandExecutor.ExecutionResult.Failure
+                ExecutionResult.Failure(commandError)
+            }, { response ->
+                // Success
+                val result: ExecutionResult = if (response.newEventId != 0) {
+                    if (response.aggregateId.isNotEmpty() && response.newRevision != 0) {
+                        ExecutionResult.Success(EventMetadata(
+                                eventId = response.newEventId,
+                                aggId = response.aggregateId,
+                                revision = response.newRevision
+                        ))
+                    } else {
+                        val message = "Server returned success, but response was incomplete: " +
+                                "${response.newEventId}, ${response.aggregateId}, ${response.newRevision}"
+                        ExecutionResult.Failure(CommandError.OtherError(message))
+                    }
+                } else {
+                    ExecutionResult.Success(newEventMetadata = null)
+                }
+                result
+            })
+            TODO()
+        } catch (t: Throwable) {
+            ExecutionResult.Failure(CommandError.OtherError("Unexpected error", cause = Some(t.nonFatalOrThrow())))
+        }
+        when (executionResult) {
+            TODO HIER BEZIG: AFHANKELIJK VAN TYPE FOUT OP DEBUG OF WARNING LOGGEN
+            is ExecutionResult.Failure -> logger.debug("Executing command remotely failed: $command, $lastRevision, ${executionResult.error}")
+            is ExecutionResult.Success -> logger.debug("Command executed remotely successfully: $command")
+        }
+        return executionResult
+    }
+
+    private fun postCommand(request: PostCommandRequest): Either<StatusRuntimeException, PostCommandResponse> =
+            try {
+                right(grpcCommandService.postCommand(request))
+            } catch (e: StatusRuntimeException) {
+                left(e)
             }
 }

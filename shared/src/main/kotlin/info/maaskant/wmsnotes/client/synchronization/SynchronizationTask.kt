@@ -29,28 +29,26 @@ class SynchronizationTask @Inject constructor(
     private var disposable: Disposable? = null
 
     private fun connect(): Disposable {
-        return CompositeDisposable(
-                Observables.combineLatest(
-                        Observable.interval(0, 5, TimeUnit.SECONDS),
-                        isPaused()
-                )
-                        .observeOn(Schedulers.io())
-                        .map { (_, isPaused) -> isPaused }
-                        .filter { !it }
-                        .subscribeBy(
-                                onNext = { synchronize() },
-                                onError = { logger.warn("Error", it) }
-                        )
-                ,
-                isPaused().observeOn(Schedulers.io())
-                        .subscribeBy {
-                            if (it == false) {
-                                logger.debug("Pausing synchronization")
-                            } else {
-                                logger.debug("Resuming synchronization")
-                            }
-                        }
+        val disposable1 = Observables.combineLatest(
+                Observable.interval(0, 5, TimeUnit.SECONDS),
+                isPaused()
         )
+                .observeOn(Schedulers.io())
+                .map { (_, isPaused) -> isPaused }
+                .filter { !it }
+                .subscribeBy(
+                        onNext = { synchronize() },
+                        onError = { logger.error("Error", it) }
+                )
+        val disposable2 = isPaused().observeOn(Schedulers.io())
+                .subscribeBy {
+                    if (it == false) {
+                        logger.debug("Pausing synchronization")
+                    } else {
+                        logger.debug("Resuming synchronization")
+                    }
+                }
+        return CompositeDisposable(disposable1, disposable2)
     }
 
     @Synchronized

@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.utilities
 
+// TODO: Replace with Arrow's Option
 // Source: https://medium.com/@joshfein/handling-null-in-rxjava-2-0-10abd72afa0b
 data class Optional<T>(val value: T?) {
     val isPresent = value != null

@@ -73,7 +73,7 @@ class TreeIndex @Inject constructor(
                     }
                     newEvents.forEach(events::onNext)
 
-                }, onError = { logger.warn("Error", it) })
+                }, onError = { logger.error("Error", it) })
     }
 
     private fun addAutomaticallyGeneratedFoldersIfNecessary(state: TreeIndexState, events: List<TreeIndexEvent>, path: Path): Triple<String?, TreeIndexState, List<TreeIndexEvent>> {

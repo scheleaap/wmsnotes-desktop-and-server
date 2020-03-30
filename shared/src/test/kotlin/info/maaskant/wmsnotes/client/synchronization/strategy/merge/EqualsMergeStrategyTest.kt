@@ -8,7 +8,8 @@ import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.note.TitleChangedEvent
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.Test
 
 @Suppress("UnnecessaryVariable")

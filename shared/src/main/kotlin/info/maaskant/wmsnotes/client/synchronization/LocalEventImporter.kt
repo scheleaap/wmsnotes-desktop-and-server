@@ -30,7 +30,7 @@ class LocalEventImporter @Inject constructor(
                 eventRepository.addEvent(it)
                 updateLastEventId(it.eventId)
                 numberOfNewEvents++
-            }, { logger.warn("Error", it) })
+            }, { logger.error("Error", it) })
         } finally {
             if (numberOfNewEvents > 0) logger.info("Added {} new local events", numberOfNewEvents)
         }

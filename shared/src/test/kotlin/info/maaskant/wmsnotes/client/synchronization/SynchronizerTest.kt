@@ -1,11 +1,17 @@
 package info.maaskant.wmsnotes.client.synchronization
 
+import assertk.assertThat
+import assertk.assertions.doesNotContain
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import info.maaskant.wmsnotes.client.synchronization.commandexecutor.CommandExecutor
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
 import info.maaskant.wmsnotes.model.Command
+import info.maaskant.wmsnotes.model.CommandError
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.CreateNoteCommand
@@ -14,10 +20,8 @@ import io.mockk.*
 import io.reactivex.Observable
 import io.reactivex.observers.TestObserver
 import io.reactivex.rxkotlin.toObservable
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import javax.sql.rowset.spi.SyncResolver
 
 internal class SynchronizerTest {
     private val aggId1 = "n-10000000-0000-0000-0000-000000000000"
@@ -41,8 +45,8 @@ internal class SynchronizerTest {
                 localCommandExecutor,
                 remoteCommandExecutor
         )
-        every { localCommandExecutor.execute(any(), any()) }.returns(CommandExecutor.ExecutionResult.Failure)
-        every { remoteCommandExecutor.execute(any(), any()) }.returns(CommandExecutor.ExecutionResult.Failure)
+        every { localCommandExecutor.execute(any(), any()) }.returns(CommandExecutor.ExecutionResult.Failure(CommandError.OtherError("Test")))
+        every { remoteCommandExecutor.execute(any(), any()) }.returns(CommandExecutor.ExecutionResult.Failure(CommandError.OtherError("Test")))
         every { localEvents.removeEvent(any()) }.just(Runs)
         every { remoteEvents.removeEvent(any()) }.just(Runs)
         initialState = SynchronizerState.create()
@@ -1061,7 +1065,7 @@ internal class SynchronizerTest {
     private fun givenTheFailedExecutionOfACompensatingEvent(compensatingEvent: Event, lastRevision: Int, commandExecutor: CommandExecutor): Pair<Command, Int> {
         val command = modelCommand(compensatingEvent.aggId)
         every { eventToCommandMapper.map(compensatingEvent) }.returns(command)
-        every { commandExecutor.execute(command, lastRevision) }.returns(CommandExecutor.ExecutionResult.Failure)
+        every { commandExecutor.execute(command, lastRevision) }.returns(CommandExecutor.ExecutionResult.Failure(CommandError.OtherError("Test")))
         return command to lastRevision
     }
 

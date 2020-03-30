@@ -1,5 +1,11 @@
 package info.maaskant.wmsnotes.model.eventstore
 
+import arrow.core.Either
+import arrow.core.Either.Companion.left
+import arrow.core.Either.Companion.right
+import arrow.core.Some
+import arrow.core.nonFatalOrThrow
+import info.maaskant.wmsnotes.model.CommandError.StorageError
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
@@ -95,22 +101,30 @@ class FileEventStore @Inject constructor(
 
 
     @Synchronized
-    override fun appendEvent(event: Event): Event {
-        if (event.eventId != 0) throw IllegalArgumentException("Expected id of event $event to be 0")
-        val eventWithId = event.copy(eventId = ++lastEventId)
+    override fun appendEvent(event: Event): Either<StorageError, Event> {
+        return try {
+            if (event.eventId != 0) {
+                left(StorageError("Event id must be 0: $event"))
+            } else {
+                val eventWithId = event.copy(eventId = ++lastEventId)
 
-        val eventFilePath = eventFilePath(eventWithId)
-        if (eventWithId.revision != 1) {
-            val previousEventFilePath = eventFilePath(eventWithId.aggId, eventWithId.revision - 1)
-            if (!previousEventFilePath.exists()) throw IllegalArgumentException("Previous revision of note ${eventWithId.aggId} does not exist ($previousEventFilePath)")
+                val eventFilePath = eventFilePath(eventWithId)
+                val previousEventFilePath = eventFilePath(eventWithId.aggId, eventWithId.revision - 1)
+                if (eventWithId.revision != 1 && !previousEventFilePath.exists()) {
+                    left(StorageError("Previous revision of note ${eventWithId.aggId} does not exist ($previousEventFilePath)"))
+                } else if (eventFilePath.exists()) {
+                    left(StorageError("Event $eventWithId already exists ($eventFilePath)"))
+                } else {
+                    logger.debug("Appending event $eventWithId, saving to $eventFilePath")
+                    eventFilePath.parentFile.mkdirs()
+                    eventFilePath.writeBytes(eventSerializer.serialize(eventWithId))
+                    newEventSubject.onNext(eventWithId)
+                    right(eventWithId)
+                }
+            }
+        } catch (t: Throwable) {
+            left(StorageError("Failed to store event: $event", cause = Some(t.nonFatalOrThrow())))
         }
-        if (eventFilePath.exists()) throw IllegalArgumentException("Event $eventWithId already exists ($eventFilePath)")
-
-        logger.debug("Appending event $eventWithId, saving to $eventFilePath")
-        eventFilePath.parentFile.mkdirs()
-        eventFilePath.writeBytes(eventSerializer.serialize(eventWithId))
-        newEventSubject.onNext(eventWithId)
-        return eventWithId
     }
 
     override fun getEventUpdates(): Observable<Event> = newEventSubject

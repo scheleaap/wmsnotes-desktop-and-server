@@ -7,6 +7,8 @@ service CommandService {
 }
 
 message PostCommandRequest {
+    // TODO: Add request id
+
     // The id of the aggregate to which the command applies
     string aggregate_id = 1;
 
@@ -68,13 +70,8 @@ message PostCommandRequest {
 
 
 message PostCommandResponse {
-    enum Status {
-        SUCCESS = 0;
-        INTERNAL_ERROR = 1;
-        BAD_REQUEST = 2;
-    }
-    Status status = 1;
-    string errorDescription = 2;
+    // TODO: Add request id
+
     // The id of the new event, if one was generated
     int32 new_event_id = 3;
     // The id of the aggregate, for which the new event was produced. Required if new_event_id is not null.

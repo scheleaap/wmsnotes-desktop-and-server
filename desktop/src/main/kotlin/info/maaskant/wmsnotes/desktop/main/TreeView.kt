@@ -64,7 +64,7 @@ class TreeView : View() {
                         is TreeIndexEvent.NodeRemoved -> removeNode(it.node.aggId)
                         is TreeIndexEvent.TitleChanged -> changeTitle(it.node.aggId, it.node.title, it.oldFolderIndex, it.newFolderIndex)
                     }
-                }, { logger.warn("Error", it) })
+                }, { logger.error("Error", it) })
 
     }
 

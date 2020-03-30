@@ -68,7 +68,7 @@ class EditingViewModel @Inject constructor(
                         .map { (it as NavigationViewModel.SelectionSwitchingProcessNotification.Loading).loading }
         )
                 .map { !(it.first || it.second) }
-                .subscribe(::setEnabled) { logger.warn("Error", it) }
+                .subscribe(::setEnabled) { logger.error("Error", it) }
 
         navigationViewModel.selectionSwitchingProcess
                 .subscribeOn(scheduler)
@@ -81,7 +81,7 @@ class EditingViewModel @Inject constructor(
                         is NavigationViewModel.SelectionSwitchingProcessNotification.Folder -> Optional<Note>()
                     }
                 }
-                .subscribe(::setNote) { logger.warn("Error", it) }
+                .subscribe(::setNote) { logger.error("Error", it) }
     }
 
     final fun isDirty(): Observable<Boolean> = isDirtySubject.distinctUntilChanged()

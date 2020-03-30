@@ -5,7 +5,8 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStr
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
 import info.maaskant.wmsnotes.model.Event
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.Test
 
 internal class RemoteOnlySynchronizationStrategyTest {

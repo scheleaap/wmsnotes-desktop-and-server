@@ -6,7 +6,8 @@ import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
 import info.maaskant.wmsnotes.model.folder.DeleteFolderCommand
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.server.command.grpc.Command
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory

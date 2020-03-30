@@ -3,7 +3,8 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.ExistenceDifference.ExistenceType.*
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.*
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory

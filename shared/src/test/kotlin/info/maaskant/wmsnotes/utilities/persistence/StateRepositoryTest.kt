@@ -3,7 +3,8 @@ package info.maaskant.wmsnotes.utilities.persistence
 import io.mockk.every
 import io.mockk.mockk
 import io.reactivex.Observable
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.Test
 
 internal abstract class StateRepositoryTest {

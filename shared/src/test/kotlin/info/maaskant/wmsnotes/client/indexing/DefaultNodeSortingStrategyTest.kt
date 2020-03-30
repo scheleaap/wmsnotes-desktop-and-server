@@ -5,7 +5,8 @@ import info.maaskant.wmsnotes.client.indexing.Folder
 import info.maaskant.wmsnotes.client.indexing.Node
 import info.maaskant.wmsnotes.client.indexing.Note
 import info.maaskant.wmsnotes.model.Path
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 

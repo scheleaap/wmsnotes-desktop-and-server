@@ -1,5 +1,10 @@
 package info.maaskant.wmsnotes.model
 
+import arrow.core.*
+import arrow.core.Either.Left
+import arrow.core.Either.Right
+import arrow.core.extensions.list.foldable.firstOption
+import arrow.syntax.collections.tail
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import info.maaskant.wmsnotes.utilities.ApplicationService
@@ -8,7 +13,9 @@ import io.reactivex.Observable
 import io.reactivex.Scheduler
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
-import java.lang.RuntimeException
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -54,61 +61,71 @@ abstract class AbstractCommandExecutor<
                 .map { execute(it) }
                 .subscribeBy(
                         onNext = commandBus.results::onNext,
-                        onError = { logger.warn("Error", it) }
+                        onError = { logger.error("Error", it) }
                 )
     }
 
     override fun execute(request: RequestType): CommandResult {
         logger.debug("Executing command request: {}", request)
         val aggregateBefore: AggregateType = repository.getLatest(request.aggId)
+        return CommandResult(
+                requestId = request.requestId,
+                outcome = execute(
+                        commands = request.commands,
+                        aggregate = aggregateBefore,
+                        lastRevision = request.lastRevision ?: aggregateBefore.revision
+                ),
+                origin = request.origin
+        )
+    }
+
+    private fun execute(
+            commands: List<CommandType>,
+            aggregate: AggregateType,
+            lastRevision: Int
+    ): ImmutableList<Pair<Command, Either<CommandError, Option<Event>>>> {
+        val head: Option<CommandType> = commands.firstOption()
+        val tail: List<CommandType> = commands.tail()
+        return head.map { command ->
+            val result: Either<CommandError, Pair<AggregateType, Option<Event>>> = execute(command, aggregate, lastRevision)
+            val eventEither = result.map { it.second }
+            when (result) {
+                is Left -> persistentListOf(command to eventEither)
+                is Right -> {
+                    val aggregateAfter = result.b.first
+                    persistentListOf(command to eventEither) + execute(
+                            aggregate = aggregateAfter,
+                            lastRevision = aggregateAfter.revision,
+                            commands = tail
+                    )
+                }
+            }
+        }.getOrElse { persistentListOf() }
+    }
+
+    private fun execute(
+            command: CommandType,
+            aggregateBefore: AggregateType,
+            lastRevision: Int
+    ): Either<CommandError, Pair<AggregateType, Option<Event>>> {
         return try {
-            val (_, newEvents) = execute(
-                    commands = request.commands,
-                    aggregateBefore = aggregateBefore,
-                    lastRevision = request.lastRevision ?: aggregateBefore.revision,
-                    eventsBefore = emptyList())
-            CommandResult(
-                    requestId = request.requestId,
-                    commands = request.commands.map { it to true },
-                    newEvents = newEvents,
-                    origin = request.origin
-            )
+            logger.debug("Executing command: {}", command)
+            val eventIn: Event = commandToEventMapper.map(command, lastRevision = lastRevision)
+            val (aggregateAfter, appliedEvent) = aggregateBefore.apply(eventIn)
+            val r = if (appliedEvent != null) {
+                logger.debug("Command {} produced event: {}, storing", command, appliedEvent)
+                eventStore.appendEvent(appliedEvent)
+                        .map { aggregateAfter to Some(it) }
+            } else {
+                logger.debug("Command {} produced no event", command)
+                Right(aggregateAfter to None)
+            }
+            logger.debug("Command executed successfully: $command")
+            r
         } catch (t: Throwable) {
-            logger.info("Error while executing command request $request", t)
-            CommandResult(
-                    requestId = request.requestId,
-                    commands = request.commands.map { it to false },
-                    newEvents = emptyList(),
-                    origin = request.origin
-            )
-        }
-    }
-
-    private fun execute(commands: List<CommandType>, aggregateBefore: AggregateType, lastRevision: Int, eventsBefore: List<Event>): Pair<AggregateType, List<Event>> {
-        return if (commands.isEmpty()) {
-            aggregateBefore to eventsBefore
-        } else {
-            val (aggregateAfter, newEvents) = execute(commands[0], aggregateBefore, lastRevision)
-            execute(
-                    commands = commands.drop(1),
-                    aggregateBefore = aggregateAfter,
-                    lastRevision = aggregateAfter.revision,
-                    eventsBefore = eventsBefore + newEvents
-            )
-        }
-    }
-
-    private fun execute(command: CommandType, aggregateBefore: AggregateType, lastRevision: Int): Pair<AggregateType, List<Event>> {
-        logger.debug("Executing command: {}", command)
-        val eventIn: Event = commandToEventMapper.map(command, lastRevision = lastRevision)
-        val (aggregateAfter, appliedEvent) = aggregateBefore.apply(eventIn)
-        return if (appliedEvent != null) {
-            logger.debug("Command {} produced event: {}, storing", command, appliedEvent)
-            val storedEvent = eventStore.appendEvent(appliedEvent)
-            aggregateAfter to listOf(storedEvent)
-        } else {
-            logger.debug("Command {} produced no event", command)
-            aggregateAfter to emptyList()
+            val message = "Executing command failed ($command, $aggregateBefore, $lastRevision, $t)"
+            logger.warn(message)
+            Left(CommandError.OtherError(message, cause = Some(t.nonFatalOrThrow())))
         }
     }
 

@@ -6,6 +6,7 @@ import info.maaskant.wmsnotes.model.note.Note
 import io.reactivex.Observable
 import javax.inject.Inject
 
+@Suppress("UNUSED_PARAMETER")
 class ManualMergeStrategy @Inject constructor(
         differenceAnalyzer: DifferenceAnalyzer,
         differenceCompensator: DifferenceCompensator

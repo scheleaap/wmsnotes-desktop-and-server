@@ -16,7 +16,7 @@ object CommandExecution {
                 .firstOrError()
                 .subscribeBy(
                         onSuccess = subject::onSuccess,
-                        onError = { logger.warn("Error", it) }
+                        onError = { logger.error("Error", it) }
                 )
         commandBus.requests.onNext(commandRequest)
         return subject

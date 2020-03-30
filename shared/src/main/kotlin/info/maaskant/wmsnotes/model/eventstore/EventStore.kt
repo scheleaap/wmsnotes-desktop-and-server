@@ -1,5 +1,8 @@
 package info.maaskant.wmsnotes.model.eventstore
 
+import arrow.core.Either
+import info.maaskant.wmsnotes.model.CommandError
+import info.maaskant.wmsnotes.model.CommandError.StorageError
 import info.maaskant.wmsnotes.model.Event
 import io.reactivex.Observable
 
@@ -44,5 +47,5 @@ interface EventStore {
      * @param event The event to add. Its event id must be 0.
      * @return A copy of the event with its event id set.
      * */
-    fun appendEvent(event: Event): Event
+    fun appendEvent(event: Event): Either<StorageError, Event>
 }

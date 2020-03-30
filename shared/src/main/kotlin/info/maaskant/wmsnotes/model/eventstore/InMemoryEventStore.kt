@@ -1,5 +1,10 @@
 package info.maaskant.wmsnotes.model.eventstore
 
+import arrow.core.Either
+import arrow.core.Either.Companion.left
+import arrow.core.Either.Companion.right
+import info.maaskant.wmsnotes.model.CommandError
+import info.maaskant.wmsnotes.model.CommandError.StorageError
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.model.Event
 import io.reactivex.Observable
@@ -33,20 +38,24 @@ class InMemoryEventStore : EventStore {
                 .doOnSubscribe { logger.debug("Loading all events of note $aggId") }
     }
 
-    override fun appendEvent(event: Event): Event {
-        if (event.eventId != 0) throw IllegalArgumentException()
-        if (event.eventId in events) throw IllegalArgumentException()
-        if (event.revision < 0) throw IllegalArgumentException()
-        val lastRevisionOfNote = getLastRevisionOfAggregate(event.aggId)
-        if (lastRevisionOfNote == null && event.revision != 1) {
-            throw IllegalArgumentException()
-        } else if (lastRevisionOfNote != null && event.revision != lastRevisionOfNote + 1) {
-            throw IllegalArgumentException()
+    override fun appendEvent(event: Event): Either<StorageError, Event> {
+        return if (event.eventId != 0) {
+            left(StorageError("Event id must be 0: $event"))
+        } else if (event.revision < 0) {
+            left(StorageError("Event revision must be greater or equal than 0: $event"))
+        } else {
+            val lastRevisionOfNote = getLastRevisionOfAggregate(event.aggId)
+            if (lastRevisionOfNote == null && event.revision != 1) {
+                left(StorageError("Event revision must be 0: $event, $lastRevisionOfNote"))
+            } else if (lastRevisionOfNote != null && event.revision != lastRevisionOfNote + 1) {
+                left(StorageError("Event revision must be last revision + 1: $event, $lastRevisionOfNote"))
+            } else {
+                val eventWithId = event.copy(eventId = ++lastEventId)
+                events[eventWithId.eventId] = eventWithId
+                newEventSubject.onNext(eventWithId)
+                right(eventWithId)
+            }
         }
-        val eventWithId = event.copy(eventId = ++lastEventId)
-        events[eventWithId.eventId] = eventWithId
-        newEventSubject.onNext(eventWithId)
-        return eventWithId
     }
 
     override fun getEventUpdates(): Observable<Event> = newEventSubject

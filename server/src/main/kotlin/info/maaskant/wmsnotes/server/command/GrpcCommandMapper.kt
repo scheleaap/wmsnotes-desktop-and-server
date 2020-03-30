@@ -15,9 +15,9 @@ import javax.inject.Singleton
 @Singleton
 class GrpcCommandMapper {
     fun toModelCommandRequest(request: Command.PostCommandRequest): CommandRequest<info.maaskant.wmsnotes.model.Command> {
-        if (request.aggregateId.isEmpty()) throw BadRequestException("Field 'note_id' must not be empty")
+        if (request.aggregateId.isEmpty()) throw InvalidRequestException("Field 'note_id' must not be empty")
         return when (request.commandCase!!) {
-            Command.PostCommandRequest.CommandCase.COMMAND_NOT_SET -> throw BadRequestException("Field 'command' not set")
+            Command.PostCommandRequest.CommandCase.COMMAND_NOT_SET -> throw InvalidRequestException("Field 'command' not set")
             Command.PostCommandRequest.CommandCase.CREATE_NOTE -> NoteCommandRequest.of(
                     command = CreateNoteCommand(
                             aggId = request.aggregateId,
@@ -45,7 +45,7 @@ class GrpcCommandMapper {
             Command.PostCommandRequest.CommandCase.ADD_ATTACHMENT -> NoteCommandRequest.of(
                     command = AddAttachmentCommand(
                             aggId = request.aggregateId,
-                            name = request.addAttachment.name.also { if (it.isEmpty()) throw BadRequestException("Field 'name' not set") },
+                            name = request.addAttachment.name.also { if (it.isEmpty()) throw InvalidRequestException("Field 'name' not set") },
                             content = request.addAttachment.content.toByteArray()
                     ),
                     lastRevision = request.lastRevision,
@@ -54,7 +54,7 @@ class GrpcCommandMapper {
             Command.PostCommandRequest.CommandCase.DELETE_ATTACHMENT -> NoteCommandRequest.of(
                     command = DeleteAttachmentCommand(
                             aggId = request.aggregateId,
-                            name = request.deleteAttachment.name.also { if (it.isEmpty()) throw BadRequestException("Field 'name' not set") }
+                            name = request.deleteAttachment.name.also { if (it.isEmpty()) throw InvalidRequestException("Field 'name' not set") }
                     ),
                     lastRevision = request.lastRevision,
                     origin = REMOTE
@@ -101,4 +101,5 @@ class GrpcCommandMapper {
     }
 }
 
-class BadRequestException(description: String) : Exception(description)
+// TODO: Do not throw this class. Instead, validate the request and return a list of errors.
+class InvalidRequestException(description: String) : Exception(description)

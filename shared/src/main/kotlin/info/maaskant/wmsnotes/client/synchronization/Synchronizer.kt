@@ -88,7 +88,7 @@ class Synchronizer @Inject constructor(
         }
     }
 
-    private fun synchronizeEvents(eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents>) : Boolean {
+    private fun synchronizeEvents(eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents>): Boolean {
         val r = eventsToSynchronize.asSequence().map { (aggId, aggregateEventsToSynchronize) ->
             aggId to (aggregateEventsToSynchronize to resolve(aggregateEventsToSynchronize, aggId))
         }.filter { (aggId, tmp) ->
@@ -169,6 +169,7 @@ class Synchronizer @Inject constructor(
         }
     }
 
+    TODO HIER BEZIG: FOUTEN DOORGEVEN NAAR BOVEN (NAAR DE SYNCHRONIZATIONRESULT)
     private fun executeCompensatingAction(compensatingAction: CompensatingAction, aggId: String): Boolean {
         for (remoteEvent in compensatingAction.newRemoteEvents) {
             val command = eventToCommandMapper.map(remoteEvent)
@@ -176,7 +177,7 @@ class Synchronizer @Inject constructor(
             val executionResult = remoteCommandExecutor.execute(command, lastRevision)
             logger.debug("Remote event {} -> command {} + lastRevision {} -> {}", remoteEvent, command, lastRevision, executionResult)
             when (executionResult) {
-                CommandExecutor.ExecutionResult.Failure -> return false
+                is CommandExecutor.ExecutionResult.Failure -> return false
                 is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
                     updateState(state
                             .updateLastKnownRemoteRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
@@ -191,7 +192,7 @@ class Synchronizer @Inject constructor(
             val executionResult = localCommandExecutor.execute(command, lastRevision)
             logger.debug("Local event {} -> command {} + lastRevision {} -> {}", localEvent, command, lastRevision, executionResult)
             when (executionResult) {
-                CommandExecutor.ExecutionResult.Failure -> return false
+                is CommandExecutor.ExecutionResult.Failure -> return false
                 is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
                     updateState(state
                             .updateLastKnownLocalRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)

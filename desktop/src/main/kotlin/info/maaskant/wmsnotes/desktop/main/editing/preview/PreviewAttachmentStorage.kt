@@ -54,7 +54,7 @@ class PreviewAttachmentStorage @Inject constructor(
                     if (previous?.attachmentHashes != new.attachmentHashes) {
                         attachmentsStoredNotifications.onNext(new.attachmentHashes)
                     }
-                }, onError = { logger.warn("Error", it) })
+                }, onError = { logger.error("Error", it) })
     }
 
     fun getAttachmentsStoredNotifications(): Observable<Map<String, String>> = attachmentsStoredNotifications
