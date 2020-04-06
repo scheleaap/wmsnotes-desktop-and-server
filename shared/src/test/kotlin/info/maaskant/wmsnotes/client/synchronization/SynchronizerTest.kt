@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test
 internal class SynchronizerTest {
     private val aggId1 = "n-10000000-0000-0000-0000-000000000000"
     private val aggId2 = "n-20000000-0000-0000-0000-000000000000"
+    private val commandError = CommandError.OtherError("Test")
 
     private val localEvents: ModifiableEventRepository = mockk(name = "local")
     private val remoteEvents: ModifiableEventRepository = mockk(name = "remote")
@@ -63,9 +64,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(
-                success = true
-        ))
+        assertThat(result).isEqualTo(SynchronizationResult(emptyList()))
         verify {
             synchronizationStrategy.resolve(any(), any(), any()).wasNot(Called)
             localCommandExecutor.execute(any(), any()).wasNot(Called)
@@ -148,7 +147,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(success = true))
+        assertThat(result).isEqualTo(SynchronizationResult(emptyList()))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -208,7 +207,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(success = true))
+        assertThat(result).isEqualTo(SynchronizationResult(emptyList()))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -286,7 +285,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(success = true))
+        assertThat(result).isEqualTo(SynchronizationResult(emptyList()))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -376,7 +375,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(success = true))
+        assertThat(result).isEqualTo(SynchronizationResult(emptyList()))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -465,7 +464,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(success = false))
+        assertThat(result).isEqualTo(SynchronizationResult(errors = listOf(aggId1 to commandError)))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -556,7 +555,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(success = false))
+        assertThat(result).isEqualTo(SynchronizationResult(listOf(aggId1 to commandError)))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -735,7 +734,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(success = true))
+        assertThat(result).isEqualTo(SynchronizationResult(emptyList()))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -836,7 +835,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(success = false))
+        assertThat(result).isEqualTo(SynchronizationResult(listOf(aggId1 to commandError)))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -939,7 +938,7 @@ internal class SynchronizerTest {
         val result = s.synchronize()
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationResult(success = false))
+        assertThat(result).isEqualTo(SynchronizationResult(listOf(aggId1 to commandError)))
         verifySequence {
             localEvents.getEvents()
             remoteEvents.getEvents()
@@ -1065,7 +1064,7 @@ internal class SynchronizerTest {
     private fun givenTheFailedExecutionOfACompensatingEvent(compensatingEvent: Event, lastRevision: Int, commandExecutor: CommandExecutor): Pair<Command, Int> {
         val command = modelCommand(compensatingEvent.aggId)
         every { eventToCommandMapper.map(compensatingEvent) }.returns(command)
-        every { commandExecutor.execute(command, lastRevision) }.returns(CommandExecutor.ExecutionResult.Failure(CommandError.OtherError("Test")))
+        every { commandExecutor.execute(command, lastRevision) }.returns(CommandExecutor.ExecutionResult.Failure(commandError))
         return command to lastRevision
     }
 

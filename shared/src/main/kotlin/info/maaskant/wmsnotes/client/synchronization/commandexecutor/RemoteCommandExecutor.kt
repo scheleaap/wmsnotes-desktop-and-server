@@ -1,10 +1,13 @@
 package info.maaskant.wmsnotes.client.synchronization.commandexecutor
 
-import arrow.core.*
+import arrow.core.Either
 import arrow.core.Either.Companion.left
 import arrow.core.Either.Companion.right
+import arrow.core.Some
+import arrow.core.nonFatalOrThrow
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
-import info.maaskant.wmsnotes.client.synchronization.commandexecutor.CommandExecutor.*
+import info.maaskant.wmsnotes.client.synchronization.commandexecutor.CommandExecutor.EventMetadata
+import info.maaskant.wmsnotes.client.synchronization.commandexecutor.CommandExecutor.ExecutionResult
 import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.CommandError
 import info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest
@@ -31,8 +34,7 @@ class RemoteCommandExecutor @Inject constructor(
             logger.debug("Executing command remotely: $command, $lastRevision")
             val request = grpcCommandMapper.toGrpcPostCommandRequest(command, lastRevision)
             val responseEither: Either<StatusRuntimeException, PostCommandResponse> = postCommand(request)
-            val a = responseEither.left().flatMap { left(1) }
-            val b: ExecutionResult = responseEither.fold({ sre ->
+            responseEither.fold({ sre ->
                 // Failure
                 val commandError: CommandError = when (sre.status.code) {
                     Status.Code.INVALID_ARGUMENT ->
@@ -68,12 +70,10 @@ class RemoteCommandExecutor @Inject constructor(
                 }
                 result
             })
-            TODO()
         } catch (t: Throwable) {
             ExecutionResult.Failure(CommandError.OtherError("Unexpected error", cause = Some(t.nonFatalOrThrow())))
         }
         when (executionResult) {
-            TODO HIER BEZIG: AFHANKELIJK VAN TYPE FOUT OP DEBUG OF WARNING LOGGEN
             is ExecutionResult.Failure -> logger.debug("Executing command remotely failed: $command, $lastRevision, ${executionResult.error}")
             is ExecutionResult.Success -> logger.debug("Command executed remotely successfully: $command")
         }

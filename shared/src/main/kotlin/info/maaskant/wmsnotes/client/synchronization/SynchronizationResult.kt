@@ -1,5 +1,7 @@
 package info.maaskant.wmsnotes.client.synchronization
 
+import info.maaskant.wmsnotes.model.CommandError
+
 data class SynchronizationResult(
-        val success: Boolean
+        val errors: List<Pair<String, CommandError>>
 )

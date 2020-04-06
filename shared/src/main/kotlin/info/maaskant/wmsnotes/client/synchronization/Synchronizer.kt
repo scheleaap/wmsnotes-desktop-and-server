@@ -1,8 +1,13 @@
 package info.maaskant.wmsnotes.client.synchronization
 
+import arrow.core.Either
+import arrow.core.Either.Companion.left
+import arrow.core.Either.Companion.right
+import arrow.core.flatMap
 import info.maaskant.wmsnotes.client.synchronization.commandexecutor.CommandExecutor
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
+import info.maaskant.wmsnotes.model.CommandError
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
@@ -54,8 +59,8 @@ class Synchronizer @Inject constructor(
 
         updateLastRevisions(localEvents, remoteEvents)
         removeEventsToIgnore(eventsToIgnore)
-        val success = synchronizeEvents(eventsToSynchronize)
-        return SynchronizationResult(success = success)
+        val errors = synchronizeEvents(eventsToSynchronize)
+        return SynchronizationResult(errors = errors)
     }
 
     private fun updateLastRevisions(localEvents: Observable<Event>, remoteEvents: Observable<Event>) {
@@ -88,11 +93,11 @@ class Synchronizer @Inject constructor(
         }
     }
 
-    private fun synchronizeEvents(eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents>): Boolean {
+    private fun synchronizeEvents(eventsToSynchronize: SortedMap<String, LocalAndRemoteEvents>): List<Pair<String, CommandError>> {
         val r = eventsToSynchronize.asSequence().map { (aggId, aggregateEventsToSynchronize) ->
             aggId to (aggregateEventsToSynchronize to resolve(aggregateEventsToSynchronize, aggId))
         }.filter { (aggId, tmp) ->
-            val (aggregateEventsToSynchronize, resolutionResult) = tmp
+            val (aggregateEventsToSynchronize: LocalAndRemoteEvents, resolutionResult: SynchronizationStrategy.ResolutionResult) = tmp
             when (resolutionResult) {
                 SynchronizationStrategy.ResolutionResult.NoSolution -> {
                     logger.warn("The events for aggregate {} cannot be synchronized, because the program does not know how. Events: {}", aggId, aggregateEventsToSynchronize)
@@ -110,10 +115,12 @@ class Synchronizer @Inject constructor(
             val (_, resolutionResult) = tmp
             aggId to (resolutionResult as SynchronizationStrategy.ResolutionResult.Solution).compensatingActions
         }.map { (aggId, compensatingActions) ->
-            executeCompensatingActions(compensatingActions, aggId)
-        }.toList()
+            aggId to executeCompensatingActions(compensatingActions, aggId)
+        }.toList() // Create a list first to ensure that all aggregates are processed.
 
-        return r.all { it }
+        return r.flatMap { (aggId, result) ->
+            result.fold({ listOf(aggId to it) }, { emptyList() })
+        }
     }
 
     private fun removeEventsToIgnore(eventsToIgnore: LocalAndRemoteEvents) {
@@ -151,33 +158,32 @@ class Synchronizer @Inject constructor(
         return localEventIdsToSynchronize == compensatedLocalEventIds && remoteEventIdsToSynchronize == compensatedRemoteEventIds
     }
 
-    private fun executeCompensatingActions(compensatingActions: List<CompensatingAction>, aggId: String): Boolean {
-        return if (compensatingActions.isNotEmpty()) {
-            val head = compensatingActions[0]
+    private fun executeCompensatingActions(compensatingActions: List<CompensatingAction>, aggId: String): Either<CommandError, Unit> {
+        return if (compensatingActions.isEmpty()) {
+            right(Unit)
+        } else {
+            val head = compensatingActions.first()
             val tail = compensatingActions.subList(1, compensatingActions.size)
             logger.debug("Executing compensating action for aggregate {}: {}", aggId, head)
             val success = executeCompensatingAction(head, aggId)
-            if (success) {
+            success.flatMap {
                 logger.debug("Successfully executed compensating action for aggregate {}: {}", aggId, head)
                 executeCompensatingActions(compensatingActions = tail, aggId = aggId)
-            } else {
+            }.mapLeft {
                 logger.warn("Failed to execute compensating action for aggregate {}, skipping further compensating actions: {}", aggId, head)
-                false
+                it
             }
-        } else {
-            true
         }
     }
 
-    TODO HIER BEZIG: FOUTEN DOORGEVEN NAAR BOVEN (NAAR DE SYNCHRONIZATIONRESULT)
-    private fun executeCompensatingAction(compensatingAction: CompensatingAction, aggId: String): Boolean {
+    private fun executeCompensatingAction(compensatingAction: CompensatingAction, aggId: String): Either<CommandError, Unit> {
         for (remoteEvent in compensatingAction.newRemoteEvents) {
             val command = eventToCommandMapper.map(remoteEvent)
             val lastRevision = state.lastKnownRemoteRevisions[remoteEvent.aggId] ?: 0
             val executionResult = remoteCommandExecutor.execute(command, lastRevision)
             logger.debug("Remote event {} -> command {} + lastRevision {} -> {}", remoteEvent, command, lastRevision, executionResult)
             when (executionResult) {
-                is CommandExecutor.ExecutionResult.Failure -> return false
+                is CommandExecutor.ExecutionResult.Failure -> return left(executionResult.error)
                 is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
                     updateState(state
                             .updateLastKnownRemoteRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
@@ -192,7 +198,7 @@ class Synchronizer @Inject constructor(
             val executionResult = localCommandExecutor.execute(command, lastRevision)
             logger.debug("Local event {} -> command {} + lastRevision {} -> {}", localEvent, command, lastRevision, executionResult)
             when (executionResult) {
-                is CommandExecutor.ExecutionResult.Failure -> return false
+                is CommandExecutor.ExecutionResult.Failure -> return left(executionResult.error)
                 is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
                     updateState(state
                             .updateLastKnownLocalRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
@@ -212,7 +218,7 @@ class Synchronizer @Inject constructor(
                 )
             }
         }
-        return true
+        return right(Unit)
     }
 
     private fun groupLocalAndRemoteEventsByNote(localEvents: List<Event>, remoteEvents: List<Event>): SortedMap<String, LocalAndRemoteEvents> {

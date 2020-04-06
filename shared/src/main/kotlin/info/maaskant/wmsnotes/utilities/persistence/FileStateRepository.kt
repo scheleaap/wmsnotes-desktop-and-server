@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.utilities.persistence
 
+import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.reactivex.Scheduler
 import java.io.File
@@ -12,6 +13,8 @@ class FileStateRepository<T>(
         private val timeout: Long,
         private val unit: TimeUnit
 ) : StateRepository<T> {
+    private val logger by logger()
+
     override fun load(): T? =
             if (file.exists()) {
                 serializer.deserialize(file.readBytes())
@@ -27,7 +30,9 @@ class FileStateRepository<T>(
                     if (!file.exists()) {
                         file.parentFile.mkdirs()
                     }
-                    file.writeBytes(serializer.serialize(it))
+                    val data: ByteArray = serializer.serialize(it)
+                    file.writeBytes(data)
+                    logger.debug("Wrote {} bytes to {}", data.size, file.path)
                 }
     }
 }
