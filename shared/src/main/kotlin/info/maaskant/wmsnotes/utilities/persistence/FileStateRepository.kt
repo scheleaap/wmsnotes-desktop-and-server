@@ -25,7 +25,7 @@ class FileStateRepository<T>(
     override fun connect(stateProducer: StateProducer<T>) {
         stateProducer.getStateUpdates()
                 .subscribeOn(scheduler)
-                .apply { if (timeout > 0) debounce(timeout, unit) }
+                .let { if (timeout > 0) it.throttleLast(timeout, unit) else it }
                 .subscribe {
                     if (!file.exists()) {
                         file.parentFile.mkdirs()

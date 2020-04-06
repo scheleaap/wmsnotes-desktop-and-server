@@ -33,7 +33,7 @@ class FileEventStore @Inject constructor(
 
     init {
         logger.debug("Event store directory: $rootDirectory")
-        // Replace with persisted value if too slow.
+        // Replace with persisted index if too slow.
         try {
             val time = measureNanoTime {
                 rootDirectory

@@ -54,8 +54,12 @@ class CommandService(
                 } else {
                     val outcome: Either<CommandError, Option<Event>> = commandResult.outcome.first().second
                     when (outcome) {
-                        is Left -> responseObserver.onError(commandErrorToStatusRuntimeException(outcome.a))
+                        is Left -> {
+                            val sre = commandErrorToStatusRuntimeException(outcome.a)
+                            logger.debug("Answering request: {}, {}", sre.status.code, sre.status.description)
+                            responseObserver.onError(sre)}
                         is Right -> {
+                            logger.debug("Answering request: OK, {}", outcome.b)
                             val response = eventToResponse(outcome.b)
                             responseObserver.onNext(response)
                             responseObserver.onCompleted()
@@ -80,7 +84,7 @@ class CommandService(
         }
     }
 
-    private fun commandErrorToStatusRuntimeException(commandError: CommandError): StatusRuntimeException? {
+    private fun commandErrorToStatusRuntimeException(commandError: CommandError): StatusRuntimeException {
         return when (commandError) {
             is IllegalStateError -> Status.FAILED_PRECONDITION
                     .withDescription(commandError.message)
@@ -105,7 +109,7 @@ class CommandService(
         }
     }
 
-    private fun eventToResponse(eventOption: Option<Event>): Command.PostCommandResponse? {
+    private fun eventToResponse(eventOption: Option<Event>): Command.PostCommandResponse {
         return eventOption.map { event ->
             Command.PostCommandResponse.newBuilder()
                     .setNewEventId(event.eventId)

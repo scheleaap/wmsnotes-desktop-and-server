@@ -31,7 +31,7 @@ class RemoteCommandExecutor @Inject constructor(
 
     override fun execute(command: Command, lastRevision: Int): ExecutionResult {
         val executionResult: ExecutionResult = try {
-            logger.debug("Executing command remotely: $command, $lastRevision")
+            logger.debug("Executing command remotely: $command, lastRevision=$lastRevision")
             val request = grpcCommandMapper.toGrpcPostCommandRequest(command, lastRevision)
             val responseEither: Either<StatusRuntimeException, PostCommandResponse> = postCommand(request)
             responseEither.fold({ sre ->
@@ -74,7 +74,7 @@ class RemoteCommandExecutor @Inject constructor(
             ExecutionResult.Failure(CommandError.OtherError("Unexpected error", cause = Some(t.nonFatalOrThrow())))
         }
         when (executionResult) {
-            is ExecutionResult.Failure -> logger.debug("Executing command remotely failed: $command, $lastRevision, ${executionResult.error}")
+            is ExecutionResult.Failure -> logger.debug("Executing command remotely failed: $command, lastRevision=$lastRevision, ${executionResult.error}")
             is ExecutionResult.Success -> logger.debug("Command executed remotely successfully: $command")
         }
         return executionResult

@@ -8,6 +8,7 @@ import info.maaskant.wmsnotes.desktop.main.editing.editor.MarkdownEditorPane
 import info.maaskant.wmsnotes.desktop.settings.ApplicationViewState
 import info.maaskant.wmsnotes.desktop.util.*
 import info.maaskant.wmsnotes.utilities.logger
+import io.reactivex.rxkotlin.subscribeBy
 import javafx.application.Platform
 import javafx.geometry.Orientation
 import javafx.scene.control.TextInputDialog
@@ -166,13 +167,15 @@ class MenuAndToolbarView : View() {
                     // toggleswitch {
                     this += ToggleSwitch().apply {
                         selectedProperty().toObservable()
-                                .subscribe {
-                                    if (it) synchronizationTask.unpause() else synchronizationTask.pause()
-                                }
+                                .subscribeBy(
+                                        onNext = { if (it) synchronizationTask.unpause() else synchronizationTask.pause() },
+                                        onError = { logger.error("Error", it) }
+                                )
                         synchronizationTask.isPaused()
-                                .subscribe {
-                                    this.isSelected = !it
-                                }
+                                .subscribeBy(
+                                        onNext = { this.isSelected = !it },
+                                        onError = { logger.error("Error", it) }
+                                )
                     }
 //                    button {
 //                        text = "Synchronize Now"

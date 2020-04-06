@@ -42,11 +42,11 @@ class SynchronizationTask @Inject constructor(
                 )
         val disposable2 = isPaused().observeOn(Schedulers.io())
                 .subscribeBy {
-                    if (it == false) {
-                        logger.debug("Pausing synchronization")
+                    logger.debug(if (!it) {
+                        "Resuming synchronization"
                     } else {
-                        logger.debug("Resuming synchronization")
-                    }
+                        "Pausing synchronization"
+                    })
                 }
         return CompositeDisposable(disposable1, disposable2)
     }
@@ -70,7 +70,7 @@ class SynchronizationTask @Inject constructor(
 
     @Synchronized
     fun isPaused(): Observable<Boolean> {
-        return isPaused.distinct()
+        return isPaused.distinctUntilChanged()
     }
 
     @Synchronized
