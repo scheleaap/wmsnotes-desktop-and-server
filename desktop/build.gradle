@@ -3,6 +3,7 @@ plugins {
     id "org.jetbrains.kotlin.jvm" version "1.3.21"
     id "org.jetbrains.kotlin.plugin.spring" version "1.3.21"
     // id "org.jetbrains.kotlin.plugin.allopen" version "1.3.21"
+    id "org.openjfx.javafxplugin" version "0.0.8"
     id "org.springframework.boot" version "2.1.0.RELEASE"
     id "io.spring.dependency-management" version "1.0.6.RELEASE"
 }
@@ -69,6 +70,11 @@ dependencies {
     testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine')
     // See also https://blog.philipphauer.de/best-practices-unit-testing-kotlin/
     testImplementation 'io.mockk:mockk:1.9.2'
+}
+
+javafx {
+    version = "11.0.2"
+    modules = [ "javafx.controls", "javafx.web" ]
 }
 
 compileKotlin {

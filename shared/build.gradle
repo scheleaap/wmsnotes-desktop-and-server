@@ -18,7 +18,7 @@ dependencies {
     api 'au.com.console:kassava:1.0.0'
     api 'javax.inject:javax.inject:1'
     implementation 'commons-codec:commons-codec:1.11'
-    api 'io.reactivex.rxjava2:rxkotlin:2.2.0'
+    api 'io.reactivex.rxjava2:rxkotlin:2.4.0'
 
     // Storage: Serialization
     api 'com.esotericsoftware:kryo:5.0.0-RC1' // Selected based on https://github.com/eishay/jvm-serializers/wiki
@@ -56,7 +56,7 @@ protobuf {
 }
 
 compileKotlin {
-    kotlinOptions.jvmTarget = '1.6'
+    kotlinOptions.jvmTarget = '1.8'
     kotlinOptions.freeCompilerArgs = ['-Xjsr305=strict']
 }
 
