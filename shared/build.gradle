@@ -19,7 +19,7 @@ dependencies {
     compile "io.arrow-kt:arrow-core:$arrowVersion"
     compile "io.arrow-kt:arrow-syntax:$arrowVersion"
     kapt "io.arrow-kt:arrow-meta:$arrowVersion"
-    api 'io.reactivex.rxjava2:rxkotlin:2.2.0'
+    api 'io.reactivex.rxjava2:rxkotlin:2.4.0'
     api 'javax.inject:javax.inject:1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7"
     api "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3"
@@ -62,7 +62,7 @@ protobuf {
 }
 
 compileKotlin {
-    kotlinOptions.jvmTarget = '1.6'
+    kotlinOptions.jvmTarget = '1.8'
     kotlinOptions.freeCompilerArgs = ['-Xjsr305=strict']
 }
 

@@ -1,10 +1,9 @@
-sudo: required
-dist: trusty
+os: linux
+dist: bionic
 language: java
-jdk: oraclejdk8
+jdk: openjdk11
 services:
   - docker
-
 git:
   depth: 1
 
