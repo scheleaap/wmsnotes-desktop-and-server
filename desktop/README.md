@@ -12,6 +12,19 @@ java \
   -jar desktop\build\libs\desktop-<version>-SNAPSHOT.jar
 ```
 
+or 
+
+```sh
+java \
+  -Dserver.hostname=<server hostname>
+  --module-path ${JAVAFX_SDK} \
+  --add-modules javafx.controls,javafx.web \
+  --add-opens javafx.graphics/javafx.scene=ALL-UNNAMED \
+  --add-opens javafx.graphics/javafx.css=ALL-UNNAMED \
+  -DrootDirectory=D:\Progs\Java\wmsnotes-desktop\desktop_data \
+  -DlogDirectory=D:\Progs\Java\wmsnotes-desktop\desktop_data\logs
+  -jar desktop\build\libs\desktop-<version>-SNAPSHOT.jar
+```
 
 ## Building
 

@@ -1,12 +1,11 @@
-sudo: required
-
-git:
-  depth: 1
-
+os: linux
+dist: bionic
 language: java
-
+jdk: openjdk11
 services:
   - docker
+git:
+  depth: 1
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
