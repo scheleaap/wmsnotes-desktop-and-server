@@ -154,7 +154,7 @@ class SynchronizationConfiguration {
             grpcDeadline: Deadline,
             grpcEventMapper: GrpcEventMapper,
             @ForRemoteEvents eventRepository: ModifiableEventRepository,
-            @ForLocalEvents stateRepository: StateRepository<EventImporterState>
+            @ForRemoteEvents stateRepository: StateRepository<EventImporterState>
     ) =
             RemoteEventImporter(
                     grpcEventService,
