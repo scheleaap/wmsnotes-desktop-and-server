@@ -61,13 +61,20 @@ protobuf {
     }
 }
 
+def jvmTargetVersion = JavaVersion.VERSION_1_8
+
+compileJava {
+    sourceCompatibility = jvmTargetVersion
+    targetCompatibility = jvmTargetVersion
+}
+
 compileKotlin {
-    kotlinOptions.jvmTarget = '1.8'
+    kotlinOptions.jvmTarget = jvmTargetVersion
     kotlinOptions.freeCompilerArgs = ['-Xjsr305=strict']
 }
 
 compileTestKotlin {
-    kotlinOptions.jvmTarget = '1.8'
+    kotlinOptions.jvmTarget = jvmTargetVersion
     kotlinOptions.freeCompilerArgs = ['-Xjsr305=strict']
 }
 
