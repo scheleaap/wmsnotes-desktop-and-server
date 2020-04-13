@@ -1,5 +1,7 @@
 package info.maaskant.wmsnotes.client.synchronization.commandexecutor
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.Event
@@ -7,15 +9,13 @@ import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.CreateNoteCommand
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
+import info.maaskant.wmsnotes.testutilities.ExecutionResultAssertions.isFailure
 import io.grpc.Deadline
+import io.grpc.Status
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifySequence
-import assertk.assertThat
-import assertk.assertions.*
-import info.maaskant.wmsnotes.testutilities.ExecutionResultAssertions.isFailure
-import io.grpc.Status
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit

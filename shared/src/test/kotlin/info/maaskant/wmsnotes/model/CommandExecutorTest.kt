@@ -1,10 +1,13 @@
 package info.maaskant.wmsnotes.model
 
-import arrow.core.Either.*
 import arrow.core.Either.Companion.right
-import arrow.core.Some
+import arrow.core.Either.Right
 import arrow.core.None
-import arrow.typeclasses.Eq.Companion.any
+import arrow.core.Some
+import assertk.assertThat
+import assertk.assertions.hasSize
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import info.maaskant.wmsnotes.model.CommandOrigin.LOCAL
 import info.maaskant.wmsnotes.model.CommandRequest.Companion.randomRequestId
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
@@ -13,8 +16,6 @@ import io.mockk.*
 import io.reactivex.Scheduler
 import io.reactivex.schedulers.Schedulers
 import kotlinx.collections.immutable.persistentListOf
-import assertk.assertThat
-import assertk.assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
