@@ -33,7 +33,7 @@ internal class GrpcCommandMapperTest {
         val thrown = catchThrowable { mapper.toModelCommandRequest(request) }
 
         // Then
-        assertThat(thrown).isInstanceOf(BadRequestException::class.java)
+        assertThat(thrown).isInstanceOf(InvalidRequestException::class.java)
     }
 
     @TestFactory
@@ -70,7 +70,7 @@ internal class GrpcCommandMapperTest {
                 val thrown = catchThrowable { mapper.toModelCommandRequest(request) }
 
                 // Then
-                assertThat(thrown).isInstanceOf(BadRequestException::class.java)
+                assertThat(thrown).isInstanceOf(InvalidRequestException::class.java)
             }
         }
     }
@@ -189,7 +189,7 @@ internal class GrpcCommandMapperTest {
                 val thrown = catchThrowable { mapper.toModelCommandRequest(request) }
 
                 // Then
-                assertThat(thrown).isInstanceOf(BadRequestException::class.java)
+                assertThat(thrown).isInstanceOf(InvalidRequestException::class.java)
             }
         }
     }

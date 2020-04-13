@@ -1,9 +1,13 @@
 package info.maaskant.wmsnotes.model.eventstore
 
+import arrow.core.Either
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import info.maaskant.wmsnotes.model.CommandError
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.Path
-import org.assertj.core.api.Assertions.assertThat
+import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
+import info.maaskant.wmsnotes.testutilities.EitherAssertions.isLeft
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -15,10 +19,11 @@ internal abstract class EventStoreTest {
         val event = modelEvent(eventId = 1, aggId = 1, revision = 1)
         val r = createInstance()
 
-        // When / Then
-        assertThrows<IllegalArgumentException> {
-            r.appendEvent(event)
-        }
+        // When
+        val result = r.appendEvent(event)
+
+        // Then
+        assertThat(result).isLeft()
     }
 
     @Test
@@ -59,10 +64,11 @@ internal abstract class EventStoreTest {
         r.appendEvent(event1)
         r = createInstance()
 
-        // When / Then
-        assertThrows<IllegalArgumentException> {
-            r.appendEvent(event2)
-        }
+        // When
+        val result: Either<CommandError.StorageError, Event> = r.appendEvent(event2)
+
+        // Then
+        assertThat(result).isLeft()
     }
 
     @Test
@@ -74,10 +80,11 @@ internal abstract class EventStoreTest {
         r.appendEvent(event1)
         r = createInstance()
 
-        // When / Then
-        assertThrows<IllegalArgumentException> {
-            r.appendEvent(event2)
-        }
+        // When
+        val result = r.appendEvent(event2)
+
+        // Then
+        assertThat(result).isLeft()
     }
 
     @Test
@@ -86,10 +93,11 @@ internal abstract class EventStoreTest {
         val event = modelEvent(eventId = 0, aggId = 1, revision = 2)
         val r = createInstance()
 
-        // When / Then
-        assertThrows<IllegalArgumentException> {
-            r.appendEvent(event)
-        }
+        // When
+        val result = r.appendEvent(event)
+
+        // Then
+        assertThat(result).isLeft()
     }
 
     @Test
@@ -98,10 +106,11 @@ internal abstract class EventStoreTest {
         val event = modelEvent(eventId = 0, aggId = 1, revision = -1)
         val r = createInstance()
 
-        // When / Then
-        assertThrows<IllegalArgumentException> {
-            r.appendEvent(event)
-        }
+        // When
+        val result = r.appendEvent(event)
+
+        // Then
+        assertThat(result).isLeft()
     }
 
     @Test

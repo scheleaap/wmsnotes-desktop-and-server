@@ -29,7 +29,7 @@ class PreviewAttachmentStorage @Inject constructor(
 
     private val logger by logger()
 
-    private val attachmentsStoredNotifications: Subject<Map<String, String>> = BehaviorSubject.create()
+    private val attachmentsStoredNotifications: Subject<Map<String, String>> = BehaviorSubject.create<Map<String, String>>().toSerialized()
 
     private var state: PreviewAttachmentStorageState = initialState ?: PreviewAttachmentStorageState()
 
@@ -54,7 +54,7 @@ class PreviewAttachmentStorage @Inject constructor(
                     if (previous?.attachmentHashes != new.attachmentHashes) {
                         attachmentsStoredNotifications.onNext(new.attachmentHashes)
                     }
-                }, onError = { logger.warn("Error", it) })
+                }, onError = { logger.error("Error", it) })
     }
 
     fun getAttachmentsStoredNotifications(): Observable<Map<String, String>> = attachmentsStoredNotifications

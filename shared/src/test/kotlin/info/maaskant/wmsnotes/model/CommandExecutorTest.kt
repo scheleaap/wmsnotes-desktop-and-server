@@ -1,14 +1,21 @@
 package info.maaskant.wmsnotes.model
 
+import arrow.core.Either.Companion.right
+import arrow.core.Either.Right
+import arrow.core.None
+import arrow.core.Some
+import assertk.assertThat
+import assertk.assertions.hasSize
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import info.maaskant.wmsnotes.model.CommandOrigin.LOCAL
-import info.maaskant.wmsnotes.model.CommandOrigin.REMOTE
 import info.maaskant.wmsnotes.model.CommandRequest.Companion.randomRequestId
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
 import io.mockk.*
 import io.reactivex.Scheduler
 import io.reactivex.schedulers.Schedulers
-import org.assertj.core.api.Assertions.assertThat
+import kotlinx.collections.immutable.persistentListOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
@@ -56,8 +63,7 @@ internal abstract class CommandExecutorTest<
         // Then
         assertThat(result).isEqualTo(CommandResult(
                 requestId = request.requestId,
-                commands = listOf(command1 to true),
-                newEvents = listOf(event1Stored),
+                outcome = persistentListOf(command1 to Right(Some(event1Stored))),
                 origin = origin
         ))
         verifySequence { eventStore.appendEvent(event1Applied) }
@@ -81,8 +87,7 @@ internal abstract class CommandExecutorTest<
         // Then
         assertThat(result).isEqualTo(CommandResult(
                 requestId = request.requestId,
-                commands = listOf(command1 to true),
-                newEvents = emptyList(),
+                outcome = persistentListOf(command1 to Right(None)),
                 origin = LOCAL
         ))
         verify { eventStore.appendEvent(any()) wasNot Called }
@@ -110,8 +115,10 @@ internal abstract class CommandExecutorTest<
         // Then
         assertThat(result).isEqualTo(CommandResult(
                 requestId = request.requestId,
-                commands = listOf(command1 to true, command2 to true),
-                newEvents = listOf(event1Stored, event2Stored),
+                outcome = persistentListOf(
+                        command1 to Right(Some(event1Stored)),
+                        command2 to Right(Some(event2Stored))
+                ),
                 origin = LOCAL
         ))
         verifySequence {
@@ -140,12 +147,11 @@ internal abstract class CommandExecutorTest<
         val result = executor.execute(request)
 
         // Then
-        assertThat(result).isEqualTo(CommandResult(
-                requestId = request.requestId,
-                commands = listOf(command1 to false, command2 to false),
-                newEvents = emptyList(),
-                origin = LOCAL
-        ))
+        assertThat(result.requestId).isEqualTo(request.requestId)
+        assertThat(result.outcome).hasSize(1)
+        assertThat(result.outcome.first().first).isEqualTo(command1)
+        assertThat(result.outcome.first().second.isLeft()).isTrue()
+        assertThat(result.origin).isEqualTo(request.origin)
         verifySequence { eventStore.appendEvent(event1Applied) }
     }
 
@@ -165,12 +171,11 @@ internal abstract class CommandExecutorTest<
         val result = executor.execute(request)
 
         // Then
-        assertThat(result).isEqualTo(CommandResult(
-                requestId = request.requestId,
-                commands = listOf(command1 to false),
-                newEvents = emptyList(),
-                origin = LOCAL
-        ))
+        assertThat(result.requestId).isEqualTo(request.requestId)
+        assertThat(result.outcome).hasSize(1)
+        assertThat(result.outcome.first().first).isEqualTo(command1)
+        assertThat(result.outcome.first().second.isLeft()).isTrue()
+        assertThat(result.origin).isEqualTo(request.origin)
         verify { eventStore.appendEvent(any()) wasNot Called }
     }
 
@@ -202,7 +207,7 @@ internal abstract class CommandExecutorTest<
 
     private fun givenAnEventCanBeStored(eventIn: Event): Event {
         val eventOut: Event = mockk()
-        every { eventStore.appendEvent(eventIn) }.returns(eventOut)
+        every { eventStore.appendEvent(eventIn) }.returns(right(eventOut))
         return eventOut
     }
 

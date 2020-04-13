@@ -4,7 +4,8 @@ import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.AttachmentAddedEvent
 import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.Test
 
 internal abstract class AggregateCacheTest {

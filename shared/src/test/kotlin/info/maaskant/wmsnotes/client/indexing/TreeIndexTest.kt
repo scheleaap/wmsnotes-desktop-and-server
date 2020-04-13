@@ -1,5 +1,7 @@
 package info.maaskant.wmsnotes.client.indexing
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import info.maaskant.wmsnotes.client.indexing.TreeIndexEvent.*
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
@@ -15,7 +17,6 @@ import io.mockk.verify
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 

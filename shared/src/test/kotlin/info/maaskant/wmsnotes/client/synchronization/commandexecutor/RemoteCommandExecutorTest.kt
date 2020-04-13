@@ -1,5 +1,7 @@
 package info.maaskant.wmsnotes.client.synchronization.commandexecutor
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.Event
@@ -7,12 +9,13 @@ import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.CreateNoteCommand
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
+import info.maaskant.wmsnotes.testutilities.ExecutionResultAssertions.isFailure
 import io.grpc.Deadline
+import io.grpc.Status
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifySequence
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -83,7 +86,6 @@ internal class RemoteCommandExecutorTest {
         val event = modelEvent(eventId = 5, aggId = 1, revision = 11)
         val response = info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse
                 .newBuilder()
-                .setStatus(info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse.Status.SUCCESS)
                 .setNewEventId(event.eventId)
                 // missing aggregate id
                 .setNewRevision(event.revision)
@@ -95,7 +97,7 @@ internal class RemoteCommandExecutorTest {
         val result = executor.execute(command, lastRevision)
 
         // Then
-        assertThat(result).isEqualTo(CommandExecutor.ExecutionResult.Failure)
+        assertThat(result).isFailure()
     }
 
     @Test
@@ -106,7 +108,6 @@ internal class RemoteCommandExecutorTest {
         val event = modelEvent(eventId = 5, aggId = 1, revision = 11)
         val response = info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse
                 .newBuilder()
-                .setStatus(info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse.Status.SUCCESS)
                 .setNewEventId(event.eventId)
                 .setAggregateId(event.aggId)
                 // missing revision
@@ -118,7 +119,7 @@ internal class RemoteCommandExecutorTest {
         val result = executor.execute(command, lastRevision)
 
         // Then
-        assertThat(result).isEqualTo(CommandExecutor.ExecutionResult.Failure)
+        assertThat(result).isFailure()
     }
 
     @Test
@@ -126,14 +127,14 @@ internal class RemoteCommandExecutorTest {
         // Given
         val lastRevision = 10
         val command = modelCommand(aggId = 1)
-        val remoteRequest = givenACommandFails(command, lastRevision)
+        val remoteRequest = givenACommandFails(command, lastRevision, Status.INVALID_ARGUMENT)
         val executor = createExecutor()
 
         // When
         val result = executor.execute(command, lastRevision)
 
         // Then
-        assertThat(result).isEqualTo(CommandExecutor.ExecutionResult.Failure)
+        assertThat(result).isFailure()
         verifySequence {
             grpcCommandService.withDeadline(grpcDeadline)
             grpcCommandService.postCommand(remoteRequest)
@@ -152,7 +153,7 @@ internal class RemoteCommandExecutorTest {
         val result = executor.execute(command, lastRevision)
 
         // Then
-        assertThat(result).isEqualTo(CommandExecutor.ExecutionResult.Failure)
+        assertThat(result).isFailure()
     }
 
     private fun createExecutor() =
@@ -162,8 +163,12 @@ internal class RemoteCommandExecutorTest {
                     grpcDeadline
             )
 
-    private fun givenACommandFails(command: Command, lastRevision: Int): info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest =
-            givenACommandResponse(command, lastRevision, remoteError())
+    private fun givenACommandFails(command: Command, lastRevision: Int, grpcStatus: Status): info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest {
+        val remoteRequest: info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest = mockk()
+        every { grpcCommandMapper.toGrpcPostCommandRequest(command, lastRevision) }.returns(remoteRequest)
+        every { grpcCommandService.postCommand(remoteRequest) }.throws(grpcStatus.asRuntimeException())
+        return remoteRequest
+    }
 
     private fun givenACommandIsSuccessful(command: Command, lastRevision: Int, event: Event?): info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandRequest =
             givenACommandResponse(command, lastRevision, remoteSuccess(event))
@@ -185,7 +190,6 @@ internal class RemoteCommandExecutorTest {
         internal fun remoteSuccess(event: Event?): info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse {
             return info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse
                     .newBuilder()
-                    .setStatus(info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse.Status.SUCCESS)
                     .let {
                         if (event != null) {
                             it
@@ -198,12 +202,6 @@ internal class RemoteCommandExecutorTest {
                         }
                     }
                     .build()
-        }
-
-        internal fun remoteError(): info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse {
-            return info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse
-                    .newBuilder()
-                    .setStatus(info.maaskant.wmsnotes.server.command.grpc.Command.PostCommandResponse.Status.INTERNAL_ERROR).build()
         }
     }
 }

@@ -70,7 +70,7 @@ class EditingView : View() {
                 editingViewModel.isEnabled()
                         .observeOnFx()
                         .map { !it }
-                        .subscribe(this::setDisable) { logger.warn("Error", it) }
+                        .subscribe(this::setDisable) { logger.error("Error", it) }
             }
         }
 

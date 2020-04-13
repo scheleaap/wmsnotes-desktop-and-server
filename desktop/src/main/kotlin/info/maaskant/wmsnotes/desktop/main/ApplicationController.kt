@@ -26,17 +26,17 @@ class ApplicationController @Inject constructor(
 ) {
     private val logger by logger()
 
-    // TODO: Replace with SerializedSubject
     // Folder
-    final val createFolder: Subject<String> = PublishSubject.create()
+    final val createFolder: Subject<String> = PublishSubject.create<String>().toSerialized()
+
     // Note
-    final val selectNote: Subject<NavigationViewModel.SelectionRequest> = PublishSubject.create()
-    final val createNote: Subject<Unit> = PublishSubject.create()
-    final val deleteCurrentNote: Subject<Unit> = PublishSubject.create()
-    final val addAttachmentToCurrentNote: Subject<File> = PublishSubject.create()
-    final val deleteAttachmentFromCurrentNote: Subject<String> = PublishSubject.create()
-    final val saveContent: Subject<Unit> = PublishSubject.create()
-    final val importMarkdownFiles: Subject<File> = PublishSubject.create()
+    final val selectNote: Subject<NavigationViewModel.SelectionRequest> = PublishSubject.create<NavigationViewModel.SelectionRequest>().toSerialized()
+    final val createNote: Subject<Unit> = PublishSubject.create<Unit>().toSerialized()
+    final val deleteCurrentNote: Subject<Unit> = PublishSubject.create<Unit>().toSerialized()
+    final val addAttachmentToCurrentNote: Subject<File> = PublishSubject.create<File>().toSerialized()
+    final val deleteAttachmentFromCurrentNote: Subject<String> = PublishSubject.create<String>().toSerialized()
+    final val saveContent: Subject<Unit> = PublishSubject.create<Unit>().toSerialized()
+    final val importMarkdownFiles: Subject<File> = PublishSubject.create<File>().toSerialized()
 
     private var i: Int = 1
 

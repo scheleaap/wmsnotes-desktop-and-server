@@ -1,7 +1,8 @@
 package info.maaskant.wmsnotes.model.folder
 
 import info.maaskant.wmsnotes.model.Path
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory

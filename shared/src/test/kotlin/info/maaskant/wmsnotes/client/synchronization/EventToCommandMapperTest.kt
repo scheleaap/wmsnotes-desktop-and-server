@@ -1,14 +1,14 @@
 package info.maaskant.wmsnotes.client.synchronization
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
 import info.maaskant.wmsnotes.model.folder.DeleteFolderCommand
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
 import info.maaskant.wmsnotes.model.folder.FolderDeletedEvent
 import info.maaskant.wmsnotes.model.note.*
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 
 internal class EventToCommandMapperTest {

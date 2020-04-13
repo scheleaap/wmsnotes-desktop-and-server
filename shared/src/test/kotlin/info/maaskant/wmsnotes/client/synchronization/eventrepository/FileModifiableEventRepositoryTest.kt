@@ -1,11 +1,15 @@
 package info.maaskant.wmsnotes.client.synchronization.eventrepository
 
+import assertk.assertThat
+import assertk.assertions.exists
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
 import info.maaskant.wmsnotes.model.Event
+import info.maaskant.wmsnotes.testutilities.FileAssertions.doesNotExist
 import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File

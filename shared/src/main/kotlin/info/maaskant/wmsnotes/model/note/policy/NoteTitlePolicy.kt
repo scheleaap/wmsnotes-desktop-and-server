@@ -49,7 +49,7 @@ class NoteTitlePolicy @Inject constructor(
                 }
                 .subscribeBy(
                         onNext = commandBus.requests::onNext,
-                        onError = { logger.warn("Error", it) }
+                        onError = { logger.error("Error", it) }
                 )
     }
 

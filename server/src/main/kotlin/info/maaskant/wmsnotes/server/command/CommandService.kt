@@ -1,14 +1,23 @@
 package info.maaskant.wmsnotes.server.command
 
+import arrow.core.Either
+import arrow.core.Either.*
+import arrow.core.Option
+import arrow.core.getOrElse
 import info.maaskant.wmsnotes.model.CommandBus
+import info.maaskant.wmsnotes.model.CommandError
+import info.maaskant.wmsnotes.model.CommandError.*
 import info.maaskant.wmsnotes.model.CommandExecution
+import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.server.command.grpc.Command
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.utilities.logger
+import io.grpc.Status
+import io.grpc.StatusRuntimeException
 import io.grpc.stub.StreamObserver
 import org.lognet.springboot.grpc.GRpcService
-import java.util.concurrent.TimeUnit
 
+@Suppress("MoveVariableDeclarationIntoWhen")
 @GRpcService
 class CommandService(
         private val grpcCommandMapper: GrpcCommandMapper,
@@ -18,6 +27,7 @@ class CommandService(
 
     private val logger by logger()
 
+    @Synchronized
     override fun postCommand(
             request: Command.PostCommandRequest,
             responseObserver: StreamObserver<Command.PostCommandResponse>
@@ -25,42 +35,93 @@ class CommandService(
         try {
             val commandRequest = grpcCommandMapper.toModelCommandRequest(request)
             logger.debug("Received request: {}", commandRequest)
-            val commandResult = CommandExecution.executeBlocking(commandBus = commandBus, commandRequest = commandRequest, timeout = CommandExecution.Duration(120, TimeUnit.SECONDS))
-            val response: Command.PostCommandResponse = if (commandResult.newEvents.size > 1) {
-                throw IllegalStateException("$commandRequest produced ${commandResult.newEvents.size} events")
+            if (commandRequest.commands.size > 1) {
+                val message = "Request contains more than one command: $commandRequest"
+                logger.warn(message)
+                responseObserver.onError(Status.INTERNAL
+                        .withDescription(message)
+                        .asRuntimeException()
+                )
             } else {
-                val newEvent = commandResult.newEvents.firstOrNull()
-                Command.PostCommandResponse.newBuilder()
-                        .setStatus(when (commandResult.allSuccessful) {
-                            true -> Command.PostCommandResponse.Status.SUCCESS
-                            else -> Command.PostCommandResponse.Status.INTERNAL_ERROR
-                        })
-                        .setNewEventId(newEvent?.eventId ?: 0)
-                        .setAggregateId(newEvent?.aggId ?: "")
-                        .setNewRevision(newEvent?.revision ?: 0)
-                        .build()
+                val commandResult = CommandExecution.executeBlocking(commandBus = commandBus, commandRequest = commandRequest, timeout = commandExecutionTimeout)
+                if (commandResult.outcome.size != 1) {
+                    val message = "Result does not contain 1 command but ${commandResult.outcome.size}: $commandRequest -> $commandResult"
+                    logger.warn(message)
+                    responseObserver.onError(Status.INTERNAL
+                            .withDescription(message)
+                            .asRuntimeException()
+                    )
+                } else {
+                    val outcome: Either<CommandError, Option<Event>> = commandResult.outcome.first().second
+                    when (outcome) {
+                        is Left -> {
+                            val sre = commandErrorToStatusRuntimeException(outcome.a)
+                            logger.debug("Answering request: {}, {}", sre.status.code, sre.status.description)
+                            responseObserver.onError(sre)}
+                        is Right -> {
+                            logger.debug("Answering request: OK, {}", outcome.b)
+                            val response = eventToResponse(outcome.b)
+                            responseObserver.onNext(response)
+                            responseObserver.onCompleted()
+                        }
+                    }
+                }
             }
-            responseObserver.onNext(response)
-        } catch (e: Throwable) {
-            responseObserver.onNext(toErrorResponse(e))
+        } catch (t: InvalidRequestException) {
+            // TODO Stop throwing exceptions
+            logger.info("Bad request: {}", t.message)
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription(t.message)
+                    .withCause(t)
+                    .asRuntimeException()
+            )
+        } catch (t: Throwable) {
+            logger.warn("Internal error", t)
+            responseObserver.onError(Status.INTERNAL
+                    .withCause(t)
+                    .asRuntimeException()
+            )
         }
-        responseObserver.onCompleted()
     }
 
-    private fun toErrorResponse(e: Throwable): Command.PostCommandResponse {
-        val responseBuilder = Command.PostCommandResponse.newBuilder()
-        if (e is BadRequestException) {
-            logger.info("Bad request: {}", e.message)
-            responseBuilder
-                    .setStatus(Command.PostCommandResponse.Status.BAD_REQUEST)
-                    .setErrorDescription(e.message)
-        } else {
-            logger.warn("Internal error", e)
-            responseBuilder
-                    .setStatus(Command.PostCommandResponse.Status.INTERNAL_ERROR)
-                    .setErrorDescription("Internal errror")
+    private fun commandErrorToStatusRuntimeException(commandError: CommandError): StatusRuntimeException {
+        return when (commandError) {
+            is IllegalStateError -> Status.FAILED_PRECONDITION
+                    .withDescription(commandError.message)
+                    .asRuntimeException()
+            is InvalidCommandError -> Status.INVALID_ARGUMENT
+                    .withDescription(commandError.message)
+                    .asRuntimeException()
+            is NetworkError ->
+                // Cannot happen, really.
+                Status.INTERNAL
+                        .withDescription(commandError.message)
+                        .withCause(commandError.cause.orNull())
+                        .asRuntimeException()
+            is OtherError -> Status.INTERNAL
+                    .withDescription(commandError.message)
+                    .withCause(commandError.cause.orNull())
+                    .asRuntimeException()
+            is StorageError -> Status.INTERNAL
+                    .withDescription(commandError.message)
+                    .withCause(commandError.cause.orNull())
+                    .asRuntimeException()
         }
-        return responseBuilder.build()
     }
 
+    private fun eventToResponse(eventOption: Option<Event>): Command.PostCommandResponse {
+        return eventOption.map { event ->
+            Command.PostCommandResponse.newBuilder()
+                    .setNewEventId(event.eventId)
+                    .setAggregateId(event.aggId)
+                    .setNewRevision(event.revision)
+                    .build()
+        }.getOrElse {
+            Command.PostCommandResponse.newBuilder()
+                    .setNewEventId(0)
+                    .setAggregateId("")
+                    .setNewRevision(0)
+                    .build()
+        }
+    }
 }

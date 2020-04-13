@@ -6,7 +6,8 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrateg
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
 import info.maaskant.wmsnotes.model.note.Note
 import io.mockk.*
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.DifferenceCompensator.CompensatingEvents

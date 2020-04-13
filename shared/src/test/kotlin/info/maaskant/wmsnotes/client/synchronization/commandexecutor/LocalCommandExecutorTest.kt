@@ -1,16 +1,22 @@
 package info.maaskant.wmsnotes.client.synchronization.commandexecutor
 
+import arrow.core.Either.Companion.left
+import arrow.core.Either.Companion.right
+import arrow.core.Option
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import info.maaskant.wmsnotes.client.synchronization.CommandToCommandRequestMapper
 import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.note.CreateNoteCommand
 import info.maaskant.wmsnotes.model.note.NoteCommand
 import info.maaskant.wmsnotes.model.note.NoteCommandRequest
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
+import info.maaskant.wmsnotes.testutilities.ExecutionResultAssertions.isFailure
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.reactivex.observers.TestObserver
-import org.assertj.core.api.Assertions.assertThat
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -81,7 +87,7 @@ internal class LocalCommandExecutorTest {
         val result = executor.execute(command, lastRevision = lastRevision)
 
         // Then
-        assertThat(result).isEqualTo(CommandExecutor.ExecutionResult.Failure)
+        assertThat(result).isFailure()
         assertThat(requestsObserver.values().toList()).isEqualTo(listOf(request))
     }
 
@@ -97,7 +103,7 @@ internal class LocalCommandExecutorTest {
         val result = executor.execute(command, lastRevision = lastRevision)
 
         // Then
-        assertThat(result).isEqualTo(CommandExecutor.ExecutionResult.Failure)
+        assertThat(result).isFailure()
         assertThat(requestsObserver.values().toList()).isEqualTo(emptyList<CommandRequest<*>>())
     }
 
@@ -114,7 +120,7 @@ internal class LocalCommandExecutorTest {
         val result = executor.execute(command, lastRevision = lastRevision)
 
         // Then
-        assertThat(result).isEqualTo(CommandExecutor.ExecutionResult.Failure)
+        assertThat(result).isFailure()
         assertThat(requestsObserver.values().toList()).isEqualTo(listOf(request))
     }
 
@@ -133,11 +139,11 @@ internal class LocalCommandExecutorTest {
     }
 
     private fun givenARequestCanBeExecuted(request: NoteCommandRequest, success: Boolean, event: Event?) {
-        val newEvents = if (event != null) listOf(event) else emptyList()
         val result = CommandResult(
                 requestId = request.requestId,
-                commands = request.commands.map { it to success },
-                newEvents = newEvents,
+                outcome = request.commands.map {
+                    it to if (success) right(Option.fromNullable(event)) else left(CommandError.OtherError("test"))
+                }.toImmutableList(),
                 origin = CommandOrigin.REMOTE
         )
         commandBus.requests

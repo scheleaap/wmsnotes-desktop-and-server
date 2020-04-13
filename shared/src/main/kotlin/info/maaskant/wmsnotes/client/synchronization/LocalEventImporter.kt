@@ -6,6 +6,7 @@ import info.maaskant.wmsnotes.utilities.logger
 import info.maaskant.wmsnotes.utilities.persistence.StateProducer
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,7 +19,7 @@ class LocalEventImporter @Inject constructor(
 
     private val logger by logger()
     private var state = initialState ?: EventImporterState(null)
-    private val stateUpdates: BehaviorSubject<EventImporterState> = BehaviorSubject.create()
+    private val stateUpdates: Subject<EventImporterState> = BehaviorSubject.create<EventImporterState>().toSerialized()
 
     fun loadAndStoreLocalEvents() {
         logger.debug("Retrieving new local events")
@@ -29,7 +30,7 @@ class LocalEventImporter @Inject constructor(
                 eventRepository.addEvent(it)
                 updateLastEventId(it.eventId)
                 numberOfNewEvents++
-            }, { logger.warn("Error", it) })
+            }, { logger.error("Error", it) })
         } finally {
             if (numberOfNewEvents > 0) logger.info("Added {} new local events", numberOfNewEvents)
         }

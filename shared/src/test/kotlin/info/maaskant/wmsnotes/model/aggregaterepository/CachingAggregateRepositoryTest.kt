@@ -10,7 +10,8 @@ import io.mockk.*
 import io.reactivex.Observable
 import io.reactivex.subjects.ReplaySubject
 import io.reactivex.subjects.Subject
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 

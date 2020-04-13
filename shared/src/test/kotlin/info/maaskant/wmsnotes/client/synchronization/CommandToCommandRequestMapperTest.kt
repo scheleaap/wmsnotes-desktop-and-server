@@ -4,7 +4,8 @@ import info.maaskant.wmsnotes.model.CommandOrigin
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.folder.CreateFolderCommand
 import info.maaskant.wmsnotes.model.note.CreateNoteCommand
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 

@@ -1,6 +1,7 @@
 package info.maaskant.wmsnotes.model.note.policy
 
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 

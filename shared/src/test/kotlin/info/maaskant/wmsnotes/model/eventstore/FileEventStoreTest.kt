@@ -8,7 +8,8 @@ import info.maaskant.wmsnotes.utilities.serialization.Serializer
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File

@@ -25,17 +25,17 @@ class EditingViewModel @Inject constructor(
     private val logger by logger()
 
     // For rendering
-    final val ast: Subject<Node> = PublishSubject.create()
-    final val html: Subject<String> = PublishSubject.create()
+    final val ast: Subject<Node> = PublishSubject.create<Node>().toSerialized()
+    final val html: Subject<String> = PublishSubject.create<String>().toSerialized()
 
-    private final val isDirtySubject: Subject<Boolean> = BehaviorSubject.create()
+    private final val isDirtySubject: Subject<Boolean> = BehaviorSubject.create<Boolean>().toSerialized()
     private var isDirtyValue: Boolean = false
-    private final val isEnabledSubject: BehaviorSubject<Boolean> = BehaviorSubject.create()
+    private final val isEnabledSubject: Subject<Boolean> = BehaviorSubject.create<Boolean>().toSerialized()
     private var isEnabledValue: Boolean = false
-    private final val noteSubject: BehaviorSubject<Optional<Note>> = BehaviorSubject.create()
+    private final val noteSubject: Subject<Optional<Note>> = BehaviorSubject.create<Optional<Note>>().toSerialized()
     private var noteValue: Note? = null
     private var textValue: String = ""
-    private val textUpdatesForEditor: Subject<String> = PublishSubject.create()
+    private val textUpdatesForEditor: Subject<String> = PublishSubject.create<String>().toSerialized()
 
     init {
         ast
@@ -68,7 +68,7 @@ class EditingViewModel @Inject constructor(
                         .map { (it as NavigationViewModel.SelectionSwitchingProcessNotification.Loading).loading }
         )
                 .map { !(it.first || it.second) }
-                .subscribe(::setEnabled) { logger.warn("Error", it) }
+                .subscribe(::setEnabled) { logger.error("Error", it) }
 
         navigationViewModel.selectionSwitchingProcess
                 .subscribeOn(scheduler)
@@ -81,7 +81,7 @@ class EditingViewModel @Inject constructor(
                         is NavigationViewModel.SelectionSwitchingProcessNotification.Folder -> Optional<Note>()
                     }
                 }
-                .subscribe(::setNote) { logger.warn("Error", it) }
+                .subscribe(::setNote) { logger.error("Error", it) }
     }
 
     final fun isDirty(): Observable<Boolean> = isDirtySubject.distinctUntilChanged()

@@ -2,7 +2,9 @@ package info.maaskant.wmsnotes.model
 
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.assertThat
+import kotlinx.collections.immutable.persistentListOf
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -59,7 +61,7 @@ internal class CommandExecutionTest {
     }
 
     private fun commandResult(requestId: Int) =
-            CommandResult(requestId = requestId, commands = emptyList(), newEvents = emptyList(), origin = randomOrigin())
+            CommandResult(requestId = requestId, outcome = persistentListOf(), origin = randomOrigin())
 
     private fun commandRequest(requestId: Int): CommandRequest<Command> {
         val request = mockk<CommandRequest<Command>>()

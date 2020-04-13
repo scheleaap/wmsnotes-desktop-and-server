@@ -1,5 +1,7 @@
 package info.maaskant.wmsnotes.model.note.policy
 
+import arrow.core.Right
+import arrow.core.Some
 import info.maaskant.wmsnotes.model.*
 import info.maaskant.wmsnotes.model.CommandOrigin.LOCAL
 import info.maaskant.wmsnotes.model.CommandOrigin.REMOTE
@@ -8,7 +10,9 @@ import info.maaskant.wmsnotes.model.note.ContentChangedEvent
 import io.mockk.mockk
 import io.reactivex.observers.TestObserver
 import io.reactivex.schedulers.Schedulers
-import org.assertj.core.api.Assertions.assertThat
+import kotlinx.collections.immutable.persistentListOf
+import assertk.assertThat
+import assertk.assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -33,7 +37,7 @@ internal class NoteTitlePolicyTest {
         val content = UUID.randomUUID().toString()
         val title = UUID.randomUUID().toString()
         val event = ContentChangedEvent(eventId = 0, aggId = aggId, revision = revision, content = content)
-        val commandResult = CommandResult(0, commands = emptyList(), newEvents = listOf(event), origin = LOCAL)
+        val commandResult = CommandResult(0, outcome = persistentListOf(mockk<Command>() to Right(Some(event))), origin = LOCAL)
         val titleExtractor: (String) -> String = { if (it == content) title else "" }
         createInstanceAndStart(titleExtractor)
 
@@ -50,7 +54,7 @@ internal class NoteTitlePolicyTest {
         val content = UUID.randomUUID().toString()
         val title = UUID.randomUUID().toString()
         val event = ContentChangedEvent(eventId = 0, aggId = aggId, revision = revision, content = content)
-        val commandResult = CommandResult(0, commands = emptyList(), newEvents = listOf(event), origin = REMOTE)
+        val commandResult = CommandResult(0, outcome = persistentListOf(mockk<Command>() to Right(Some(event))), origin = REMOTE)
         val titleExtractor: (String) -> String = { if (it == content) title else "" }
         createInstanceAndStart(titleExtractor)
 
@@ -66,7 +70,7 @@ internal class NoteTitlePolicyTest {
         // Given
         val commandRequestsObserver = commandBus.requests.test()
         val event: Event = mockk()
-        val commandResult = CommandResult(0, commands = emptyList(), newEvents = listOf(event), origin = LOCAL)
+        val commandResult = CommandResult(0, outcome = persistentListOf(mockk<Command>() to Right(Some(event))), origin = LOCAL)
         val titleExtractor: (String) -> String = { "foo" }
         createInstanceAndStart(titleExtractor)
 

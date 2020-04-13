@@ -10,13 +10,13 @@ object CommandExecution {
     private val logger by logger()
 
     fun executeBlocking(commandBus: CommandBus, commandRequest: CommandRequest<Command>, timeout: Duration?): CommandResult {
-        val subject: SingleSubject<CommandResult> = SingleSubject.create<CommandResult>()
+        val subject: SingleSubject<CommandResult> = SingleSubject.create()
         commandBus.results
                 .filter { it.requestId == commandRequest.requestId }
                 .firstOrError()
                 .subscribeBy(
                         onSuccess = subject::onSuccess,
-                        onError = { logger.warn("Error", it) }
+                        onError = { logger.error("Error", it) }
                 )
         commandBus.requests.onNext(commandRequest)
         return subject

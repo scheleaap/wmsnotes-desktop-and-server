@@ -1,5 +1,7 @@
 package info.maaskant.wmsnotes.model.eventstore
 
+import arrow.core.Either
+import info.maaskant.wmsnotes.model.CommandError
 import info.maaskant.wmsnotes.model.Event
 import io.reactivex.Observable
 import java.util.concurrent.TimeUnit
@@ -20,7 +22,7 @@ class DelayingEventStore @Inject constructor(private val wrapped: EventStore) : 
                 .concatMap { Observable.just(it).delay(500, TimeUnit.MILLISECONDS) }
     }
 
-    override fun appendEvent(event: Event): Event {
+    override fun appendEvent(event: Event): Either<CommandError.StorageError, Event> {
         return wrapped.appendEvent(event)
     }
 

@@ -18,7 +18,7 @@ class ConflictResolutionChooser : Fragment() {
 //    private val localNote = NoteProjector.project(conflictData.base, conflictData.localConflictingEvents)
 //    private val remoteNote = NoteProjector.project(conflictData.base, conflictData.remoteConflictingEvents)
 //
-//    val choice: BehaviorSubject<Choice> = BehaviorSubject.createDefault(Choice.NO_CHOICE)
+//    val choice: BehaviorSubject<Choice> = BehaviorSubject.createDefault(Choice.NO_CHOICE).toSerialized()
 
     override val root = borderpane {
 //        style { padding = box(this@ConflictResolutionChooser.padding) }
