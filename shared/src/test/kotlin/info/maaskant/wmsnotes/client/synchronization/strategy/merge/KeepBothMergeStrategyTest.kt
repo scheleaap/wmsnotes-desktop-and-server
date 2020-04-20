@@ -16,6 +16,7 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.Differe
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.KeepBothMergeStrategy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.lang.RuntimeException
 
 internal class KeepBothMergeStrategyTest {
     private val aggId = "note"
@@ -36,11 +37,11 @@ internal class KeepBothMergeStrategyTest {
     @Test
     fun resolve() {
         // Given
-        val localEvent1: Event = mockk()
-        val localEvent2: Event = mockk()
+        val localEvent1: Event = createMockedEvent(aggId = aggId, revision = 1)
+        val localEvent2: Event = createMockedEvent(aggId = aggId, revision = 2)
         val localEvents = listOf(localEvent1, localEvent2)
-        val remoteEvent1: Event = mockk()
-        val remoteEvent2: Event = mockk()
+        val remoteEvent1: Event = createMockedEvent(aggId = aggId, revision = 11)
+        val remoteEvent2: Event = createMockedEvent(aggId = aggId, revision = 12)
         val remoteEvents = listOf(remoteEvent1, remoteEvent2)
         val baseNote: Note = createExistingNote(aggId)
         val localNote: Note = createExistingNote(aggId)
@@ -48,7 +49,7 @@ internal class KeepBothMergeStrategyTest {
         val compensatingEvent1: Event = mockk()
         val compensatingEvent2: Event = mockk()
         val compensatingEvent3: Event = mockk()
-        val compensatingEvent4: Event = createMockedEvent(revision = 2)
+        val compensatingEvent4: Event = createMockedEvent(aggId = aggId, revision = 2)
         val compensatingEvent5 = TitleChangedEvent(eventId = 0, aggId = newAggId, revision = 3, title = localNote.title + conflictedNoteTitleSuffix)
         givenCompensatingEvents(aggId, givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
                 leftEvents = listOf(compensatingEvent1, compensatingEvent2),
@@ -70,8 +71,46 @@ internal class KeepBothMergeStrategyTest {
         ))
     }
 
-    private fun createMockedEvent(revision: Int): Event {
+    @Test
+    fun `resolve, non-existent base note`() {
+        // Given
+        val localEvent1: Event = createMockedEvent(aggId = aggId, revision = 1)
+        val localEvent2: Event = createMockedEvent(aggId = aggId, revision = 2)
+        val localEvents = listOf(localEvent1, localEvent2)
+        val remoteEvent1: Event = createMockedEvent(aggId = aggId, revision = 11)
+        val remoteEvent2: Event = createMockedEvent(aggId = aggId, revision = 12)
+        val remoteEvents = listOf(remoteEvent1, remoteEvent2)
+        val baseNote: Note = Note()
+        val localNote: Note = createExistingNote(aggId)
+        val remoteNote: Note = createExistingNote(aggId)
+        val compensatingEvent1: Event = mockk()
+        val compensatingEvent2: Event = mockk()
+        val compensatingEvent3: Event = mockk()
+        val compensatingEvent4: Event = createMockedEvent(aggId = aggId, revision = 2)
+        val compensatingEvent5 = TitleChangedEvent(eventId = 0, aggId = newAggId, revision = 3, title = localNote.title + conflictedNoteTitleSuffix)
+        givenCompensatingEvents(aggId, givenDifferences(localNote, remoteNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
+                leftEvents = listOf(compensatingEvent1, compensatingEvent2),
+                rightEvents = emptyList()
+        ))
+        givenCompensatingEvents(newAggId, givenDifferences(Note(), localNote), DifferenceCompensator.Target.RIGHT, CompensatingEvents(
+                leftEvents = listOf(compensatingEvent3, compensatingEvent4),
+                rightEvents = emptyList()
+        ))
+        val strategy = createStrategy()
+
+        // When
+        val mergeResult = strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
+
+        // Then
+        assertThat(mergeResult).isEqualTo(Solution(
+                newLocalEvents = listOf(compensatingEvent1, compensatingEvent2, compensatingEvent3, compensatingEvent4, compensatingEvent5),
+                newRemoteEvents = listOf(compensatingEvent3, compensatingEvent4, compensatingEvent5)
+        ))
+    }
+
+    private fun createMockedEvent(aggId: String, revision: Int): Event {
         val event: Event = mockk()
+        every { event.aggId }.returns(aggId)
         every { event.revision }.returns(revision)
         return event
     }

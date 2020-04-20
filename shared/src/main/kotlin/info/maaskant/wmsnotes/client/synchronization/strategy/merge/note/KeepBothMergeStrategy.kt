@@ -34,7 +34,7 @@ class KeepBothMergeStrategy @Inject constructor(
 
     private fun getCompensatingLocalEvents(baseNote: Note, localNote: Note, remoteNote: Note): List<Event> {
         val (compensatingLocalEvents, _) = differenceCompensator.compensate(
-                aggId = baseNote.aggId,
+                aggId = localNote.aggId,
                 differences = differenceAnalyzer.compare(left = localNote, right = remoteNote),
                 target = DifferenceCompensator.Target.RIGHT
         )
