@@ -1,11 +1,11 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.folder.FolderMergingSynchronizationStrategy
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.folder.Folder
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent
 import info.maaskant.wmsnotes.model.folder.FolderEvent
-import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.note.NoteEvent
 import io.mockk.mockk

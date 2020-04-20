@@ -1,6 +1,6 @@
-package info.maaskant.wmsnotes.client.synchronization.strategy.merge
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge.note
 
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.ExistenceDifference.ExistenceType.*
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.ExistenceDifference.ExistenceType.*
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.*

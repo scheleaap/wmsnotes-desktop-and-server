@@ -10,7 +10,7 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 //import assertk.assertions.*
 //import org.junit.jupiter.api.BeforeEach
 //import org.junit.jupiter.api.Test
-//import info.maaskant.wmsnotes.client.synchronization.strategy.merge.DifferenceCompensator.CompensatingEvents
+//import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceCompensator.CompensatingEvents
 //import info.maaskant.wmsnotes.model.Event
 //import org.junit.jupiter.api.Disabled
 //

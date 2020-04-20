@@ -1,5 +1,6 @@
-package info.maaskant.wmsnotes.client.synchronization.strategy.merge
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge.note
 
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.note.Note

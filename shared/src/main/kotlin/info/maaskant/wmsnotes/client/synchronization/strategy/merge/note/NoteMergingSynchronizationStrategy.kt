@@ -1,8 +1,7 @@
-package info.maaskant.wmsnotes.client.synchronization.strategy.merge
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge.note
 
-import arrow.core.extensions.list.foldable.firstOption
-import arrow.core.getOrElse
-import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergingSynchronizationStrategy
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.note.Note

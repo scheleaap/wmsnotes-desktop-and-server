@@ -1,6 +1,6 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.DifferenceCompensator.CompensatingEvents
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceCompensator.CompensatingEvents
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.note.Note
@@ -10,6 +10,10 @@ import io.mockk.every
 import io.mockk.mockk
 import assertk.assertThat
 import assertk.assertions.*
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.Difference
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceAnalyzer
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceCompensator
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.KeepBothMergeStrategy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 

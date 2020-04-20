@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.client.synchronization.strategy.merge
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge.note
 
 import au.com.console.kassava.kotlinEquals
 import info.maaskant.wmsnotes.model.Path

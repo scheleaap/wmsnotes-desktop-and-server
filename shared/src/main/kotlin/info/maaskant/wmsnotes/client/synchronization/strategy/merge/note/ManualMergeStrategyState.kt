@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.client.synchronization.strategy.merge
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge.note
 
 //import com.esotericsoftware.kryo.Kryo
 //import com.esotericsoftware.kryo.Registration

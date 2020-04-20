@@ -7,7 +7,10 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.LocalOnlySynchroni
 import info.maaskant.wmsnotes.client.synchronization.strategy.MultipleSynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.RemoteOnlySynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.*
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceAnalyzer
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceCompensator
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.KeepBothMergeStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.NoteMergingSynchronizationStrategy
 import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
