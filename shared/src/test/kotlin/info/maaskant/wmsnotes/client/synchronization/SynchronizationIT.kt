@@ -7,10 +7,7 @@ import info.maaskant.wmsnotes.client.synchronization.strategy.LocalOnlySynchroni
 import info.maaskant.wmsnotes.client.synchronization.strategy.MultipleSynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.RemoteOnlySynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.DifferenceAnalyzer
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.DifferenceCompensator
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.KeepBothMergeStrategy
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergingSynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.*
 import info.maaskant.wmsnotes.model.Command
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
@@ -47,14 +44,14 @@ internal class SynchronizationIT {
         synchronizationStrategy = MultipleSynchronizationStrategy(
                 LocalOnlySynchronizationStrategy(),
                 RemoteOnlySynchronizationStrategy(),
-                MergingSynchronizationStrategy(
+                NoteMergingSynchronizationStrategy(
                         mergeStrategy = KeepBothMergeStrategy(
                                 differenceAnalyzer = DifferenceAnalyzer(),
                                 differenceCompensator = DifferenceCompensator(),
                                 aggregateIdGenerator = { newAggId },
                                 conflictedNoteTitleSuffix = " (conflict)"
                         ),
-                        noteRepository = CachingAggregateRepository(
+                        aggregateRepository = CachingAggregateRepository(
                                 eventStore = eventStore,
                                 aggregateCache = NoopAggregateCache(),
                                 emptyAggregate = Note()

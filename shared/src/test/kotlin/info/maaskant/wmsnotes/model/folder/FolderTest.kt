@@ -230,7 +230,7 @@ internal class FolderTest {
     // Add more classes here
 
     @TestFactory
-    fun `equals and hashCode for all fields`(): List<DynamicTest> {
+    fun `equals, equalsIgnoringRevision and hashCode for all fields`(): List<DynamicTest> {
         val revision = 0
         val exists = false
         val aggId = "folder"
@@ -254,6 +254,9 @@ internal class FolderTest {
                 assertThat(modified).isEqualTo(modified)
                 assertThat(modified.hashCode()).isEqualTo(modified.hashCode())
                 assertThat(original).isNotEqualTo(modified)
+                assertThat(original.equalsIgnoringRevision(original)).isTrue()
+                assertThat(modified.equalsIgnoringRevision(modified)).isTrue()
+                assertThat(original.equalsIgnoringRevision(modified)).isEqualTo(original.revision != modified.revision)
             }
         }
     }

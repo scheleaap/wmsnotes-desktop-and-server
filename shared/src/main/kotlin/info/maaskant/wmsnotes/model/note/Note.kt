@@ -34,7 +34,7 @@ class Note private constructor(
     )
 
     override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::aggId, Note::revision, Note::exists, Note::path, Note::title, Note::content, Note::attachmentHashes))
-    fun equalsIgnoringRevision(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::aggId, Note::exists, Note::path, Note::title, Note::content, Note::attachmentHashes))
+    override fun equalsIgnoringRevision(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Note::aggId, Note::exists, Note::path, Note::title, Note::content, Note::attachmentHashes))
     override fun hashCode() = Objects.hash(aggId, revision, exists, path, title, content, attachmentHashes)
     override fun toString() = kotlinToString(properties = arrayOf(Note::aggId, Note::revision, Note::exists, Note::path, Note::title, Note::contentLength, Note::attachmentHashes))
 

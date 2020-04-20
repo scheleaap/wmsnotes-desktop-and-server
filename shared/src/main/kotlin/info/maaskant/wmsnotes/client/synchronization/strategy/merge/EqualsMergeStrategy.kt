@@ -1,28 +1,28 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult
+import info.maaskant.wmsnotes.model.Aggregate
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.utilities.logger
 
-class EqualsMergeStrategy : MergeStrategy {
+class EqualsMergeStrategy<AggregateType : Aggregate<AggregateType>> : MergeStrategy<AggregateType> {
     private val logger by logger()
 
     override fun merge(
             localEvents: List<Event>,
             remoteEvents: List<Event>,
-            baseNote: Note,
-            localNote: Note,
-            remoteNote: Note
+            baseAggregate: AggregateType,
+            localAggregate: AggregateType,
+            remoteAggregate: AggregateType
     ): MergeResult {
-        return if (localNote.equalsIgnoringRevision(remoteNote)) {
-            logger.debug("{} and {} are equal", localNote, remoteNote)
+        return if (localAggregate.equalsIgnoringRevision(remoteAggregate)) {
+            logger.debug("{} and {} are equal", localAggregate, remoteAggregate)
             MergeResult.Solution(
                     newLocalEvents = emptyList(),
                     newRemoteEvents = emptyList()
             )
         } else {
-            logger.debug("{} and {} are different", localNote, remoteNote)
+            logger.debug("{} and {} are different", localAggregate, remoteAggregate)
             MergeResult.NoSolution
         }
     }

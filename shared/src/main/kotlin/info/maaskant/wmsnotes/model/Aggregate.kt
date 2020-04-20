@@ -7,6 +7,7 @@ interface Aggregate<T : Aggregate<T>> {
     val aggId: String
 
     fun apply(event: Event): Pair<T, Event?>
+    fun equalsIgnoringRevision(other: Any?): Boolean
 
     companion object {
         fun <T : Aggregate<T>> apply(base: T, events: List<Event>): T =

@@ -21,6 +21,7 @@ import info.maaskant.wmsnotes.model.CommandExecution
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.eventstore.EventStore
+import info.maaskant.wmsnotes.model.folder.Folder
 import info.maaskant.wmsnotes.model.note.Note
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
 import info.maaskant.wmsnotes.server.command.grpc.EventServiceGrpc
@@ -168,20 +169,28 @@ class SynchronizationConfiguration {
 
     @Bean
     @Singleton
-    fun synchronizationStrategy(mergeStrategy: MergeStrategy, aggregateRepository: AggregateRepository<Note>) =
+    fun synchronizationStrategy(
+            folderMergeStrategy: MergeStrategy<Folder>,
+            folderRepository: AggregateRepository<Folder>,
+            noteMergeStrategy: MergeStrategy<Note>,
+            noteRepository: AggregateRepository<Note>
+    ) =
             MultipleSynchronizationStrategy(
                     LocalOnlySynchronizationStrategy(),
                     RemoteOnlySynchronizationStrategy(),
-                    MergingSynchronizationStrategy(
-                            mergeStrategy = mergeStrategy,
-                            noteRepository = aggregateRepository
+                    NoteMergingSynchronizationStrategy(
+                            mergeStrategy = noteMergeStrategy,
+                            aggregateRepository = noteRepository
+                    ),
+                    FolderMergingSynchronizationStrategy(
+                            mergeStrategy = folderMergeStrategy,
+                            aggregateRepository = folderRepository
                     )
-
             )
 
     @Bean
     @Singleton
-    fun mergeStrategy(differenceAnalyzer: DifferenceAnalyzer, differenceCompensator: DifferenceCompensator) =
+    fun noteMergeStrategy(differenceAnalyzer: DifferenceAnalyzer, differenceCompensator: DifferenceCompensator): MergeStrategy<Note> =
             MultipleMergeStrategy(
                     EqualsMergeStrategy(),
                     KeepBothMergeStrategy(
@@ -191,6 +200,11 @@ class SynchronizationConfiguration {
                             conflictedNoteTitleSuffix = " (conflict on desktop)"
                     )
             )
+
+    @Bean
+    @Singleton
+    fun folderMergeStrategy(): MergeStrategy<Folder> =
+            EqualsMergeStrategy()
 
     @Bean
     @Singleton

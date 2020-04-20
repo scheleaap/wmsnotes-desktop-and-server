@@ -5,8 +5,6 @@ import au.com.console.kassava.kotlinToString
 import info.maaskant.wmsnotes.model.Aggregate
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
-import info.maaskant.wmsnotes.model.note.Note
-import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.*
@@ -27,6 +25,7 @@ class Folder private constructor(
     val title: String = path.elements.lastOrNull() ?: ""
 
     override fun equals(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Folder::aggId, Folder::revision, Folder::exists, Folder::path))
+    override fun equalsIgnoringRevision(other: Any?) = kotlinEquals(other = other, properties = arrayOf(Folder::aggId, Folder::exists, Folder::path))
     override fun hashCode() = Objects.hash(aggId, revision, exists, path)
     override fun toString() = kotlinToString(properties = arrayOf(Folder::path, Folder::aggId, Folder::revision, Folder::exists))
 

@@ -1,30 +1,28 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
+import info.maaskant.wmsnotes.model.Aggregate
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.Path
-import info.maaskant.wmsnotes.model.note.Note
-import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import assertk.assertThat
-import assertk.assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-internal class MergingSynchronizationStrategyTest {
-    private val noteRepository: AggregateRepository<Note> = mockk()
-    private val mergeStrategy: MergeStrategy = mockk()
+internal abstract class MergingSynchronizationStrategyTest<AggregateType : Aggregate<AggregateType>, EventType : Event> {
+    private val aggregateRepository: AggregateRepository<AggregateType> = mockk()
+    private val mergeStrategy: MergeStrategy<AggregateType> = mockk()
 
     @BeforeEach
     fun init() {
         clearMocks(
-                noteRepository,
+                aggregateRepository,
                 mergeStrategy
         )
     }
@@ -33,31 +31,31 @@ internal class MergingSynchronizationStrategyTest {
     fun solution() {
         // Given
         val baseRevision = 1
-        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, aggId = 1, revision = baseRevision + 1)
-        val compensatedLocalEvent2: Event = modelEvent(eventId = 2, aggId = 1, revision = baseRevision + 2)
-        val compensatedRemoteEvent1: Event = modelEvent(eventId = 11, aggId = 1, revision = 11)
-        val compensatedRemoteEvent2: Event = modelEvent(eventId = 12, aggId = 1, revision = 12)
-        val modifiedCompensatedRemoteEvent1: Event = modelEvent(eventId = 11, aggId = 1, revision = baseRevision + 1)
-        val modifiedCompensatedRemoteEvent2: Event = modelEvent(eventId = 12, aggId = 1, revision = baseRevision + 2)
+        val compensatedLocalEvent1: Event = createEvent(eventId = 1, aggId = 1, revision = baseRevision + 1)
+        val compensatedLocalEvent2: Event = createEvent(eventId = 2, aggId = 1, revision = baseRevision + 2)
+        val compensatedRemoteEvent1: Event = createEvent(eventId = 11, aggId = 1, revision = 11)
+        val compensatedRemoteEvent2: Event = createEvent(eventId = 12, aggId = 1, revision = 12)
+        val modifiedCompensatedRemoteEvent1: Event = createEvent(eventId = 11, aggId = 1, revision = baseRevision + 1)
+        val modifiedCompensatedRemoteEvent2: Event = createEvent(eventId = 12, aggId = 1, revision = baseRevision + 2)
         val compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2)
         val compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
         val modifiedCompensatedRemoteEvents = listOf(modifiedCompensatedRemoteEvent1, modifiedCompensatedRemoteEvent2)
-        val newLocalEvent1: Event = mockk()
-        val newLocalEvent2: Event = mockk()
-        val newRemoteEvent1: Event = mockk()
-        val newRemoteEvent2: Event = mockk()
+        val newLocalEvent1: Event = createMockedEvent()
+        val newLocalEvent2: Event = createMockedEvent()
+        val newRemoteEvent1: Event = createMockedEvent()
+        val newRemoteEvent2: Event = createMockedEvent()
         val aggId = compensatedLocalEvent1.aggId
-        val baseNote: Note = mockk()
-        val localNote: Note = mockk()
-        val remoteNote: Note = mockk()
-        every { noteRepository.get(aggId, baseRevision) }.returns(baseNote)
-        givenAnEventApplicationResult(baseNote, compensatedLocalEvents, localNote)
-        givenAnEventApplicationResult(baseNote, modifiedCompensatedRemoteEvents, remoteNote)
-        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+        val baseAggregate: AggregateType = createMockedAggregate()
+        val localAggregate: AggregateType = createMockedAggregate()
+        val remoteAggregate: AggregateType = createMockedAggregate()
+        every { aggregateRepository.get(aggId, baseRevision) }.returns(baseAggregate)
+        givenAnEventApplicationResult(baseAggregate, compensatedLocalEvents, localAggregate)
+        givenAnEventApplicationResult(baseAggregate, modifiedCompensatedRemoteEvents, remoteAggregate)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseAggregate, localAggregate, remoteAggregate) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
         ))
-        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteRepository)
+        val strategy = createInstance(mergeStrategy, aggregateRepository)
 
         // When
         val result = strategy.resolve(aggId = aggId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
@@ -75,24 +73,24 @@ internal class MergingSynchronizationStrategyTest {
     fun `no solution`() {
         // Given
         val baseRevision = 1
-        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, aggId = 1, revision = baseRevision + 1)
-        val compensatedLocalEvent2: Event = modelEvent(eventId = 2, aggId = 1, revision = baseRevision + 2)
-        val compensatedRemoteEvent1: Event = modelEvent(eventId = 11, aggId = 1, revision = 11)
-        val compensatedRemoteEvent2: Event = modelEvent(eventId = 12, aggId = 1, revision = 12)
-        val modifiedCompensatedRemoteEvent1: Event = modelEvent(eventId = 11, aggId = 1, revision = baseRevision + 1)
-        val modifiedCompensatedRemoteEvent2: Event = modelEvent(eventId = 12, aggId = 1, revision = baseRevision + 2)
+        val compensatedLocalEvent1: Event = createEvent(eventId = 1, aggId = 1, revision = baseRevision + 1)
+        val compensatedLocalEvent2: Event = createEvent(eventId = 2, aggId = 1, revision = baseRevision + 2)
+        val compensatedRemoteEvent1: Event = createEvent(eventId = 11, aggId = 1, revision = 11)
+        val compensatedRemoteEvent2: Event = createEvent(eventId = 12, aggId = 1, revision = 12)
+        val modifiedCompensatedRemoteEvent1: Event = createEvent(eventId = 11, aggId = 1, revision = baseRevision + 1)
+        val modifiedCompensatedRemoteEvent2: Event = createEvent(eventId = 12, aggId = 1, revision = baseRevision + 2)
         val compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2)
         val compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
         val modifiedCompensatedRemoteEvents = listOf(modifiedCompensatedRemoteEvent1, modifiedCompensatedRemoteEvent2)
         val aggId = compensatedLocalEvent1.aggId
-        val baseNote: Note = mockk()
-        val localNote: Note = mockk()
-        val remoteNote: Note = mockk()
-        every { noteRepository.get(aggId, baseRevision) }.returns(baseNote)
-        givenAnEventApplicationResult(baseNote, compensatedLocalEvents, localNote)
-        givenAnEventApplicationResult(baseNote, modifiedCompensatedRemoteEvents, remoteNote)
-        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(NoSolution)
-        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteRepository)
+        val baseAggregate: AggregateType = createMockedAggregate()
+        val localAggregate: AggregateType = createMockedAggregate()
+        val remoteAggregate: AggregateType = createMockedAggregate()
+        every { aggregateRepository.get(aggId, baseRevision) }.returns(baseAggregate)
+        givenAnEventApplicationResult(baseAggregate, compensatedLocalEvents, localAggregate)
+        givenAnEventApplicationResult(baseAggregate, modifiedCompensatedRemoteEvents, remoteAggregate)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseAggregate, localAggregate, remoteAggregate) }.returns(NoSolution)
+        val strategy = createInstance(mergeStrategy, aggregateRepository)
 
         // When
         val result = strategy.resolve(aggId = aggId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
@@ -105,27 +103,27 @@ internal class MergingSynchronizationStrategyTest {
     fun `no local events`() {
         // Given
         val baseRevision = 1
-        val compensatedRemoteEvent1: Event = modelEvent(eventId = 11, aggId = 1, revision = 11)
-        val compensatedRemoteEvent2: Event = modelEvent(eventId = 12, aggId = 1, revision = 12)
-        val modifiedCompensatedRemoteEvent1: Event = modelEvent(eventId = 11, aggId = 1, revision = baseRevision + 1)
-        val modifiedCompensatedRemoteEvent2: Event = modelEvent(eventId = 12, aggId = 1, revision = baseRevision + 2)
+        val compensatedRemoteEvent1: Event = createEvent(eventId = 11, aggId = 1, revision = 11)
+        val compensatedRemoteEvent2: Event = createEvent(eventId = 12, aggId = 1, revision = 12)
+        val modifiedCompensatedRemoteEvent1: Event = createEvent(eventId = 11, aggId = 1, revision = baseRevision + 1)
+        val modifiedCompensatedRemoteEvent2: Event = createEvent(eventId = 12, aggId = 1, revision = baseRevision + 2)
         val compensatedLocalEvents = emptyList<Event>()
         val compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
         val modifiedCompensatedRemoteEvents = listOf(modifiedCompensatedRemoteEvent1, modifiedCompensatedRemoteEvent2)
-        val newLocalEvent1: Event = mockk()
-        val newLocalEvent2: Event = mockk()
-        val newRemoteEvent1: Event = mockk()
-        val newRemoteEvent2: Event = mockk()
+        val newLocalEvent1: Event = createMockedEvent()
+        val newLocalEvent2: Event = createMockedEvent()
+        val newRemoteEvent1: Event = createMockedEvent()
+        val newRemoteEvent2: Event = createMockedEvent()
         val aggId = compensatedRemoteEvent1.aggId
-        val baseNote: Note = mockk()
-        val localNote: Note = mockk()
-        val remoteNote: Note = mockk()
-        givenAnEventApplicationResult(baseNote, modifiedCompensatedRemoteEvents, remoteNote)
-        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+        val baseAggregate: AggregateType = createMockedAggregate()
+        val localAggregate: AggregateType = createMockedAggregate()
+        val remoteAggregate: AggregateType = createMockedAggregate()
+        givenAnEventApplicationResult(baseAggregate, modifiedCompensatedRemoteEvents, remoteAggregate)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseAggregate, localAggregate, remoteAggregate) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
         ))
-        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteRepository)
+        val strategy = createInstance(mergeStrategy, aggregateRepository)
 
         // When
         val result = strategy.resolve(aggId = aggId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
@@ -138,25 +136,43 @@ internal class MergingSynchronizationStrategyTest {
     fun `no remote events`() {
         // Given
         val baseRevision = 1
-        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, aggId = 1, revision = baseRevision + 1)
-        val compensatedLocalEvent2: Event = modelEvent(eventId = 2, aggId = 1, revision = baseRevision + 2)
+        val compensatedLocalEvent1: Event = createEvent(eventId = 1, aggId = 1, revision = baseRevision + 1)
+        val compensatedLocalEvent2: Event = createEvent(eventId = 2, aggId = 1, revision = baseRevision + 2)
         val compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2)
         val compensatedRemoteEvents = emptyList<Event>()
-        val newLocalEvent1: Event = mockk()
-        val newLocalEvent2: Event = mockk()
-        val newRemoteEvent1: Event = mockk()
-        val newRemoteEvent2: Event = mockk()
+        val newLocalEvent1: Event = createMockedEvent()
+        val newLocalEvent2: Event = createMockedEvent()
+        val newRemoteEvent1: Event = createMockedEvent()
+        val newRemoteEvent2: Event = createMockedEvent()
         val aggId = compensatedLocalEvent1.aggId
-        val baseNote: Note = mockk()
-        val localNote: Note = mockk()
-        val remoteNote: Note = mockk()
-        every { noteRepository.get(aggId, baseRevision) }.returns(baseNote)
-        givenAnEventApplicationResult(baseNote, compensatedLocalEvents, localNote)
-        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+        val baseAggregate: AggregateType = createMockedAggregate()
+        val localAggregate: AggregateType = createMockedAggregate()
+        val remoteAggregate: AggregateType = createMockedAggregate()
+        every { aggregateRepository.get(aggId, baseRevision) }.returns(baseAggregate)
+        givenAnEventApplicationResult(baseAggregate, compensatedLocalEvents, localAggregate)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseAggregate, localAggregate, remoteAggregate) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
         ))
-        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteRepository)
+        val strategy = createInstance(mergeStrategy, aggregateRepository)
+
+        // When
+        val result = strategy.resolve(aggId = aggId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
+
+        // Then
+        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.NoSolution)
+    }
+
+    @Test
+    fun `another type of aggregate`() {
+        // Given
+        val baseRevision = 1
+        val compensatedLocalEvent: Event = createOtherEvent(eventId = 1, aggId = 1, revision = baseRevision + 1)
+        val compensatedRemoteEvent: Event = createOtherEvent(eventId = 11, aggId = 1, revision = 11)
+        val compensatedLocalEvents = listOf(compensatedLocalEvent)
+        val compensatedRemoteEvents = listOf(compensatedRemoteEvent)
+        val aggId = compensatedLocalEvent.aggId
+        val strategy = createInstance(mergeStrategy, aggregateRepository)
 
         // When
         val result = strategy.resolve(aggId = aggId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
@@ -167,32 +183,32 @@ internal class MergingSynchronizationStrategyTest {
 
     @Test
     fun `local event with revision 1`() {
-        // This situation should not normally occur, because it would mean there is a conflict involving a local note
-        // that has just been created. Perhaps it could occur in case the client crashes during a previous
+        // This situation should not normally occur, because it would mean there is a conflict involving a local
+        // aggregate that has just been created. Perhaps it could occur in case the client crashes during a previous
         // synchronization, though.
 
         // Given
         val baseRevision = 0 // 0 instead of 1!
-        val compensatedLocalEvent1: Event = modelEvent(eventId = 1, aggId = 1, revision = baseRevision + 1)
-        val compensatedRemoteEvent1: Event = modelEvent(eventId = 11, aggId = 1, revision = 11)
-        val modifiedCompensatedRemoteEvent1: Event = modelEvent(eventId = 11, aggId = 1, revision = baseRevision + 1)
+        val compensatedLocalEvent1: Event = createEvent(eventId = 1, aggId = 1, revision = baseRevision + 1)
+        val compensatedRemoteEvent1: Event = createEvent(eventId = 11, aggId = 1, revision = 11)
+        val modifiedCompensatedRemoteEvent1: Event = createEvent(eventId = 11, aggId = 1, revision = baseRevision + 1)
         val compensatedLocalEvents = listOf(compensatedLocalEvent1)
         val compensatedRemoteEvents = listOf(compensatedRemoteEvent1)
         val modifiedCompensatedRemoteEvents = listOf(modifiedCompensatedRemoteEvent1)
-        val newLocalEvent1: Event = mockk()
-        val newRemoteEvent1: Event = mockk()
+        val newLocalEvent1: Event = createMockedEvent()
+        val newRemoteEvent1: Event = createMockedEvent()
         val aggId = compensatedLocalEvent1.aggId
-        val baseNote: Note = mockk()
-        val localNote: Note = mockk()
-        val remoteNote: Note = mockk()
-        every { noteRepository.get(aggId, baseRevision) }.returns(baseNote)
-        givenAnEventApplicationResult(baseNote, compensatedLocalEvents, localNote)
-        givenAnEventApplicationResult(baseNote, modifiedCompensatedRemoteEvents, remoteNote)
-        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseNote, localNote, remoteNote) }.returns(Solution(
+        val baseAggregate: AggregateType = createMockedAggregate()
+        val localAggregate: AggregateType = createMockedAggregate()
+        val remoteAggregate: AggregateType = createMockedAggregate()
+        every { aggregateRepository.get(aggId, baseRevision) }.returns(baseAggregate)
+        givenAnEventApplicationResult(baseAggregate, compensatedLocalEvents, localAggregate)
+        givenAnEventApplicationResult(baseAggregate, modifiedCompensatedRemoteEvents, remoteAggregate)
+        every { mergeStrategy.merge(compensatedLocalEvents, compensatedRemoteEvents, baseAggregate, localAggregate, remoteAggregate) }.returns(Solution(
                 newLocalEvents = listOf(newLocalEvent1),
                 newRemoteEvents = listOf(newRemoteEvent1)
         ))
-        val strategy = MergingSynchronizationStrategy(mergeStrategy, noteRepository)
+        val strategy = createInstance(mergeStrategy, aggregateRepository)
 
         // When
         val result = strategy.resolve(aggId = aggId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
@@ -207,23 +223,23 @@ internal class MergingSynchronizationStrategyTest {
     }
 
     private fun givenAnEventApplicationResult(
-            baseNote: Note,
+            baseAggregate: AggregateType,
             events: List<Event>,
-            resultNote: Note) {
+            resultAggregate: AggregateType) {
         val last = events.last()
         val firsts = events - last
-        var baseNoteTemp = baseNote
+        var baseAggregateTemp = baseAggregate
         for (first in firsts) {
-            val resultNoteTemp: Note = mockk()
-            every { baseNoteTemp.apply(first) }.returns(Pair(resultNoteTemp, first))
-            baseNoteTemp = resultNoteTemp
+            val resultAggregateTemp: AggregateType = createMockedAggregate()
+            every { baseAggregateTemp.apply(first) }.returns(Pair(resultAggregateTemp, first))
+            baseAggregateTemp = resultAggregateTemp
         }
-        every { baseNoteTemp.apply(last) }.returns(Pair(resultNote, last))
+        every { baseAggregateTemp.apply(last) }.returns(Pair(resultAggregate, last))
     }
 
-    companion object {
-        internal fun modelEvent(eventId: Int, aggId: Int, revision: Int): NoteCreatedEvent {
-            return NoteCreatedEvent(eventId = eventId, aggId = "note-$aggId", revision = revision, path = Path("path-$aggId"), title = "Title $aggId", content = "Text $aggId")
-        }
-    }
+    abstract fun createInstance(mergeStrategy: MergeStrategy<AggregateType>, aggregateRepository: AggregateRepository<AggregateType>): MergingSynchronizationStrategy<AggregateType>
+    abstract fun createEvent(eventId: Int, aggId: Int, revision: Int): EventType
+    abstract fun createOtherEvent(eventId: Int, aggId: Int, revision: Int): Event
+    abstract fun createMockedAggregate(): AggregateType
+    abstract fun createMockedEvent(): EventType
 }

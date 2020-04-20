@@ -1,15 +1,12 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
 import info.maaskant.wmsnotes.model.Event
-import info.maaskant.wmsnotes.model.Path
-import info.maaskant.wmsnotes.model.note.Note
-import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
-import info.maaskant.wmsnotes.model.note.TitleChangedEvent
+import info.maaskant.wmsnotes.testutilities.Toastie
 import io.mockk.mockk
-import assertk.assertThat
-import assertk.assertions.*
 import org.junit.jupiter.api.Test
 
 @Suppress("UnnecessaryVariable")
@@ -25,15 +22,13 @@ internal class EqualsMergeStrategyTest {
         val remoteEvent1: Event = mockk()
         val remoteEvent2: Event = mockk()
         val remoteEvents = listOf(remoteEvent1, remoteEvent2)
-        val baseNote: Note = Note()
-                .apply(NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = Path("path"), title = "Title", content = "Content")).first
-        val localNote: Note = baseNote
-                .apply(TitleChangedEvent(eventId = 0, aggId = aggId, revision = 2, title = "v1")).first
-        val remoteNote = localNote
-        val strategy = createStrategy()
+        val baseAggregate: Toastie = Toastie(aggId = aggId, revision = 1, value = 1)
+        val localAggregate: Toastie = Toastie(aggId = aggId, revision = 2, value = 2)
+        val remoteAggregate = localAggregate
+        val strategy = createInstance()
 
         // When
-        val result = strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
+        val result = strategy.merge(localEvents, remoteEvents, baseAggregate, localAggregate, remoteAggregate)
 
         // Then
         assertThat(result).isEqualTo(Solution(
@@ -51,17 +46,13 @@ internal class EqualsMergeStrategyTest {
         val remoteEvent1: Event = mockk()
         val remoteEvent2: Event = mockk()
         val remoteEvents = listOf(remoteEvent1, remoteEvent2)
-        val baseNote: Note = Note()
-                .apply(NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = Path("path"), title = "Title", content = "Content")).first
-        val localNote: Note = baseNote
-                .apply(TitleChangedEvent(eventId = 0, aggId = aggId, revision = 2, title = "v1")).first
-        val remoteNote = localNote
-                .apply(TitleChangedEvent(eventId = 0, aggId = aggId, revision = 3, title = "v2")).first
-                .apply(TitleChangedEvent(eventId = 0, aggId = aggId, revision = 4, title = "v1")).first
-        val strategy = createStrategy()
+        val baseNote = Toastie(aggId = aggId, revision = 1, value = 1)
+        val localAggregate = Toastie(aggId = aggId, revision = 2, value = 2)
+        val remoteAggregate = Toastie(aggId = aggId, revision = 3, value = 2)
+        val strategy = createInstance()
 
         // When
-        val result = strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
+        val result = strategy.merge(localEvents, remoteEvents, baseNote, localAggregate, remoteAggregate)
 
         // Then
         assertThat(result).isEqualTo(Solution(
@@ -79,21 +70,19 @@ internal class EqualsMergeStrategyTest {
         val remoteEvent1: Event = mockk()
         val remoteEvent2: Event = mockk()
         val remoteEvents = listOf(remoteEvent1, remoteEvent2)
-        val baseNote: Note = Note()
-                .apply(NoteCreatedEvent(eventId = 0, aggId = aggId, revision = 1, path = Path("path"), title = "Title", content = "Content")).first
-        val localNote: Note = baseNote
-                .apply(TitleChangedEvent(eventId = 0, aggId = aggId, revision = 2, title = "v1")).first
-        val remoteNote = baseNote
-                .apply(TitleChangedEvent(eventId = 0, aggId = aggId, revision = 2, title = "v2")).first
-        val strategy = createStrategy()
+        val baseAggregate = Toastie(aggId = aggId, revision = 1, value = 1)
+        val localAggregate = Toastie(aggId = aggId, revision = 2, value = 2)
+        val remoteNote = Toastie(aggId = aggId, revision = 2, value = 3)
+        val strategy = createInstance()
 
         // When
-        val result = strategy.merge(localEvents, remoteEvents, baseNote, localNote, remoteNote)
+        val result = strategy.merge(localEvents, remoteEvents, baseAggregate, localAggregate, remoteNote)
 
         // Then
         assertThat(result).isEqualTo(NoSolution)
     }
 
-    private fun createStrategy() =
-            EqualsMergeStrategy()
+    private fun createInstance() =
+            EqualsMergeStrategy<Toastie>()
 }
+

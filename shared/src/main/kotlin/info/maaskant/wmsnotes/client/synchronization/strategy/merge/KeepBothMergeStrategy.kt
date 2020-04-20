@@ -12,19 +12,19 @@ class KeepBothMergeStrategy @Inject constructor(
         private val differenceCompensator: DifferenceCompensator,
         private val aggregateIdGenerator: () -> String,
         private val conflictedNoteTitleSuffix: String
-) : MergeStrategy {
+) : MergeStrategy<Note> {
     private val logger by logger()
 
     override fun merge(
             localEvents: List<Event>,
             remoteEvents: List<Event>,
-            baseNote: Note,
-            localNote: Note,
-            remoteNote: Note
+            baseAggregate: Note,
+            localAggregate: Note,
+            remoteAggregate: Note
     ): MergeResult {
-        val compensatingLocalEvents = getCompensatingLocalEvents(baseNote, localNote, remoteNote)
-        val eventsForNewNote = getEventsForNewNote(localNote)
-        logger.debug("Changing aggregate {} to {}, creating new note {} ", baseNote.aggId, remoteNote, localNote)
+        val compensatingLocalEvents = getCompensatingLocalEvents(baseAggregate, localAggregate, remoteAggregate)
+        val eventsForNewNote = getEventsForNewNote(localAggregate)
+        logger.debug("Changing aggregate {} to {}, creating new note {} ", baseAggregate.aggId, remoteAggregate, localAggregate)
         return MergeResult.Solution(
                 newLocalEvents = compensatingLocalEvents + eventsForNewNote,
                 newRemoteEvents = eventsForNewNote
