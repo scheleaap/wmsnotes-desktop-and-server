@@ -25,19 +25,11 @@ internal class RemoteOnlySynchronizationStrategyTest {
         val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = emptyList(),
-                        compensatedRemoteEvents = listOf(event1),
-                        newLocalEvents = listOf(event1),
-                        newRemoteEvents = emptyList()
-                ),
-                CompensatingAction(
-                        compensatedLocalEvents = emptyList(),
-                        compensatedRemoteEvents = listOf(event2),
-                        newLocalEvents = listOf(event2),
-                        newRemoteEvents = emptyList()
-                )
+        assertThat(result).isEqualTo(Solution(CompensatingAction(
+                compensatedLocalEvents = emptyList(),
+                compensatedRemoteEvents = remoteEvents,
+                newLocalEvents = remoteEvents,
+                newRemoteEvents = emptyList()
         )))
     }
 

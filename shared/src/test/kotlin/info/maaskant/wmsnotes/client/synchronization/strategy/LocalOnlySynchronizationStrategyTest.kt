@@ -1,12 +1,12 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
 import info.maaskant.wmsnotes.model.Event
 import io.mockk.mockk
-import assertk.assertThat
-import assertk.assertions.*
 import org.junit.jupiter.api.Test
 
 internal class LocalOnlySynchronizationStrategyTest {
@@ -25,19 +25,11 @@ internal class LocalOnlySynchronizationStrategyTest {
         val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(event1),
-                        compensatedRemoteEvents = emptyList(),
-                        newLocalEvents = emptyList(),
-                        newRemoteEvents = listOf(event1)
-                ),
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(event2),
-                        compensatedRemoteEvents = emptyList(),
-                        newLocalEvents = emptyList(),
-                        newRemoteEvents = listOf(event2)
-                )
+        assertThat(result).isEqualTo(Solution(CompensatingAction(
+                compensatedLocalEvents = localEvents,
+                compensatedRemoteEvents = emptyList(),
+                newLocalEvents = emptyList(),
+                newRemoteEvents = localEvents
         )))
     }
 
