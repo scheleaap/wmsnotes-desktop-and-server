@@ -177,34 +177,36 @@ class Synchronizer @Inject constructor(
     }
 
     private fun executeCompensatingAction(compensatingAction: CompensatingAction, aggId: String): Either<CommandError, Unit> {
-        for (remoteEvent in compensatingAction.newRemoteEvents) {
-            val command = eventToCommandMapper.map(remoteEvent)
-            val lastRevision = state.lastKnownRemoteRevisions[remoteEvent.aggId] ?: 0
-            val executionResult = remoteCommandExecutor.execute(command, lastRevision)
-            logger.debug("Remote event {} -> command {} + lastRevision {} -> {}", remoteEvent, command, lastRevision, executionResult)
-            when (executionResult) {
-                is CommandExecutor.ExecutionResult.Failure -> return left(executionResult.error)
-                is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
-                    updateState(state
-                            .updateLastKnownRemoteRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
-                            .ignoreRemoteEvent(executionResult.newEventMetadata.eventId)
-                    )
+        if (compensatingAction.newRemoteEvents.isNotEmpty() || compensatingAction.newLocalEvents.isNotEmpty()) {
+            for (remoteEvent in compensatingAction.newRemoteEvents) {
+                val command = eventToCommandMapper.map(remoteEvent)
+                val lastRevision = state.lastKnownRemoteRevisions[remoteEvent.aggId] ?: 0
+                val executionResult = remoteCommandExecutor.execute(command, lastRevision)
+                logger.debug("Remote event {} -> command {} + lastRevision {} -> {}", remoteEvent, command, lastRevision, executionResult)
+                when (executionResult) {
+                    is CommandExecutor.ExecutionResult.Failure -> return left(executionResult.error)
+                    is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
+                        updateState(state
+                                .updateLastKnownRemoteRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
+                                .ignoreRemoteEvent(executionResult.newEventMetadata.eventId)
+                        )
+                    }
                 }
             }
-        }
-        for (localEvent in compensatingAction.newLocalEvents) {
-            val command = eventToCommandMapper.map(localEvent)
-            val lastRevision = state.lastKnownLocalRevisions[localEvent.aggId] ?: 0
-            val executionResult = localCommandExecutor.execute(command, lastRevision)
-            logger.debug("Local event {} -> command {} + lastRevision {} -> {}", localEvent, command, lastRevision, executionResult)
-            when (executionResult) {
-                is CommandExecutor.ExecutionResult.Failure -> return left(executionResult.error)
-                is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
-                    updateState(state
-                            .updateLastKnownLocalRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
-                            .updateLastSynchronizedLocalRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
-                            .ignoreLocalEvent(executionResult.newEventMetadata.eventId)
-                    )
+            for (localEvent in compensatingAction.newLocalEvents) {
+                val command = eventToCommandMapper.map(localEvent)
+                val lastRevision = state.lastKnownLocalRevisions[localEvent.aggId] ?: 0
+                val executionResult = localCommandExecutor.execute(command, lastRevision)
+                logger.debug("Local event {} -> command {} + lastRevision {} -> {}", localEvent, command, lastRevision, executionResult)
+                when (executionResult) {
+                    is CommandExecutor.ExecutionResult.Failure -> return left(executionResult.error)
+                    is CommandExecutor.ExecutionResult.Success -> if (executionResult.newEventMetadata != null) {
+                        updateState(state
+                                .updateLastKnownLocalRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
+                                .updateLastSynchronizedLocalRevision(executionResult.newEventMetadata.aggId, executionResult.newEventMetadata.revision)
+                                .ignoreLocalEvent(executionResult.newEventMetadata.eventId)
+                        )
+                    }
                 }
             }
         }
