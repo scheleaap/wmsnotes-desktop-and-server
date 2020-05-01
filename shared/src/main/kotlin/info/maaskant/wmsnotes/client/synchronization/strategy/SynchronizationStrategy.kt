@@ -1,10 +1,10 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy
 
 import au.com.console.kassava.kotlinToString
-import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.model.Event
 
 // TODO: Rename to CompensationStrategy or Compensator or something
+// TODO: Rename Solution to CompensatingAction or Compensation
 /**
  * A strategy to compensate for unsynchronized local and remote events. Typically, unsynchronized local events are
  * compensated by producing new remote events and unsynchronized remote events by new local events. This is not a
@@ -25,9 +25,12 @@ interface SynchronizationStrategy {
             override fun toString() = kotlinToString(properties = emptyArray())
         }
 
-        data class Solution(val compensatingActions: List<CompensatingAction>) : ResolutionResult() {
-            constructor(compensatingAction: CompensatingAction) : this(listOf(compensatingAction))
-        }
+        data class Solution(
+                val compensatedLocalEvents: List<Event>,
+                val compensatedRemoteEvents: List<Event>,
+                val newLocalEvents: List<Event>,
+                val newRemoteEvents: List<Event>
+        ) : ResolutionResult()
     }
 }
 

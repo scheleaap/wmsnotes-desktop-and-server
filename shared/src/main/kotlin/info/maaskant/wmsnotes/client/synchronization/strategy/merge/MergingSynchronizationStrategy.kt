@@ -2,7 +2,6 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import arrow.core.extensions.list.foldable.firstOption
 import arrow.core.getOrElse
-import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
 import info.maaskant.wmsnotes.model.Aggregate
 import info.maaskant.wmsnotes.model.Event
@@ -49,12 +48,10 @@ abstract class MergingSynchronizationStrategy<AggregateType : Aggregate<Aggregat
             MergeStrategy.MergeResult.NoSolution -> SynchronizationStrategy.ResolutionResult.NoSolution
             is MergeStrategy.MergeResult.Solution -> {
                 SynchronizationStrategy.ResolutionResult.Solution(
-                        compensatingAction = CompensatingAction(
-                                compensatedLocalEvents = localEvents,
-                                compensatedRemoteEvents = remoteEvents,
-                                newLocalEvents = mergeResult.newLocalEvents,
-                                newRemoteEvents = mergeResult.newRemoteEvents
-                        )
+                        compensatedLocalEvents = localEvents,
+                        compensatedRemoteEvents = remoteEvents,
+                        newLocalEvents = mergeResult.newLocalEvents,
+                        newRemoteEvents = mergeResult.newRemoteEvents
                 )
             }
         }

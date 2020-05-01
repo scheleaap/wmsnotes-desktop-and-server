@@ -121,12 +121,11 @@ internal class SynchronizerTest {
                     localEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
                     remoteEvents = emptyList()
             )
-        }.returns(Solution(CompensatingAction(
+        }.returns(Solution(
                 compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
                 compensatedRemoteEvents = emptyList(),
                 newLocalEvents = emptyList(),
                 newRemoteEvents = listOf(compensatingEventForLocalEvent1, compensatingEventForLocalEvent2)
-        )
         ))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
@@ -181,12 +180,11 @@ internal class SynchronizerTest {
                     localEvents = emptyList(),
                     remoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
             )
-        }.returns(Solution(CompensatingAction(
+        }.returns(Solution(
                 compensatedLocalEvents = emptyList(),
                 compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2),
                 newLocalEvents = listOf(compensatingEventForRemoteEvent1, compensatingEventForRemoteEvent2),
                 newRemoteEvents = emptyList()
-        )
         ))
         val commandForRemoteEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForRemoteEvent1,
@@ -248,12 +246,12 @@ internal class SynchronizerTest {
                     localEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
                     remoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
             )
-        }.returns(Solution(CompensatingAction(
+        }.returns(Solution(
                 compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
                 compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2),
                 newLocalEvents = listOf(compensatingEventForRemoteEvent1, compensatingEventForRemoteEvent2),
                 newRemoteEvents = listOf(compensatingEventForLocalEvent1, compensatingEventForLocalEvent2)
-        )))
+        ))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
@@ -305,7 +303,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `one note, multiple compensating actions`() {
+    fun `one note, one compensating action, executing local command fails`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId1, revision = 2)
@@ -330,110 +328,12 @@ internal class SynchronizerTest {
                     localEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
                     remoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent1),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent1),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent1)
-                ),
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent2),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent2),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent2)
-                )
-        )))
-        val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
-                compensatingEvent = compensatingEventForLocalEvent1,
-                lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
-                commandExecutor = remoteCommandExecutor,
-                newEvent = newRemoteEventForLocalEvent1
-        )
-        val commandForLocalEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
-                compensatingEvent = compensatingEventForLocalEvent2,
-                lastRevision = newRemoteEventForLocalEvent1.revision,
-                commandExecutor = remoteCommandExecutor,
-                newEvent = newRemoteEventForLocalEvent2
-        )
-        val commandForRemoteEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
-                compensatingEvent = compensatingEventForRemoteEvent1,
-                lastRevision = initialState.lastKnownLocalRevisions[aggId1]!!,
-                commandExecutor = localCommandExecutor,
-                newEvent = newLocalEventForRemoteEvent1
-        )
-        val commandForRemoteEvent2 = givenTheSuccessfulExecutionOfACompensatingEvent(
-                compensatingEvent = compensatingEventForRemoteEvent2,
-                lastRevision = newLocalEventForRemoteEvent1.revision,
-                commandExecutor = localCommandExecutor,
-                newEvent = newLocalEventForRemoteEvent2
-        )
-        val s = createSynchronizer()
-        val stateObserver = s.getStateUpdates().test()
-
-        // When
-        val result = s.synchronize()
-
-        // Then
-        assertThat(result).isEqualTo(SynchronizationResult(emptyList()))
-        verifySequence {
-            localEvents.getEvents()
-            remoteEvents.getEvents()
-            remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
-            localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
-            remoteEvents.removeEvent(compensatedRemoteEvent1)
-            localEvents.removeEvent(compensatedLocalEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
-            localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
-            remoteEvents.removeEvent(compensatedRemoteEvent2)
-            localEvents.removeEvent(compensatedLocalEvent2)
-        }
-        val finalState = stateObserver.values().last()
-        assertThat(finalState.lastKnownLocalRevisions[aggId1]).isEqualTo(newLocalEventForRemoteEvent2.revision)
-        assertThat(finalState.lastKnownRemoteRevisions[aggId1]).isEqualTo(newRemoteEventForLocalEvent2.revision)
-        assertThat(finalState.lastSynchronizedLocalRevisions[aggId1]).isEqualTo(newLocalEventForRemoteEvent2.revision)
-    }
-
-    @Test
-    fun `one note, multiple compensating actions, executing local command fails`() {
-        // Given
-        val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
-        val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId1, revision = 2)
-        val compensatedRemoteEvent1 = modelEvent(eventId = 1, aggId = aggId1, revision = 11)
-        val compensatedRemoteEvent2 = modelEvent(eventId = 2, aggId = aggId1, revision = 12)
-        val compensatingEventForLocalEvent1 = modelEvent(eventId = -1, aggId = aggId1, revision = 0)
-        val compensatingEventForLocalEvent2 = modelEvent(eventId = -2, aggId = aggId1, revision = 0)
-        val compensatingEventForRemoteEvent1 = modelEvent(eventId = -1, aggId = aggId1, revision = 0)
-        val compensatingEventForRemoteEvent2 = modelEvent(eventId = -2, aggId = aggId1, revision = 0)
-        val newRemoteEventForLocalEvent1 = modelEvent(eventId = 3, aggId = aggId1, revision = 13)
-        val newRemoteEventForLocalEvent2 = modelEvent(eventId = 4, aggId = aggId1, revision = 14)
-        val newLocalEventForRemoteEvent1 = modelEvent(eventId = 13, aggId = aggId1, revision = 3)
-        val newLocalEventForRemoteEvent2 = modelEvent(eventId = 14, aggId = aggId1, revision = 4)
-        initialState = initialState
-                .updateLastKnownLocalRevision(aggId1, compensatedLocalEvent2.revision)
-                .updateLastKnownRemoteRevision(aggId1, compensatedRemoteEvent2.revision)
-        givenLocalEvents(compensatedLocalEvent1, compensatedLocalEvent2)
-        givenRemoteEvents(compensatedRemoteEvent1, compensatedRemoteEvent2)
-        every {
-            synchronizationStrategy.resolve(
-                    aggId = aggId1,
-                    localEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
-                    remoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
-            )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent1),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent1),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent1)
-                ),
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent2),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent2),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent2)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent1, compensatingEventForRemoteEvent2),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent1, compensatingEventForLocalEvent2)
+        ))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
@@ -469,24 +369,24 @@ internal class SynchronizerTest {
             localEvents.getEvents()
             remoteEvents.getEvents()
             remoteCommandExecutor.execute(commandForLocalEvent1.first, lastRevision = commandForLocalEvent1.second)
+            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
             localCommandExecutor.execute(commandForRemoteEvent1.first, lastRevision = commandForRemoteEvent1.second)
         }
         verify(exactly = 0) {
             remoteEvents.removeEvent(compensatedRemoteEvent1)
             localEvents.removeEvent(compensatedLocalEvent1)
-            remoteCommandExecutor.execute(commandForLocalEvent2.first, lastRevision = commandForLocalEvent2.second)
             localCommandExecutor.execute(commandForRemoteEvent2.first, lastRevision = commandForRemoteEvent2.second)
             remoteEvents.removeEvent(compensatedRemoteEvent2)
             localEvents.removeEvent(compensatedLocalEvent2)
         }
         val finalState = stateObserver.values().last()
         assertThat(finalState.lastKnownLocalRevisions[aggId1]).isEqualTo(initialState.lastKnownLocalRevisions[aggId1])
-        assertThat(finalState.lastKnownRemoteRevisions[aggId1]).isEqualTo(newRemoteEventForLocalEvent1.revision)
+        assertThat(finalState.lastKnownRemoteRevisions[aggId1]).isEqualTo(newRemoteEventForLocalEvent2.revision)
         assertThat(finalState.lastSynchronizedLocalRevisions[aggId1]).isEqualTo(initialState.lastSynchronizedLocalRevisions[aggId1])
     }
 
     @Test
-    fun `one note, multiple compensating actions, executing remote command fails`() {
+    fun `one note, one compensating action, executing remote command fails`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId1, revision = 2)
@@ -511,20 +411,12 @@ internal class SynchronizerTest {
                     localEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
                     remoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent1),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent1),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent1)
-                ),
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent2),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent2),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent2)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent1, compensatingEventForRemoteEvent2),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent1, compensatingEventForLocalEvent2)
+        ))
         val commandForLocalEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
@@ -574,7 +466,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `one note, multiple compensating actions, different events in compensating actions`() {
+    fun `one note, one compensating action, missing compensated event in solution`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId1, revision = 2)
@@ -599,20 +491,12 @@ internal class SynchronizerTest {
                     localEvents = listOf(compensatedLocalEvent1, compensatedLocalEvent2),
                     remoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent1),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent1),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent1)
-                ),
-                CompensatingAction(
-                        compensatedLocalEvents = emptyList(), // Missing compensatedLocalEvent2
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent2),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent2)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent1), // Missing compensatedLocalEvent2
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent1, compensatedRemoteEvent2),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent1, compensatingEventForRemoteEvent2),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent1, compensatingEventForLocalEvent2)
+        ))
         givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
@@ -654,7 +538,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `multiple notes, multiple compensating actions`() {
+    fun `multiple notes, one compensating action`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId2, revision = 2)
@@ -681,28 +565,24 @@ internal class SynchronizerTest {
                     localEvents = listOf(compensatedLocalEvent1),
                     remoteEvents = listOf(compensatedRemoteEvent1)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent1),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent1),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent1)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent1),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent1),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent1)
+        ))
         every {
             synchronizationStrategy.resolve(
                     aggId = aggId2,
                     localEvents = listOf(compensatedLocalEvent2),
                     remoteEvents = listOf(compensatedRemoteEvent2)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent2),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent2),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent2)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent2),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent2),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent2)
+        ))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
@@ -757,7 +637,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `multiple notes, multiple compensating actions, executing local command fails`() {
+    fun `multiple notes, one compensating action, executing local command fails`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId2, revision = 2)
@@ -783,28 +663,24 @@ internal class SynchronizerTest {
                     localEvents = listOf(compensatedLocalEvent1),
                     remoteEvents = listOf(compensatedRemoteEvent1)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent1),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent1),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent1)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent1),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent1),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent1)
+        ))
         every {
             synchronizationStrategy.resolve(
                     aggId = aggId2,
                     localEvents = listOf(compensatedLocalEvent2),
                     remoteEvents = listOf(compensatedRemoteEvent2)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent2),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent2),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent2)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent2),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent2),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent2)
+        ))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
@@ -860,7 +736,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `multiple notes, multiple compensating actions, executing remote command fails`() {
+    fun `multiple notes, one compensating action, executing remote command fails`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId2, revision = 2)
@@ -886,28 +762,24 @@ internal class SynchronizerTest {
                     localEvents = listOf(compensatedLocalEvent1),
                     remoteEvents = listOf(compensatedRemoteEvent1)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent1),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent1),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent1)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent1),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent1),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent1)
+        ))
         every {
             synchronizationStrategy.resolve(
                     aggId = aggId2,
                     localEvents = listOf(compensatedLocalEvent2),
                     remoteEvents = listOf(compensatedRemoteEvent2)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent2),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent2),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent2)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent2),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent2),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent2),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent2)
+        ))
         val commandForLocalEvent1 = givenTheFailedExecutionOfACompensatingEvent( // Failure
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,
@@ -983,14 +855,12 @@ internal class SynchronizerTest {
                     localEvents = listOf(compensatedLocalEvent1),
                     remoteEvents = listOf(compensatedRemoteEvent1)
             )
-        }.returns(Solution(listOf(
-                CompensatingAction(
-                        compensatedLocalEvents = listOf(compensatedLocalEvent1),
-                        compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
-                        newLocalEvents = listOf(compensatingEventForRemoteEvent1),
-                        newRemoteEvents = listOf(compensatingEventForLocalEvent1)
-                )
-        )))
+        }.returns(Solution(
+                compensatedLocalEvents = listOf(compensatedLocalEvent1),
+                compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
+                newLocalEvents = listOf(compensatingEventForRemoteEvent1),
+                newRemoteEvents = listOf(compensatingEventForLocalEvent1)
+        ))
         val commandForLocalEvent1 = givenTheSuccessfulExecutionOfACompensatingEvent(
                 compensatingEvent = compensatingEventForLocalEvent1,
                 lastRevision = initialState.lastKnownRemoteRevisions[aggId1]!!,

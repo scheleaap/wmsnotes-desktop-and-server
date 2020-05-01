@@ -2,7 +2,6 @@ package info.maaskant.wmsnotes.client.synchronization.strategy.merge
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
@@ -61,12 +60,12 @@ internal abstract class MergingSynchronizationStrategyTest<AggregateType : Aggre
         val result = strategy.resolve(aggId = aggId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.Solution(listOf(CompensatingAction(
+        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.Solution(
                 compensatedLocalEvents = compensatedLocalEvents,
                 compensatedRemoteEvents = compensatedRemoteEvents,
                 newLocalEvents = listOf(newLocalEvent1, newLocalEvent2),
                 newRemoteEvents = listOf(newRemoteEvent1, newRemoteEvent2)
-        ))))
+        ))
     }
 
     @Test
@@ -214,12 +213,12 @@ internal abstract class MergingSynchronizationStrategyTest<AggregateType : Aggre
         val result = strategy.resolve(aggId = aggId, localEvents = compensatedLocalEvents, remoteEvents = compensatedRemoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.Solution(listOf(CompensatingAction(
+        assertThat(result).isEqualTo(SynchronizationStrategy.ResolutionResult.Solution(
                 compensatedLocalEvents = listOf(compensatedLocalEvent1),
                 compensatedRemoteEvents = listOf(compensatedRemoteEvent1),
                 newLocalEvents = listOf(newLocalEvent1),
                 newRemoteEvents = listOf(newRemoteEvent1)
-        ))))
+        ))
     }
 
     private fun givenAnEventApplicationResult(

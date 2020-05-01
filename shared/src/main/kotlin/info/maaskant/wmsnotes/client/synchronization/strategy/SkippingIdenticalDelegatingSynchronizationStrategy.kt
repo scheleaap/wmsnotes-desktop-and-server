@@ -1,8 +1,8 @@
 package info.maaskant.wmsnotes.client.synchronization.strategy
 
-import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult
-import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.*
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
+import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
 import info.maaskant.wmsnotes.model.Event
 import kotlin.math.min
 
@@ -20,20 +20,20 @@ class SkippingIdenticalDelegatingSynchronizationStrategy(private val delegate: S
             val delegateResult = delegate.resolve(aggId = aggId, localEvents = filteredLocalEvents, remoteEvents = filteredRemoteEvents)
             when (delegateResult) {
                 NoSolution -> delegateResult
-                is Solution -> Solution(CompensatingAction(
+                is Solution -> Solution(
                         compensatedLocalEvents = localEvents,
                         compensatedRemoteEvents = remoteEvents,
-                        newLocalEvents = delegateResult.compensatingActions.first().newLocalEvents,
-                        newRemoteEvents = delegateResult.compensatingActions.first().newRemoteEvents
-                ))
+                        newLocalEvents = delegateResult.newLocalEvents,
+                        newRemoteEvents = delegateResult.newRemoteEvents
+                )
             }
         } else {
-            Solution(CompensatingAction(
+            Solution(
                     compensatedLocalEvents = localEvents,
                     compensatedRemoteEvents = remoteEvents,
                     newLocalEvents = emptyList(),
                     newRemoteEvents = emptyList()
-            ))
+            )
         }
     }
 }

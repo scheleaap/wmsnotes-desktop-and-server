@@ -2,7 +2,6 @@ package info.maaskant.wmsnotes.client.synchronization.strategy
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
 import info.maaskant.wmsnotes.model.Event
@@ -25,12 +24,12 @@ internal class LocalOnlySynchronizationStrategyTest {
         val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(Solution(CompensatingAction(
+        assertThat(result).isEqualTo(Solution(
                 compensatedLocalEvents = localEvents,
                 compensatedRemoteEvents = emptyList(),
                 newLocalEvents = emptyList(),
                 newRemoteEvents = localEvents
-        )))
+        ))
     }
 
     @Test
@@ -61,6 +60,11 @@ internal class LocalOnlySynchronizationStrategyTest {
         val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(Solution(emptyList()))
+        assertThat(result).isEqualTo(Solution(
+                compensatedLocalEvents = emptyList(),
+                compensatedRemoteEvents = emptyList(),
+                newLocalEvents = emptyList(),
+                newRemoteEvents = emptyList()
+        ))
     }
 }

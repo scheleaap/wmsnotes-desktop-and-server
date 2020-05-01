@@ -2,7 +2,6 @@ package info.maaskant.wmsnotes.client.synchronization.strategy
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import info.maaskant.wmsnotes.client.synchronization.CompensatingAction
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.NoSolution
 import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy.ResolutionResult.Solution
@@ -78,12 +77,12 @@ internal class SkippingIdenticalDelegatingSynchronizationStrategyTest {
                 val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
                 // Then
-                assertThat(result).isEqualTo(Solution(CompensatingAction(
+                assertThat(result).isEqualTo(Solution(
                         compensatedLocalEvents = localEvents,
                         compensatedRemoteEvents = remoteEvents,
                         newLocalEvents = emptyList(),
                         newRemoteEvents = emptyList()
-                )))
+                ))
             }
         }
     }
@@ -108,12 +107,12 @@ internal class SkippingIdenticalDelegatingSynchronizationStrategyTest {
         val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(Solution(CompensatingAction(
+        assertThat(result).isEqualTo(Solution(
                 compensatedLocalEvents = localEvents,
                 compensatedRemoteEvents = remoteEvents,
-                newLocalEvents = delegateSolution.compensatingActions.first().newLocalEvents,
-                newRemoteEvents = delegateSolution.compensatingActions.first().newRemoteEvents
-        )))
+                newLocalEvents = delegateSolution.newLocalEvents,
+                newRemoteEvents = delegateSolution.newRemoteEvents
+        ))
     }
 
     @Test
@@ -136,12 +135,12 @@ internal class SkippingIdenticalDelegatingSynchronizationStrategyTest {
         val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(Solution(CompensatingAction(
+        assertThat(result).isEqualTo(Solution(
                 compensatedLocalEvents = localEvents,
                 compensatedRemoteEvents = remoteEvents,
-                newLocalEvents = delegateSolution.compensatingActions.first().newLocalEvents,
-                newRemoteEvents = delegateSolution.compensatingActions.first().newRemoteEvents
-        )))
+                newLocalEvents = delegateSolution.newLocalEvents,
+                newRemoteEvents = delegateSolution.newRemoteEvents
+        ))
     }
 
     @Test
@@ -163,12 +162,12 @@ internal class SkippingIdenticalDelegatingSynchronizationStrategyTest {
         val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(Solution(CompensatingAction(
+        assertThat(result).isEqualTo(Solution(
                 compensatedLocalEvents = localEvents,
                 compensatedRemoteEvents = remoteEvents,
-                newLocalEvents = delegateSolution.compensatingActions.first().newLocalEvents,
-                newRemoteEvents = delegateSolution.compensatingActions.first().newRemoteEvents
-        )))
+                newLocalEvents = delegateSolution.newLocalEvents,
+                newRemoteEvents = delegateSolution.newRemoteEvents
+        ))
     }
 
     @Test
@@ -190,24 +189,24 @@ internal class SkippingIdenticalDelegatingSynchronizationStrategyTest {
         val result = strategy.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents)
 
         // Then
-        assertThat(result).isEqualTo(Solution(CompensatingAction(
+        assertThat(result).isEqualTo(Solution(
                 compensatedLocalEvents = localEvents,
                 compensatedRemoteEvents = remoteEvents,
-                newLocalEvents = delegateSolution.compensatingActions.first().newLocalEvents,
-                newRemoteEvents = delegateSolution.compensatingActions.first().newRemoteEvents
-        )))
+                newLocalEvents = delegateSolution.newLocalEvents,
+                newRemoteEvents = delegateSolution.newRemoteEvents
+        ))
     }
 
 
     private fun createInstance() = SkippingIdenticalDelegatingSynchronizationStrategy(delegate)
 
     private fun givenDelegateCanResolve(localEvents: List<Event>, remoteEvents: List<Event>): Solution {
-        val solution = Solution(CompensatingAction(
+        val solution = Solution(
                 compensatedLocalEvents = localEvents,
                 compensatedRemoteEvents = remoteEvents,
                 newLocalEvents = listOf(mockk(), mockk()),
                 newRemoteEvents = listOf(mockk(), mockk())
-        ))
+        )
         every { delegate.resolve(aggId = aggId, localEvents = localEvents, remoteEvents = remoteEvents) }.returns(solution)
         return solution
     }
