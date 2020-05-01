@@ -10,10 +10,7 @@ import info.maaskant.wmsnotes.client.synchronization.commandexecutor.RemoteComma
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
-import info.maaskant.wmsnotes.client.synchronization.strategy.LocalOnlySynchronizationStrategy
-import info.maaskant.wmsnotes.client.synchronization.strategy.MultipleSynchronizationStrategy
-import info.maaskant.wmsnotes.client.synchronization.strategy.RemoteOnlySynchronizationStrategy
-import info.maaskant.wmsnotes.client.synchronization.strategy.SynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.*
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.*
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.folder.FolderMergingSynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceAnalyzer
@@ -180,16 +177,18 @@ class SynchronizationConfiguration {
             noteMergeStrategy: MergeStrategy<Note>,
             noteRepository: AggregateRepository<Note>
     ) =
-            MultipleSynchronizationStrategy(
-                    LocalOnlySynchronizationStrategy(),
-                    RemoteOnlySynchronizationStrategy(),
-                    NoteMergingSynchronizationStrategy(
-                            mergeStrategy = noteMergeStrategy,
-                            aggregateRepository = noteRepository
-                    ),
-                    FolderMergingSynchronizationStrategy(
-                            mergeStrategy = folderMergeStrategy,
-                            aggregateRepository = folderRepository
+            SkippingIdenticalDelegatingSynchronizationStrategy(
+                    MultipleSynchronizationStrategy(
+                            LocalOnlySynchronizationStrategy(),
+                            RemoteOnlySynchronizationStrategy(),
+                            NoteMergingSynchronizationStrategy(
+                                    mergeStrategy = noteMergeStrategy,
+                                    aggregateRepository = noteRepository
+                            ),
+                            FolderMergingSynchronizationStrategy(
+                                    mergeStrategy = folderMergeStrategy,
+                                    aggregateRepository = folderRepository
+                            )
                     )
             )
 
