@@ -1,6 +1,8 @@
-package info.maaskant.wmsnotes.client.synchronization.strategy.merge
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge.note
 
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.NoteMergingSynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergingSynchronizationStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergingSynchronizationStrategyTest
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.aggregaterepository.AggregateRepository
 import info.maaskant.wmsnotes.model.folder.FolderCreatedEvent

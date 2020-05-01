@@ -1,11 +1,10 @@
-package info.maaskant.wmsnotes.client.synchronization.strategy.merge
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge.note
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.ExistenceDifference.ExistenceType.*
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.*
 import assertk.assertThat
 import assertk.assertions.*
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory

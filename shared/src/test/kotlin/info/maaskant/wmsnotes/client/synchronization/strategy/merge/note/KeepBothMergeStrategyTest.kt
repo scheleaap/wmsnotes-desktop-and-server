@@ -1,4 +1,4 @@
-package info.maaskant.wmsnotes.client.synchronization.strategy.merge
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge.note
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceCompensator.CompensatingEvents
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy.MergeResult.Solution
@@ -10,13 +10,8 @@ import io.mockk.every
 import io.mockk.mockk
 import assertk.assertThat
 import assertk.assertions.*
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.Difference
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceAnalyzer
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceCompensator
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.KeepBothMergeStrategy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.lang.RuntimeException
 
 internal class KeepBothMergeStrategyTest {
     private val aggId = "note"

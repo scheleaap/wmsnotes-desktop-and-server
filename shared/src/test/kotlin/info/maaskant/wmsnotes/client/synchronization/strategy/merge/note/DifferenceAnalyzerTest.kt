@@ -1,11 +1,10 @@
-package info.maaskant.wmsnotes.client.synchronization.strategy.merge
+package info.maaskant.wmsnotes.client.synchronization.strategy.merge.note
 
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.ExistenceDifference.ExistenceType.*
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.*
 import assertk.assertThat
 import assertk.assertions.*
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -245,11 +244,11 @@ internal class DifferenceAnalyzerTest {
 
         fun noteCreatedEvent(
                 eventId: Int = 1,
-                aggId: String = DifferenceAnalyzerTest.aggId,
+                aggId: String = Companion.aggId,
                 revision: Int = 1,
-                path: Path = DifferenceAnalyzerTest.path,
-                title: String = DifferenceAnalyzerTest.title,
-                content: String = DifferenceAnalyzerTest.content
+                path: Path = Companion.path,
+                title: String = Companion.title,
+                content: String = Companion.content
         ): NoteCreatedEvent =
                 NoteCreatedEvent(
                         eventId = eventId,
