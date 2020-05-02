@@ -115,8 +115,8 @@ class Synchronizer @Inject constructor(
         }.map { (aggId, tmp) ->
             val (_, resolutionResult) = tmp
             aggId to (resolutionResult as Solution)
-        }.map { (aggId, compensatingActions) ->
-            aggId to executeSolution(compensatingActions, aggId)
+        }.map { (aggId, solution) ->
+            aggId to executeSolution(solution, aggId)
         }.toList() // Create a list first to ensure that all aggregates are processed.
 
         return r.flatMap { (aggId, result) ->

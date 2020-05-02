@@ -103,7 +103,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `one note, one compensating action, only local events`() {
+    fun `one note, only local events`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId1, revision = 2)
@@ -162,7 +162,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `one note, one compensating action, only remote events`() {
+    fun `one note, only remote events`() {
         // Given
         val compensatedRemoteEvent1 = modelEvent(eventId = 1, aggId = aggId1, revision = 11)
         val compensatedRemoteEvent2 = modelEvent(eventId = 2, aggId = aggId1, revision = 12)
@@ -221,7 +221,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `one note, one compensating action`() {
+    fun `one note`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId1, revision = 2)
@@ -303,7 +303,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `one note, one compensating action, executing local command fails`() {
+    fun `one note, executing local command fails`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId1, revision = 2)
@@ -386,7 +386,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `one note, one compensating action, executing remote command fails`() {
+    fun `one note, executing remote command fails`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId1, revision = 2)
@@ -466,7 +466,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `one note, one compensating action, missing compensated event in solution`() {
+    fun `one note, missing compensated event in solution`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId1, revision = 2)
@@ -538,7 +538,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `multiple notes, one compensating action`() {
+    fun `multiple notes`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId2, revision = 2)
@@ -637,7 +637,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `multiple notes, one compensating action, executing local command fails`() {
+    fun `multiple notes, executing local command fails`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId2, revision = 2)
@@ -736,7 +736,7 @@ internal class SynchronizerTest {
     }
 
     @Test
-    fun `multiple notes, one compensating action, executing remote command fails`() {
+    fun `multiple notes, executing remote command fails`() {
         // Given
         val compensatedLocalEvent1 = modelEvent(eventId = 11, aggId = aggId1, revision = 1)
         val compensatedLocalEvent2 = modelEvent(eventId = 12, aggId = aggId2, revision = 2)
