@@ -12,7 +12,7 @@ rsync -rtPv user@host:/var/wmsnotes/ /mnt/d/Progs/Java/wmsnotes-desktop/tmp/serv
 ```
 * From desktop:
 ```sh
-xcopy C:\Users\<USER>\AppData\Roaming\WMS Notes\Desktop D:\Progs\Java\wmsnotes-desktop\tmp\desktop\ /E/H
+xcopy "C:\Users\<USER>\AppData\Roaming\WMS Notes\Desktop" "D:\Progs\Java\wmsnotes-desktop\tmp\desktop\" /E/H
 ```
 
 ## Analyzing Differences

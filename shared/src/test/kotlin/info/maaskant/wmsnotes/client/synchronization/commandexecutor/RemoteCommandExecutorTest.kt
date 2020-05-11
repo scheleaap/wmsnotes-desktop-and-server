@@ -2,13 +2,16 @@ package info.maaskant.wmsnotes.client.synchronization.commandexecutor
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
 import info.maaskant.wmsnotes.client.api.GrpcCommandMapper
 import info.maaskant.wmsnotes.model.Command
+import info.maaskant.wmsnotes.model.CommandError
 import info.maaskant.wmsnotes.model.Event
 import info.maaskant.wmsnotes.model.Path
 import info.maaskant.wmsnotes.model.note.CreateNoteCommand
 import info.maaskant.wmsnotes.model.note.NoteCreatedEvent
 import info.maaskant.wmsnotes.server.command.grpc.CommandServiceGrpc
+import info.maaskant.wmsnotes.testutilities.ExecutionResultAssertions.asFailure
 import info.maaskant.wmsnotes.testutilities.ExecutionResultAssertions.isFailure
 import io.grpc.Deadline
 import io.grpc.Status
@@ -17,7 +20,9 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifySequence
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import java.util.concurrent.TimeUnit
 
 @Suppress("SameParameterValue")
@@ -122,22 +127,31 @@ internal class RemoteCommandExecutorTest {
         assertThat(result).isFailure()
     }
 
-    @Test
-    fun `failure, remote`() {
-        // Given
-        val lastRevision = 10
-        val command = modelCommand(aggId = 1)
-        val remoteRequest = givenACommandFails(command, lastRevision, Status.INVALID_ARGUMENT)
-        val executor = createExecutor()
+    @TestFactory
+    fun `failure, remote`(): List<DynamicTest> {
+        val items = mapOf(
+                Status.CANCELLED to CommandError.NetworkError::class,
+                Status.DEADLINE_EXCEEDED to CommandError.NetworkError::class,
+                Status.FAILED_PRECONDITION to CommandError.IllegalStateError::class,
+                Status.INVALID_ARGUMENT to CommandError.InvalidCommandError::class,
+                Status.UNAVAILABLE to CommandError.NetworkError::class,
+                Status.INTERNAL to CommandError.OtherError::class,
+                Status.UNKNOWN to CommandError.OtherError::class
+        )
+        return items.map { (grpcStatus, expectedCommandError) ->
+            DynamicTest.dynamicTest("${grpcStatus.code} -> ${expectedCommandError.simpleName}") {
+                // Given
+                val lastRevision = 10
+                val command = modelCommand(aggId = 1)
+                givenACommandFails(command, lastRevision, grpcStatus)
+                val executor = createExecutor()
 
-        // When
-        val result = executor.execute(command, lastRevision)
+                // When
+                val result = executor.execute(command, lastRevision)
 
-        // Then
-        assertThat(result).isFailure()
-        verifySequence {
-            grpcCommandService.withDeadline(grpcDeadline)
-            grpcCommandService.postCommand(remoteRequest)
+                // Then
+                assertThat(result).asFailure().isInstanceOf(expectedCommandError)
+            }
         }
     }
 
@@ -153,7 +167,7 @@ internal class RemoteCommandExecutorTest {
         val result = executor.execute(command, lastRevision)
 
         // Then
-        assertThat(result).isFailure()
+        assertThat(result).asFailure().isInstanceOf(CommandError.OtherError::class)
     }
 
     private fun createExecutor() =

@@ -11,7 +11,9 @@ import info.maaskant.wmsnotes.client.synchronization.eventrepository.FileModifia
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.InMemoryModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.eventrepository.ModifiableEventRepository
 import info.maaskant.wmsnotes.client.synchronization.strategy.*
-import info.maaskant.wmsnotes.client.synchronization.strategy.merge.*
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.EqualsMergeStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MergeStrategy
+import info.maaskant.wmsnotes.client.synchronization.strategy.merge.MultipleMergeStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.folder.FolderMergingSynchronizationStrategy
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceAnalyzer
 import info.maaskant.wmsnotes.client.synchronization.strategy.merge.note.DifferenceCompensator

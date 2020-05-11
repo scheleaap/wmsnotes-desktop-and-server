@@ -37,14 +37,16 @@ class RemoteCommandExecutor @Inject constructor(
             responseEither.fold({ sre ->
                 // Failure
                 val commandError: CommandError = when (sre.status.code) {
-                    Status.Code.INVALID_ARGUMENT ->
-                        CommandError.InvalidCommandError(sre.status.description ?: "Missing description")
+                    Status.Code.CANCELLED ->
+                        CommandError.NetworkError(sre.status.description ?: "Missing description")
                     Status.Code.FAILED_PRECONDITION ->
                         CommandError.IllegalStateError(sre.status.description ?: "Missing description")
-                    Status.Code.UNAVAILABLE ->
-                        CommandError.NetworkError("Server not available")
+                    Status.Code.INVALID_ARGUMENT ->
+                        CommandError.InvalidCommandError(sre.status.description ?: "Missing description")
                     Status.Code.DEADLINE_EXCEEDED ->
                         CommandError.NetworkError("Server is taking too long to respond")
+                    Status.Code.UNAVAILABLE ->
+                        CommandError.NetworkError("Server not available")
                     else -> CommandError.OtherError(
                             message = "Error sending command to server: ${sre.status.code}, ${sre.status.description}",
                             cause = Some(sre)
