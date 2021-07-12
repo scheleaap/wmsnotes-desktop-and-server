@@ -64,6 +64,12 @@ class MenuAndToolbarView : View() {
             applicationController.importMarkdownFiles.onNext(directory)
         }
     }
+    private val exportMarkdownFilesAction = StatelessAction(messageKey = "menu.file.exportMarkdownFiles") {
+        val directory: File? = chooseDirectory(owner = this.currentWindow)
+        if (directory != null) {
+            applicationController.exportMarkdownFiles.onNext(directory)
+        }
+    }
     private val cutAction = StatelessAction(messageKey = "menu.edit.cut", graphic = FontAwesomeIconView(FontAwesomeIcon.CUT),
             accelerator = "Shortcut+X",
             enabled = navigationViewModel.currentSelection.map { it is NavigationViewModel.Selection.NoteSelection }) {
@@ -136,6 +142,7 @@ class MenuAndToolbarView : View() {
                         item(createFolderAction)
                         separator()
                         item(importMarkdownFilesAction)
+                        item(exportMarkdownFilesAction)
                         separator()
                         item(exitAction)
                     }

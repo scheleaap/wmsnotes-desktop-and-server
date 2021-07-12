@@ -1,5 +1,6 @@
 package info.maaskant.wmsnotes.desktop.main
 
+import info.maaskant.wmsnotes.desktop.export.MarkdownFilesExporter
 import info.maaskant.wmsnotes.desktop.imprt.MarkdownFilesImporter
 import info.maaskant.wmsnotes.desktop.main.editing.EditingViewModel
 import info.maaskant.wmsnotes.model.CommandBus
@@ -9,6 +10,7 @@ import info.maaskant.wmsnotes.model.folder.FolderCommand
 import info.maaskant.wmsnotes.model.folder.FolderCommandRequest
 import info.maaskant.wmsnotes.model.note.*
 import info.maaskant.wmsnotes.utilities.logger
+import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -22,7 +24,8 @@ import javax.inject.Singleton
 class ApplicationController @Inject constructor(
         private val navigationViewModel: NavigationViewModel,
         private val editingViewModel: EditingViewModel,
-        commandBus: CommandBus
+        commandBus: CommandBus,
+        private val markdownFilesExporter: MarkdownFilesExporter
 ) {
     private val logger by logger()
 
@@ -37,6 +40,7 @@ class ApplicationController @Inject constructor(
     final val deleteAttachmentFromCurrentNote: Subject<String> = PublishSubject.create<String>().toSerialized()
     final val saveContent: Subject<Unit> = PublishSubject.create<Unit>().toSerialized()
     final val importMarkdownFiles: Subject<File> = PublishSubject.create<File>().toSerialized()
+    final val exportMarkdownFiles: Subject<File> = PublishSubject.create<File>().toSerialized()
 
     private var i: Int = 1
 
@@ -111,6 +115,13 @@ class ApplicationController @Inject constructor(
                     }
                 }
                 .subscribe(commandBus.requests)
+        exportMarkdownFiles
+            .subscribeOn(Schedulers.io())
+            .map(File::toPath)
+            .subscribeBy(
+                onNext = markdownFilesExporter::export,
+                onError = { logger.error("Error", it) }
+            )
     }
 
 }
